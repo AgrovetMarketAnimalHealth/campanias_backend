@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Facades\File;
 class ClienteAuthController extends Controller
 {
     // ─────────────────────────────────────────
@@ -27,7 +27,6 @@ class ClienteAuthController extends Controller
     {
         DB::beginTransaction();
         try {
-            // 1. Registrar cliente
             $cliente = Cliente::create([
                 'tipo_persona'                  => $request->tipo_persona,
                 'nombre'                        => $request->nombre,
@@ -44,13 +43,16 @@ class ClienteAuthController extends Controller
                 'email_verification_expires_at' => now()->addHours(24),
             ]);
 
-            // 2. Guardar imagen en MinIO
-            $rutaComprobante = Storage::disk('s3')->putFile(
-                "clientes/{$cliente->id}/comprobantes",
-                $request->file('archivo_comprobante')
-            );
+            $directorio = public_path("clientes/{$cliente->id}/comprobantes");
+            if (!is_dir($directorio)) {
+                mkdir($directorio, 0775, true);
+            }
 
-            // 3. Crear boleta
+            $archivo         = $request->file('archivo_comprobante');
+            $nombreArchivo   = time() . '_' . $archivo->getClientOriginalName();
+            $archivo->move($directorio, $nombreArchivo);
+            $rutaComprobante = "clientes/{$cliente->id}/comprobantes/{$nombreArchivo}";
+
             $boleta = Boleta::create([
                 'cliente_id' => $cliente->id,
                 'archivo'    => $rutaComprobante,
@@ -59,7 +61,6 @@ class ClienteAuthController extends Controller
 
             DB::commit();
 
-            // 4. Despachar job después del commit
             EnviarEmailRegistro::dispatch($cliente, (string) $boleta->id)->onQueue('emails');
 
             return response()->json([
@@ -71,20 +72,21 @@ class ClienteAuthController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             if (isset($cliente)) {
-                Storage::disk('s3')->deleteDirectory("clientes/{$cliente->id}");
+                $directorioCliente = public_path("clientes/{$cliente->id}");
+                if (is_dir($directorioCliente)) {
+                    array_map('unlink', glob("$directorioCliente/comprobantes/*"));
+                    rmdir("$directorioCliente/comprobantes");
+                    rmdir($directorioCliente);
+                }
             }
-            Log::error('Error en registro de cliente', [
-                'error' => $e->getMessage(),
-                'email' => $request->email,
-                'ip'    => $request->ip(),
-            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error al registrar. Intenta nuevamente.',
+                'message' => $e->getMessage(),
+                'line'    => $e->getLine(),
+                'file'    => $e->getFile(),
             ], 500);
         }
     }
-
     // ─────────────────────────────────────────
     // LOGIN (sin password — por email, DNI o teléfono)
     // ─────────────────────────────────────────

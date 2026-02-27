@@ -3,11 +3,11 @@
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
 import {
     Drawer, DrawerClose, DrawerContent, DrawerDescription,
     DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger,
 } from '@/components/ui/drawer';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,7 @@ import type { Boleta } from '../types/boleta.types';
 import {
     IconUser, IconId, IconCalendar, IconFileText, IconPhoto,
     IconCircleCheckFilled, IconXboxX, IconReceipt, IconCurrencyDollar,
+    IconAlertCircle, IconCircleCheck,
 } from '@tabler/icons-react';
 
 interface Props {
@@ -36,33 +37,42 @@ interface ServerValidationError {
     message?: string;
 }
 
+interface FeedbackState {
+    type: 'success' | 'error';
+    message: string;
+    details?: string[];
+}
+
 export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
     const isMobile = useIsMobile();
     const [open, setOpen] = React.useState(false);
     const [accion, setAccion] = React.useState<'aceptar' | 'rechazar' | null>(null);
     const [loadingImg, setLoadingImg] = React.useState(true);
+    const [feedback, setFeedback] = React.useState<FeedbackState | null>(null);
     const esPendiente = boleta.estado === 'pendiente';
+
+    const isPdf = (url: string) =>
+        /\.pdf(\?.*)?$/i.test(url) || url.includes('/pdf');
+
+    // Limpia el feedback al cambiar de acción
+    React.useEffect(() => { setFeedback(null); }, [accion]);
+
+    function buildErrorDetails(errors: Record<string, string[]>): string[] {
+        return Object.values(errors).flat();
+    }
 
     const aceptarForm = useForm<AceptarBoletaForm>({
         resolver: zodResolver(aceptarBoletaSchema),
-        defaultValues: {
-            numero_boleta: '',
-            monto: undefined,
-            puntos: undefined,
-            observacion: '',
-        },
+        defaultValues: { numero_boleta: '', monto: undefined, puntos: undefined, observacion: '' },
     });
 
     const rechazarForm = useForm<RechazarBoletaForm>({
         resolver: zodResolver(rechazarBoletaSchema),
-        defaultValues: {
-            numero_boleta: '',
-            monto: undefined,
-            observacion: '',
-        },
+        defaultValues: { numero_boleta: '', monto: undefined, observacion: '' },
     });
 
     const handleAceptar = aceptarForm.handleSubmit(async (values) => {
+        setFeedback(null);
         try {
             const updated = await boletaService.update(boleta.id, {
                 estado: 'aceptada',
@@ -71,30 +81,20 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                 puntos: values.puntos,
                 observacion: values.observacion,
             });
-            toast.success('Boleta aceptada correctamente');
+            setFeedback({ type: 'success', message: `Boleta ${boleta.codigo} aceptada correctamente.` });
             onUpdated(updated);
-            setOpen(false);
         } catch (error) {
             const err = error as ServerValidationError;
-            if (err?.errors?.numero_boleta) {
-                aceptarForm.setError('numero_boleta', {
-                    type: 'server',
-                    message: err.errors.numero_boleta[0],
-                });
-            } else if (err?.errors) {
-                Object.entries(err.errors).forEach(([field, messages]) => {
-                    aceptarForm.setError(field as keyof AceptarBoletaForm, {
-                        type: 'server',
-                        message: messages[0],
-                    });
-                });
-            } else {
-                toast.error(err?.message ?? 'Error al aceptar la boleta');
-            }
+            setFeedback({
+                type: 'error',
+                message: err?.message ?? 'Error al aceptar la boleta.',
+                details: err?.errors ? buildErrorDetails(err.errors) : undefined,
+            });
         }
     });
 
     const handleRechazar = rechazarForm.handleSubmit(async (values) => {
+        setFeedback(null);
         try {
             const updated = await boletaService.update(boleta.id, {
                 estado: 'rechazada',
@@ -102,28 +102,36 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                 monto: values.monto,
                 observacion: values.observacion,
             });
-            toast.success('Boleta rechazada');
+            setFeedback({ type: 'success', message: `Boleta ${boleta.codigo} marcada como rechazada.` });
             onUpdated(updated);
-            setOpen(false);
         } catch (error) {
             const err = error as ServerValidationError;
-            if (err?.errors?.numero_boleta) {
-                rechazarForm.setError('numero_boleta', {
-                    type: 'server',
-                    message: err.errors.numero_boleta[0],
-                });
-            } else if (err?.errors) {
-                Object.entries(err.errors).forEach(([field, messages]) => {
-                    rechazarForm.setError(field as keyof RechazarBoletaForm, {
-                        type: 'server',
-                        message: messages[0],
-                    });
-                });
-            } else {
-                toast.error(err?.message ?? 'Error al rechazar la boleta');
-            }
+            setFeedback({
+                type: 'error',
+                message: err?.message ?? 'Error al rechazar la boleta.',
+                details: err?.errors ? buildErrorDetails(err.errors) : undefined,
+            });
         }
     });
+
+    // Bloque de Alert reutilizable
+    const FeedbackAlert = feedback ? (
+        <Alert variant={feedback.type === 'error' ? 'destructive' : 'default'}>
+            {feedback.type === 'error'
+                ? <IconAlertCircle className="size-4" />
+                : <IconCircleCheck className="size-4" />
+            }
+            <AlertTitle>{feedback.type === 'error' ? 'Error' : '¡Listo!'}</AlertTitle>
+            <AlertDescription>
+                <p>{feedback.message}</p>
+                {feedback.details && feedback.details.length > 0 && (
+                    <ul className="mt-1 list-disc pl-4 space-y-0.5">
+                        {feedback.details.map((d, i) => <li key={i}>{d}</li>)}
+                    </ul>
+                )}
+            </AlertDescription>
+        </Alert>
+    ) : null;
 
     return (
         <Drawer open={open} onOpenChange={setOpen} direction={isMobile ? 'bottom' : 'right'}>
@@ -164,7 +172,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                         </div>
                     </div>
 
-                    {/* Info boleta procesada (solo si ya fue procesada) */}
+                    {/* Info boleta procesada */}
                     {!esPendiente && (
                         <div className="grid grid-cols-2 gap-3">
                             <div className="rounded-lg border p-3">
@@ -198,7 +206,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                         </div>
                     )}
 
-                    {/* Observación (si existe y ya fue procesada) */}
+                    {/* Observación */}
                     {!esPendiente && boleta.observacion && boleta.observacion !== '-' && (
                         <div className="rounded-lg border p-3">
                             <p className="text-xs text-muted-foreground mb-1">Observación</p>
@@ -208,25 +216,36 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
 
                     <Separator />
 
-                    {/* Imagen */}
+                    {/* Comprobante (imagen o PDF) */}
                     {boleta.archivo ? (
                         <div className="space-y-2">
                             <p className="text-xs text-muted-foreground flex items-center gap-1 uppercase tracking-wide font-medium">
                                 <IconPhoto className="size-3" /> Comprobante
                             </p>
                             <div className="relative rounded-lg overflow-hidden border bg-muted/20 min-h-[200px] flex items-center justify-center">
-                                {loadingImg && (
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="size-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                                    </div>
+                                {isPdf(boleta.archivo) ? (
+                                    <iframe
+                                        src={boleta.archivo}
+                                        title="Comprobante PDF"
+                                        className="w-full rounded-lg"
+                                        style={{ height: 420, border: 'none' }}
+                                    />
+                                ) : (
+                                    <>
+                                        {loadingImg && (
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <div className="size-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                                            </div>
+                                        )}
+                                        <img
+                                            src={boleta.archivo}
+                                            alt="Comprobante"
+                                            className="w-full object-contain max-h-[400px] rounded-lg"
+                                            onLoad={() => setLoadingImg(false)}
+                                            onError={() => setLoadingImg(false)}
+                                        />
+                                    </>
                                 )}
-                                <img
-                                    src={boleta.archivo}
-                                    alt="Comprobante"
-                                    className="w-full object-contain max-h-[400px] rounded-lg"
-                                    onLoad={() => setLoadingImg(false)}
-                                    onError={() => setLoadingImg(false)}
-                                />
                             </div>
                             <a
                                 href={boleta.archivo}
@@ -234,7 +253,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                                 rel="noopener noreferrer"
                                 className="text-xs text-primary underline underline-offset-2 inline-block"
                             >
-                                Abrir en nueva pestaña
+                                {isPdf(boleta.archivo) ? 'Abrir PDF en nueva pestaña' : 'Abrir en nueva pestaña'}
                             </a>
                         </div>
                     ) : (
@@ -330,6 +349,9 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                                             {...aceptarForm.register('observacion')}
                                         />
                                     </div>
+
+                                    {FeedbackAlert}
+
                                     <Button
                                         type="submit"
                                         size="sm"
@@ -392,6 +414,9 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                                             </p>
                                         )}
                                     </div>
+
+                                    {FeedbackAlert}
+
                                     <Button
                                         type="submit"
                                         size="sm"

@@ -48,11 +48,11 @@ class BoletaController extends Controller
     {
         if ($request->estado === 'aceptada') {
             $this->boletaService->aceptar(
-                boleta:        $boleta,
-                puntos:        $request->puntos,
-                monto:         $request->monto,
-                numeroBoleta:  $request->numero_boleta,
-                observacion:   $request->observacion,
+                boleta:       $boleta,
+                puntos:       $request->puntos,
+                monto:        $request->monto,
+                numeroBoleta: $request->numero_boleta,
+                observacion:  $request->observacion,
             );
         }
 

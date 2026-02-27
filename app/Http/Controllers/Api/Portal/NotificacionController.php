@@ -32,8 +32,8 @@ class NotificacionController extends Controller
                 ->whereIn('tipo', $this->getTiposPermitidos())
                 ->when($filtro === 'no_leidas', fn($q) => $q->noLeido())
                 ->when($search, fn($q) => $q->where(function ($q) use ($search) {
-                    $q->where('asunto', 'ilike', "%{$search}%")
-                      ->orWhere('cuerpo', 'ilike', "%{$search}%");
+                    $q->where('asunto', 'like', "%{$search}%")
+                      ->orWhere('cuerpo', 'like', "%{$search}%");
                 }))
                 ->latest()
                 ->paginate($perPage);

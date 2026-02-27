@@ -16,9 +16,6 @@ import AppLogo from './app-logo';
 import { dashboard } from '@/routes';
 import boletas from '@/routes/boletas';
 import clientes from '@/routes/clientes';
-import notificaciones from '@/routes/notificaciones';
-import roles from '@/routes/roles';
-import usuarios from '@/routes/usuarios';
 
 const mainNavItems: NavItem[] = [
     {
@@ -38,21 +35,6 @@ const panelNavItems: NavItem[] = [
         title: 'Clientes',
         href: clientes.index(),
         icon: Users,
-    },
-    {
-        title: 'Notificaciones',
-        href: notificaciones.index(),
-        icon: Bell,
-    },
-    {
-        title: 'Roles',
-        href: roles.index(),
-        icon: Shield,
-    },
-    {
-        title: 'Usuarios',
-        href: usuarios.index(),
-        icon: UserCog,
     },
 ];
 

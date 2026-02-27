@@ -8,7 +8,7 @@ use App\Models\Boleta;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class BoletaController extends Controller{
     public function resumen(Request $request): JsonResponse{
@@ -51,8 +51,9 @@ class BoletaController extends Controller{
             ->when($request->estado, function ($query, $estado) {
                 $query->where('estado', $estado);
             })
-            ->latest()
+            ->orderBy('created_at', 'desc')
             ->paginate(10);
+
         return BoletaResource::collection($boletas);
     }
     public function store(Request $request): JsonResponse
@@ -63,10 +64,15 @@ class BoletaController extends Controller{
 
         $cliente = Auth::guard('sanctum')->user();
 
-        $ruta = Storage::disk('s3')->putFile(
-            "clientes/{$cliente->id}/comprobantes",
-            $request->file('archivo')
-        );
+        $directorio = public_path("clientes/{$cliente->id}/comprobantes");
+        if (!is_dir($directorio)) {
+            mkdir($directorio, 0775, true);
+        }
+
+        $archivo       = $request->file('archivo');
+        $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
+        $archivo->move($directorio, $nombreArchivo);
+        $ruta = "clientes/{$cliente->id}/comprobantes/{$nombreArchivo}";
 
         $boleta = Boleta::create([
             'cliente_id' => $cliente->id,
