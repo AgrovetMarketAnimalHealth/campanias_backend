@@ -21,7 +21,7 @@ use Illuminate\Support\Str;
 class ClienteAuthController extends Controller
 {
     // ─────────────────────────────────────────
-    // REGISTRO
+    // REGISTRO (sin password)
     // ─────────────────────────────────────────
     public function register(StoreClienteRequest $request): JsonResponse
     {
@@ -36,7 +36,6 @@ class ClienteAuthController extends Controller
                 'ruc'                           => $request->ruc,
                 'departamento'                  => $request->departamento,
                 'email'                         => $request->email,
-                'password'                      => $request->password,
                 'telefono'                      => $request->telefono,
                 'acepta_politicas'              => true,
                 'acepta_terminos'               => true,
@@ -62,6 +61,7 @@ class ClienteAuthController extends Controller
 
             // 4. Despachar job después del commit
             EnviarEmailRegistro::dispatch($cliente, (string) $boleta->id)->onQueue('emails');
+
             return response()->json([
                 'success' => true,
                 'accion'  => 'verificar_email',
@@ -84,15 +84,18 @@ class ClienteAuthController extends Controller
             ], 500);
         }
     }
+
     // ─────────────────────────────────────────
-    // LOGIN
+    // LOGIN (sin password — por email, DNI o teléfono)
     // ─────────────────────────────────────────
-    public function login(Request $request): JsonResponse{
+    public function login(Request $request): JsonResponse
+    {
         $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required',
+            'identificador' => 'required|string',
         ]);
-        $key = 'login:' . Str::lower($request->email) . '|' . $request->ip();
+
+        $identificador = trim($request->identificador);
+        $key = 'login:' . Str::lower($identificador) . '|' . $request->ip();
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $segundos = RateLimiter::availableIn($key);
@@ -101,26 +104,41 @@ class ClienteAuthController extends Controller
                 'message' => "Demasiados intentos fallidos. Espera {$segundos} segundos.",
             ], 429);
         }
-        if (!Auth::guard('cliente')->attempt($request->only('email', 'password'))) {
+
+        // Buscar cliente por email, DNI o teléfono
+        $cliente = Cliente::where('email', $identificador)
+            ->orWhere('dni', $identificador)
+            ->orWhere('telefono', $identificador)
+            ->first();
+
+        if (!$cliente) {
             RateLimiter::hit($key, 60);
             return response()->json([
                 'success' => false,
-                'message' => 'Credenciales incorrectas.',
+                'message' => 'No se encontró una cuenta con ese dato.',
             ], 401);
         }
+
         RateLimiter::clear($key);
-        $cliente = Auth::guard('cliente')->user();
 
         if (!$cliente->email_verified_at) {
-            Auth::guard('cliente')->logout();
             return response()->json([
                 'success' => false,
                 'accion'  => 'verificar_email',
                 'message' => 'Debes verificar tu correo electrónico antes de ingresar.',
             ], 403);
         }
+
+        if ($cliente->estado !== 'activo') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tu cuenta no está activa. Contacta al soporte.',
+            ], 403);
+        }
+
         $cliente->tokens()->delete();
         $token = $cliente->createToken('cliente-token')->plainTextToken;
+
         return response()->json([
             'success' => true,
             'message' => 'Inicio de sesión exitoso.',
@@ -166,9 +184,7 @@ class ClienteAuthController extends Controller
             'estado'                        => 'activo',
         ]);
 
-        // ✅ FIX 4: Revocar tokens previos antes de emitir uno nuevo
         $cliente->tokens()->delete();
-
         $authToken = $cliente->createToken('cliente-token')->plainTextToken;
 
         return response()->json([
@@ -225,7 +241,6 @@ class ClienteAuthController extends Controller
 
         RateLimiter::hit($key, 600);
 
-        // Query directa para no tocar otros campos
         DB::table('clientes')
             ->where('id', $cliente->id)
             ->update([
@@ -233,7 +248,6 @@ class ClienteAuthController extends Controller
                 'email_verification_expires_at' => now()->addHours(24),
             ]);
 
-        // Recargar el modelo para que el job tenga el token actualizado
         $cliente->refresh();
 
         EnviarEmailRegistro::dispatch($cliente)->onQueue('emails');
@@ -257,7 +271,8 @@ class ClienteAuthController extends Controller
     // ─────────────────────────────────────────
     // LOGOUT
     // ─────────────────────────────────────────
-    public function logout(Request $request): JsonResponse{
+    public function logout(Request $request): JsonResponse
+    {
         $cliente = Auth::guard('sanctum')->user();
         if ($cliente) {
             $request->user()->currentAccessToken()->delete();
@@ -272,7 +287,7 @@ class ClienteAuthController extends Controller
     // ME (usuario autenticado)
     // ─────────────────────────────────────────
     public function me(Request $request): JsonResponse
-    {   
+    {
         $cliente = Auth::guard('sanctum')->user();
 
         if (!$cliente) {

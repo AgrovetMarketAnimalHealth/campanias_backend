@@ -27,13 +27,20 @@ RUN apk add --no-cache \
     php84-sodium \
     php84-opcache
 
-# Crear enlace simbólico (forzar si existe)
+# Crear enlace simbólico
 RUN ln -sf /usr/bin/php84 /usr/bin/php
+
+# Sin límites de subida para PHP CLI
+RUN echo "upload_max_filesize = 0" > /etc/php84/conf.d/uploads.ini \
+    && echo "post_max_size = 0"        >> /etc/php84/conf.d/uploads.ini \
+    && echo "memory_limit = 512M"      >> /etc/php84/conf.d/uploads.ini \
+    && echo "max_execution_time = 300" >> /etc/php84/conf.d/uploads.ini \
+    && echo "max_input_time = 300"     >> /etc/php84/conf.d/uploads.ini
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Instalar dependencias adicionales útiles
+# Instalar dependencias adicionales
 RUN apk add --no-cache \
     git \
     curl \
@@ -52,5 +59,4 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 WORKDIR /var/www
-
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

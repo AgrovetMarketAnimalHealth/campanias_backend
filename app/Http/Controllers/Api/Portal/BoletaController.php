@@ -58,7 +58,7 @@ class BoletaController extends Controller{
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'archivo' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+            'archivo' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf'],
         ]);
 
         $cliente = Auth::guard('sanctum')->user();

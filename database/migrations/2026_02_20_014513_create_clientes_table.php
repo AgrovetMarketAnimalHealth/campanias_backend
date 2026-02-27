@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('ruc', 20)->nullable()->unique();
             $table->string('departamento');
             $table->string('email')->unique();
-            $table->string('password');
             $table->string('telefono', 20);
             $table->boolean('acepta_politicas')->default(false);
             $table->boolean('acepta_terminos')->default(false);

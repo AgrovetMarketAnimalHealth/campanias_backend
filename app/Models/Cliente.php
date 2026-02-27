@@ -35,7 +35,6 @@ class Cliente extends Authenticatable implements AuditableContract, MustVerifyEm
         'ruc',
         'departamento',
         'email',
-        'password',
         'telefono',
         'acepta_politicas',
         'acepta_terminos',
@@ -47,7 +46,6 @@ class Cliente extends Authenticatable implements AuditableContract, MustVerifyEm
     ];
 
     protected $hidden = [
-        'password',
         'two_factor_secret',
         'two_factor_recovery_codes',
         'remember_token',
@@ -57,7 +55,6 @@ class Cliente extends Authenticatable implements AuditableContract, MustVerifyEm
     {
         return [
             'email_verified_at'       => 'datetime',
-            'password'                => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'acepta_politicas'        => 'boolean',
             'acepta_terminos'         => 'boolean',

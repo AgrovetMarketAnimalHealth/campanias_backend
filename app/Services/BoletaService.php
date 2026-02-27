@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Jobs\EnviarEmailBoletaAceptada;
@@ -12,44 +13,53 @@ class BoletaService
         private readonly PuntosService $puntosService,
     ) {}
 
-    public function aceptar(Boleta $boleta, int $puntos, float $monto, string $numeroBoleta, ?string $observacion = null): Boleta
-    {
+    public function aceptar(
+        Boleta  $boleta,
+        int     $puntos,
+        float   $monto,
+        string  $numeroBoleta,
+        ?string $observacion = null,
+    ): Boleta {
         return DB::transaction(function () use ($boleta, $puntos, $monto, $numeroBoleta, $observacion) {
             if ($boleta->estado !== 'pendiente') {
                 throw new \Exception('La boleta ya fue procesada.');
             }
 
-            $boleta->update([
-                'estado'          => 'aceptada',
+            $boleta->updateQuietly([
+                'estado'           => 'aceptada',
                 'puntos_otorgados' => $puntos,
-                'monto'           => $monto,
-                'numero_boleta'   => $numeroBoleta,
-                'observacion'     => $observacion,
+                'monto'            => $monto,
+                'numero_boleta'    => $numeroBoleta,
+                'observacion'      => $observacion,
             ]);
 
             $this->puntosService->acreditar($boleta, $puntos);
 
-            dispatch(new EnviarEmailBoletaAceptada($boleta));
+            dispatch(new EnviarEmailBoletaAceptada($boleta))->onQueue('emails');
 
             return $boleta;
         });
     }
 
-    public function rechazar(Boleta $boleta, string $observacion, float $monto, string $numeroBoleta): Boleta
-    {
+    public function rechazar(
+        Boleta  $boleta,
+        string  $observacion,
+        float   $monto,
+        string  $numeroBoleta,
+    ): Boleta {
         return DB::transaction(function () use ($boleta, $observacion, $monto, $numeroBoleta) {
             if ($boleta->estado !== 'pendiente') {
                 throw new \Exception('La boleta ya fue procesada.');
             }
 
-            $boleta->update([
+            $boleta->updateQuietly([
                 'estado'        => 'rechazada',
                 'monto'         => $monto,
                 'numero_boleta' => $numeroBoleta,
                 'observacion'   => $observacion,
             ]);
 
-            dispatch(new EnviarEmailBoletaRechazada($boleta));
+            dispatch(new EnviarEmailBoletaRechazada($boleta))->onQueue('emails');
 
             return $boleta;
         });

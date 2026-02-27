@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Concerns\Traits\HasAuditFields;
@@ -20,8 +21,8 @@ class Boleta extends Model implements AuditableContract
         'codigo',
         'archivo',
         'puntos_otorgados',
-        'numero_boleta',   // ✅ agregado
-        'monto',           // ✅ agregado
+        'numero_boleta',
+        'monto',
         'estado',
         'observacion',
         'created_by',
@@ -31,14 +32,12 @@ class Boleta extends Model implements AuditableContract
         'id'               => 'string',
         'cliente_id'       => 'string',
         'created_by'       => 'string',
-        'puntos_otorgados' => 'integer',   // ✅ corregido, era decimal:2 pero es integer
-        'monto'            => 'decimal:2', // ✅ agregado
+        'puntos_otorgados' => 'integer',
+        'monto'            => 'decimal:2',
         'created_at'       => 'datetime',
         'updated_at'       => 'datetime',
         'deleted_at'       => 'datetime',
     ];
-
-    const UPDATED_AT = null;
 
     public function scopePendiente($query)
     {
@@ -80,9 +79,6 @@ class Boleta extends Model implements AuditableContract
 
             $boleta->codigo     = $codigo;
             $boleta->updated_by = null;
-        });
-
-        static::updating(function ($boleta) {
         });
     }
 }

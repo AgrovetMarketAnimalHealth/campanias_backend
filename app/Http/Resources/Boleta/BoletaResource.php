@@ -4,8 +4,8 @@ namespace App\Http\Resources\Boleta;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class BoletaResource extends JsonResource
 {
@@ -14,16 +14,34 @@ class BoletaResource extends JsonResource
         return [
             'id'               => $this->id,
             'codigo'           => $this->codigo,
-            'archivo'          => $this->archivo
-                ? Storage::disk('s3')->url($this->archivo)
-                : null,
+            'archivo'          => $this->resolverUrlArchivo(),
             'puntos_otorgados' => $this->puntos_otorgados,
             'estado'           => $this->estado,
             'observacion'      => $this->observacion,
-            'created_at' => Carbon::parse($this->created_at)->format('d-m-Y H:i:s A'),
-            'updated_at' => $this->updated_at
-                ? Carbon::parse($this->updated_at)->format('d-m-Y h:i:s A')
-                : null,
+            'created_at'       => Carbon::parse($this->created_at)->format('d-m-Y H:i:s A'),
+            'updated_at'       => $this->updated_at
+                                    ? Carbon::parse($this->updated_at)->format('d-m-Y h:i:s A')
+                                    : null,
         ];
+    }
+
+    private function resolverUrlArchivo(): ?string
+    {
+        if (!$this->archivo) {
+            return null;
+        }
+
+        $disco = Storage::build([
+            'driver'                  => 's3',
+            'key'                     => env('AWS_ACCESS_KEY_ID'),
+            'secret'                  => env('AWS_SECRET_ACCESS_KEY'),
+            'region'                  => env('AWS_DEFAULT_REGION'),
+            'bucket'                  => env('AWS_BUCKET'),
+            'url'                     => env('AWS_URL'),
+            'endpoint'                => env('AWS_URL'),
+            'use_path_style_endpoint' => true,
+        ]);
+
+        return $disco->temporaryUrl($this->archivo, now()->addMinutes(60));
     }
 }

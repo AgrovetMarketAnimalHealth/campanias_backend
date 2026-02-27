@@ -1,7 +1,5 @@
 FROM php:8.4-fpm-alpine
-
 WORKDIR /var/www
-
 # Instalar dependencias necesarias
 RUN apk add --no-cache \
     postgresql-client \
@@ -49,21 +47,23 @@ RUN apk add --no-cache \
     pcntl && \
     apk del build-deps && rm -rf /usr/src/php*
 
+# Sin límites de subida
+RUN echo "upload_max_filesize = 0" > /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "post_max_size = 0"        >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "memory_limit = 512M"      >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "max_input_time = 300"     >> /usr/local/etc/php/conf.d/uploads.ini
+
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
 # Crear usuario para la aplicación
 RUN addgroup -g 1000 -S www && \
     adduser -u 1000 -S www -G www
-
 # Crear directorios necesarios
 RUN mkdir -p /var/www/storage/framework/{sessions,views,cache} && \
     mkdir -p /var/www/bootstrap/cache && \
     chown -R www:www /var/www && \
     chmod -R 775 /var/www/storage /var/www/bootstrap/cache
-
 USER www
-
 EXPOSE 9000
-
 CMD ["php-fpm"]
