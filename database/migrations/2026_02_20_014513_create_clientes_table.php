@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -23,22 +22,18 @@ return new class extends Migration
             $table->string('archivo_comprobante')->nullable();
             $table->enum('estado', ['pendiente', 'activo', 'rechazado'])->default('pendiente');
             $table->timestamp('email_verified_at')->nullable();
-
+            $table->string('email_verification_token')->nullable();
+            $table->timestamp('email_verification_expires_at')->nullable();
             // Campos Fortify 2FA
             $table->text('two_factor_secret')->nullable();
             $table->text('two_factor_recovery_codes')->nullable();
             $table->timestamp('two_factor_confirmed_at')->nullable();
-            
-            $table->string('email_verification_token')->nullable()->after('email_verified_at');
-            $table->timestamp('email_verification_expires_at')->nullable()->after('email_verification_token');
-
             $table->rememberToken();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->unsignedBigInteger('deleted_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
-
             // Índices
             $table->index('tipo_persona');
             $table->index('estado');
