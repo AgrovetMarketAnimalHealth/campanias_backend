@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Resources\Boleta;
-
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
@@ -18,10 +16,21 @@ class BoletaResourceC extends JsonResource
             'puntos_otorgados' => $this->puntos_otorgados,
             'estado'           => $this->estado,
             'observacion'      => $this->observacion,
-            'archivo_url'      => $this->archivo
-                                    ? Storage::disk('s3')->temporaryUrl($this->archivo, now()->addMinutes(30))
-                                    : null,
+            'archivo_url'      => $this->resolverUrlArchivo(),
             'fecha'            => $this->created_at?->format('d/m/Y H:i'),
         ];
+    }
+
+    private function resolverUrlArchivo(): ?string
+    {
+        if (!$this->archivo) {
+            return asset('img/images.png');
+        }
+
+        if (!Storage::disk('public')->exists($this->archivo)) {
+            return asset('img/images.png');
+        }
+
+        return Storage::disk('public')->url($this->archivo);
     }
 }

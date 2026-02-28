@@ -1,9 +1,8 @@
 <?php
-
 namespace App\Http\Resources\Boleta;
-
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class BoletaResource extends JsonResource
@@ -19,8 +18,8 @@ class BoletaResource extends JsonResource
             'observacion'      => $this->observacion,
             'created_at'       => Carbon::parse($this->created_at)->format('d-m-Y H:i:s A'),
             'updated_at'       => $this->updated_at
-                                    ? Carbon::parse($this->updated_at)->format('d-m-Y h:i:s A')
-                                    : null,
+                                        ? Carbon::parse($this->updated_at)->format('d-m-Y h:i:s A')
+                                        : null,
         ];
     }
 
@@ -30,11 +29,10 @@ class BoletaResource extends JsonResource
             return asset('img/images.png');
         }
 
-        $rutaFisica = public_path($this->archivo);
-        if (!file_exists($rutaFisica)) {
+        if (!Storage::disk('public')->exists($this->archivo)) {
             return asset('img/images.png');
         }
 
-        return asset($this->archivo);
+        return Storage::disk('public')->url($this->archivo);
     }
 }

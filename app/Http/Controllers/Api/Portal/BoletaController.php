@@ -57,38 +57,38 @@ class BoletaController extends Controller{
         return BoletaResource::collection($boletas);
     }
     public function store(Request $request): JsonResponse
-    {
-        $request->validate([
-            'archivo' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf'],
-        ]);
+{
+    $request->validate([
+        'archivo' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf'],
+    ]);
 
-        $cliente = Auth::guard('sanctum')->user();
+    $cliente = Auth::guard('sanctum')->user();
 
-        $directorio = public_path("clientes/{$cliente->id}/comprobantes");
-        if (!is_dir($directorio)) {
-            mkdir($directorio, 0775, true);
-        }
+    $archivo       = $request->file('archivo');
+    $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
 
-        $archivo       = $request->file('archivo');
-        $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
-        $archivo->move($directorio, $nombreArchivo);
-        $ruta = "clientes/{$cliente->id}/comprobantes/{$nombreArchivo}";
+    // Storage se encarga de crear la carpeta automáticamente
+    $ruta = $archivo->storeAs(
+        "clientes/{$cliente->id}/comprobantes",
+        $nombreArchivo,
+        'public'
+    );
 
-        $boleta = Boleta::create([
-            'cliente_id' => $cliente->id,
-            'archivo'    => $ruta,
-            'estado'     => 'pendiente',
-            'created_by' => $cliente->id,
-        ]);
+    $boleta = Boleta::create([
+        'cliente_id' => $cliente->id,
+        'archivo'    => $ruta,
+        'estado'     => 'pendiente',
+        'created_by' => $cliente->id,
+    ]);
 
-        EnviarEmailBoleta::dispatch($cliente, $boleta)->onQueue('emails');
+    EnviarEmailBoleta::dispatch($cliente, $boleta)->onQueue('emails');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Comprobante subido correctamente. Será revisado pronto.',
-            'data'    => new BoletaResource($boleta),
-        ], 201);
-    }
+    return response()->json([
+        'success' => true,
+        'message' => 'Comprobante subido correctamente. Será revisado pronto.',
+        'data'    => new BoletaResource($boleta),
+    ], 201);
+}
     public function show(Boleta $boleta){
         $cliente = Auth::guard('sanctum')->user();
 

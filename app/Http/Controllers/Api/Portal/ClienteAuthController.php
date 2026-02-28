@@ -43,15 +43,15 @@ class ClienteAuthController extends Controller
                 'email_verification_expires_at' => now()->addHours(24),
             ]);
 
-            $directorio = public_path("clientes/{$cliente->id}/comprobantes");
-            if (!is_dir($directorio)) {
-                mkdir($directorio, 0775, true);
-            }
-
-            $archivo         = $request->file('archivo_comprobante');
-            $nombreArchivo   = time() . '_' . $archivo->getClientOriginalName();
-            $archivo->move($directorio, $nombreArchivo);
-            $rutaComprobante = "clientes/{$cliente->id}/comprobantes/{$nombreArchivo}";
+            $archivo       = $request->file('archivo_comprobante');
+            $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
+            
+            // Storage se encarga de crear la carpeta automáticamente
+            $rutaComprobante = $archivo->storeAs(
+                "clientes/{$cliente->id}/comprobantes",
+                $nombreArchivo,
+                'public'
+            );
 
             $boleta = Boleta::create([
                 'cliente_id' => $cliente->id,
@@ -60,7 +60,6 @@ class ClienteAuthController extends Controller
             ]);
 
             DB::commit();
-
             EnviarEmailRegistro::dispatch($cliente, (string) $boleta->id)->onQueue('emails');
 
             return response()->json([
@@ -72,12 +71,8 @@ class ClienteAuthController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             if (isset($cliente)) {
-                $directorioCliente = public_path("clientes/{$cliente->id}");
-                if (is_dir($directorioCliente)) {
-                    array_map('unlink', glob("$directorioCliente/comprobantes/*"));
-                    rmdir("$directorioCliente/comprobantes");
-                    rmdir($directorioCliente);
-                }
+                // Eliminar archivos subidos si algo falla
+                Storage::disk('public')->deleteDirectory("clientes/{$cliente->id}");
             }
             return response()->json([
                 'success' => false,

@@ -1,9 +1,8 @@
 <?php
-
 namespace App\Http\Resources\Boleta;
-
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class BoletaResourceBackend extends JsonResource
@@ -32,14 +31,13 @@ class BoletaResourceBackend extends JsonResource
     private function resolverUrlArchivo(): ?string
     {
         if (!$this->archivo) {
-            return null;
+            return asset('img/images.png');
         }
 
-        $rutaFisica = public_path($this->archivo);
-        if (!file_exists($rutaFisica)) {
-            return null;
+        if (!Storage::disk('public')->exists($this->archivo)) {
+            return asset('img/images.png');
         }
 
-        return asset($this->archivo);
+        return Storage::disk('public')->url($this->archivo);
     }
 }
