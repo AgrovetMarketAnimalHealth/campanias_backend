@@ -13,7 +13,7 @@ export const clienteService = {
         const filtered = Object.fromEntries(
             Object.entries(params).filter(([, v]) => v !== undefined && v !== '' && v !== 'todas')
         )
-        const { data } = await axios.get('/cliente', { params: filtered })
+        const { data } = await axios.get('/promo-concierto/backoffice/cliente', { params: filtered })
         return data
     },
 
@@ -24,7 +24,7 @@ export const clienteService = {
         const filtered = Object.fromEntries(
             Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
         )
-        const { data } = await axios.get(`/cliente/${clienteId}/boletas`, { params: filtered })
+        const { data } = await axios.get(`/promo-concierto/backoffice/cliente/${clienteId}/boletas`, { params: filtered })
         return data
     },
 }

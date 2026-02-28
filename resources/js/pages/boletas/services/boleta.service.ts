@@ -1,6 +1,6 @@
 import type { Boleta, BoletaFiltros, BoletaPaginado, UpdateBoletaPayload } from '../types/boleta.types';
 
-const BASE = '/boleta';
+const BASE = '/promo-concierto/backoffice/boleta';
 
 function getCsrfToken(): string {
     const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
