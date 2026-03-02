@@ -11,16 +11,16 @@ services:
     volumes:
       - .:/var/www
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       minio:
         condition: service_started
     networks:
       - campanias
     environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
       DB_DATABASE: campanias
       DB_USERNAME: campanias_user
       DB_PASSWORD: password
@@ -36,14 +36,14 @@ services:
       - .:/var/www
     command: php artisan queue:work --queue=emails,default --sleep=3 --tries=3 --backoff=60 --timeout=90
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
     networks:
       - campanias
     environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
       DB_DATABASE: campanias
       DB_USERNAME: campanias_user
       DB_PASSWORD: password
@@ -62,26 +62,26 @@ services:
     networks:
       - campanias
 
-  postgres:
-    image: postgres:16
-    container_name: campanias_postgres
+  mysql:
+    image: mysql:8.0
+    container_name: campanias_mysql
     restart: unless-stopped
-    shm_size: 128mb
     environment:
-      POSTGRES_USER: campanias_user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: campanias
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: campanias
+      MYSQL_USER: campanias_user
+      MYSQL_PASSWORD: password
     ports:
-      - "5432:5432"
+      - "3307:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     networks:
       - campanias
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U campanias_user"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "campanias_user", "-ppassword"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   adminer:
     image: adminer
@@ -90,9 +90,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DEFAULT_SERVER: mysql
     depends_on:
-      - postgres
+      - mysql
     networks:
       - campanias
 
@@ -152,6 +152,6 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
+  mysql_data:
   minio_data:
   node_modules_data:

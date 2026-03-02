@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Api\Portal\BoletaController;
 use App\Http\Controllers\Api\Portal\ClienteAuthController;
-use App\Http\Controllers\Api\Portal\NotificacionController; // <-- Importar el controlador
+use App\Http\Controllers\Api\Portal\NotificacionController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {

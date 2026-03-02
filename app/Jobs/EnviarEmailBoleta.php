@@ -19,6 +19,7 @@ class EnviarEmailBoleta implements ShouldQueue
     public function __construct(
         public readonly Cliente $cliente,
         public readonly Boleta  $boleta,
+        public readonly ?int    $userId = null,
     ) {}
 
     public function handle(BrevoService $brevo): void
@@ -31,8 +32,9 @@ class EnviarEmailBoleta implements ShouldQueue
                 'boleta'  => $this->boleta,
             ])->render(),
             tipo:      'boleta_recibida',
-            clienteId: $this->cliente->id,  // ✅ nombre correcto
-            boletaId:  $this->boleta->id,   // ✅ también pasa el boleta_id
+            clienteId: $this->cliente->id,
+            boletaId:  $this->boleta->id,
+            userId:    $this->userId,
         );
     }
 }

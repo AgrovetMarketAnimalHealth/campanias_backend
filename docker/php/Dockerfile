@@ -15,6 +15,7 @@ RUN apk add --no-cache \
     freetype \
     icu \
     postgresql-dev \
+    mysql-client \
     git \
     curl \
     zip \
@@ -39,6 +40,8 @@ RUN apk add --no-cache \
     gd \
     pdo_pgsql \
     pgsql \
+    pdo_mysql \
+    mysqli \
     intl \
     bcmath \
     opcache \
