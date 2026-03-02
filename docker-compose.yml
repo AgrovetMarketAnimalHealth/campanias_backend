@@ -1,53 +1,57 @@
 services:
+
   app:
     build:
       context: ./docker/php
       dockerfile: Dockerfile
     container_name: campanias_app
-    restart: always
+    user: root
+    restart: unless-stopped
     working_dir: /var/www
     volumes:
       - .:/var/www
     depends_on:
-      - postgres
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
     networks:
       - campanias
     environment:
-      - DB_CONNECTION=pgsql
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_DATABASE=campanias
-      - DB_USERNAME=campanias_user
-      - DB_PASSWORD=password
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: campanias
+      DB_USERNAME: campanias_user
+      DB_PASSWORD: password
 
   worker:
     build:
       context: ./docker/php
       dockerfile: Dockerfile
     container_name: campanias_worker
-    restart: always
+    restart: unless-stopped
     working_dir: /var/www
     volumes:
       - .:/var/www
     command: php artisan queue:work --queue=emails,default --sleep=3 --tries=3 --backoff=60 --timeout=90
     depends_on:
-      - postgres
-      - minio
+      postgres:
+        condition: service_healthy
     networks:
       - campanias
     environment:
-      - DB_CONNECTION=pgsql
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_DATABASE=campanias
-      - DB_USERNAME=campanias_user
-      - DB_PASSWORD=password
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: campanias
+      DB_USERNAME: campanias_user
+      DB_PASSWORD: password
 
   nginx:
     image: nginx:alpine
     container_name: campanias_nginx
-    restart: always
+    restart: unless-stopped
     ports:
       - "8000:80"
     volumes:
@@ -59,9 +63,9 @@ services:
       - campanias
 
   postgres:
-    image: postgres:16.8
+    image: postgres:16
     container_name: campanias_postgres
-    restart: always
+    restart: unless-stopped
     shm_size: 128mb
     environment:
       POSTGRES_USER: campanias_user
@@ -80,9 +84,9 @@ services:
       retries: 5
 
   adminer:
-    image: adminer:latest
+    image: adminer
     container_name: campanias_adminer
-    restart: always
+    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
@@ -93,9 +97,9 @@ services:
       - campanias
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio
     container_name: campanias_minio
-    restart: always
+    restart: unless-stopped
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -113,22 +117,23 @@ services:
       context: ./docker/node
       dockerfile: Dockerfile
     container_name: campanias_node
+    restart: unless-stopped
     working_dir: /var/www
     volumes:
       - .:/var/www
+      - node_modules_data:/var/www/node_modules
     ports:
       - "5173:5173"
     depends_on:
       - app
-      - postgres
     networks:
       - campanias
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     environment:
-      - CHOKIDAR_USEPOLLING=true
-      - NODE_ENV=development
-      - VITE_PORT=5173
-      - VITE_HOST=0.0.0.0
+      CHOKIDAR_USEPOLLING: "true"
+      NODE_ENV: development
+      VITE_PORT: 5173
+      VITE_HOST: 0.0.0.0
 
   composer:
     build:
@@ -149,3 +154,4 @@ networks:
 volumes:
   postgres_data:
   minio_data:
+  node_modules_data:
