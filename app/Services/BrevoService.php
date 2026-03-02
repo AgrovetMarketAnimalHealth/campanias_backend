@@ -27,18 +27,19 @@ class BrevoService
         string  $tipo,
         ?string $clienteId = null,
         ?string $boletaId  = null,
+        ?int    $userId    = null,
     ): void {
         $notificacion = Notificacion::create([
             'cliente_id'         => $clienteId,
             'boleta_id'          => $boletaId,
-            'user_id'            => Auth::id(),
+            'user_id'            => $userId,
             'tipo'               => $tipo,
             'destinatario_email' => $destinatario,
             'asunto'             => $asunto,
             'cuerpo'             => $cuerpo,
             'estado_envio'       => 'pendiente',
             'intentos'           => 0,
-            'created_by'         => Auth::id(),
+            'created_by'         => $userId,
         ]);
 
         try {
@@ -61,7 +62,7 @@ class BrevoService
                 'respuesta_brevo'  => $response->body(),
                 'enviado_at'       => now(),
                 'intentos'         => 1,
-                'updated_by'       => Auth::id(),
+                'updated_by'       => $userId,
             ]);
         } catch (\Exception $e) {
             Log::error('Brevo error: ' . $e->getMessage());
@@ -70,7 +71,7 @@ class BrevoService
                 'estado_envio'    => 'fallido',
                 'respuesta_brevo' => $e->getMessage(),
                 'intentos'        => 1,
-                'updated_by'      => Auth::id(),
+                'updated_by'      => $userId
             ]);
         }
     }
