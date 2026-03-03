@@ -75,6 +75,10 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureDefaults(): void
     {
+        if ($this->app->isProduction()) {
+            \URL::forceScheme('https');
+        }
+        
         Date::use(CarbonImmutable::class);
 
         DB::prohibitDestructiveCommands(

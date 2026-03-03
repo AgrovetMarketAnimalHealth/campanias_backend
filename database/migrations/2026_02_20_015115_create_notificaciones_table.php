@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('notificaciones', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('cliente_id')->nullable()->constrained('clientes')->nullOnDelete();
-            $table->unsignedBigInteger('user_id')->nullable()->change();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->foreignUuid('boleta_id')->nullable()->constrained('boletas')->nullOnDelete();
             $table->enum('tipo', [
                 'registro_cliente',
