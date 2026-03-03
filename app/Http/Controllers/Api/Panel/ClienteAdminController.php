@@ -8,15 +8,11 @@ use App\Http\Resources\Cliente\ClienteResource;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 
-class ClienteAdminController extends Controller
-{
-    /**
-     * GET /cliente
-     * Lista paginada de clientes con resumen de boletas.
-     */
-    public function index(Request $request): AnonymousResourceCollection
-    {
+class ClienteAdminController extends Controller{
+    public function index(Request $request): AnonymousResourceCollection{
+        Gate::authorize('viewAny', Cliente::class);
         $clientes = Cliente::query()
             ->withCount([
                 'boletas as boletas_aceptadas'  => fn($q) => $q->where('estado', 'aceptada'),
@@ -39,20 +35,12 @@ class ClienteAdminController extends Controller
 
         return ClienteResource::collection($clientes);
     }
-
-    /**
-     * GET /cliente/{id}/boletas
-     * Boletas que pertenecen únicamente a ese cliente.
-     */
-    public function boletas(Request $request, string $id): AnonymousResourceCollection
-    {
-        $cliente = Cliente::findOrFail($id);
-
+    public function boletas(Request $request, Cliente $cliente){
+        Gate::authorize('view', $cliente);
         $boletas = $cliente->boletas()
             ->when($request->estado, fn($q, $estado) => $q->where('estado', $estado))
             ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 15);
-
         return BoletaResourceC::collection($boletas);
     }
 }

@@ -9,13 +9,10 @@ use App\Http\Controllers\Web\Panel\UsuarioWebController;
 use App\Http\Controllers\Web\Panel\BoletaWebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Laravel\Fortify\Features;
 
 Route::prefix('promo-concierto/backoffice')->group(function () {
     Route::get('/', function () {
-        return Inertia::render('welcome', [
-            'canRegister' => Features::enabled(Features::registration()),
-        ]);
+        return Inertia::render('welcome');
     })->name('home');
 
     Route::middleware(['auth'])->group(function () {
@@ -24,7 +21,6 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
             return Inertia::render('dashboard');
         })->name('dashboard');
 
-        // ── Vistas Web (Inertia) ─────────────────────────────────────────────────
         Route::prefix('panel')->group(function () {
             Route::get('/boletas',        [BoletaWebController::class,       'index'])->name('boletas.index');
             Route::get('/clientes',       [ClienteWebController::class,      'index'])->name('clientes.index');
@@ -34,14 +30,12 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
             Route::get('/usuarios',       [UsuarioWebController::class,      'index'])->name('usuarios.index');
         });
 
-        // ── API Boletas ──────────────────────────────────────────────────────────
         Route::prefix('boleta')->controller(BoletaController::class)->group(function () {
             Route::get('/',         'index')->name('panel.boleta.index');
             Route::get('{boleta}',  'show')->name('panel.boleta.show');
             Route::put('{boleta}',  'update')->name('panel.boleta.update');
         });
 
-        // ── API Clientes ─────────────────────────────────────────────────────────
         Route::prefix('cliente')->controller(ClienteAdminController::class)->group(function () {
             Route::get('/',              'index')->name('panel.cliente.index');
             Route::get('{id}/boletas',   'boletas')->name('panel.cliente.boletas');

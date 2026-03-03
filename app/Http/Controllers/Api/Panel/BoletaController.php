@@ -10,6 +10,7 @@ use App\Models\Boleta;
 use App\Services\BoletaService;
 use App\Http\Requests\Admin\Boleta\UpdateBoletaRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Pipeline;
 
 class BoletaController extends Controller
@@ -20,6 +21,7 @@ class BoletaController extends Controller
 
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Boleta::class);
         $perPage    = $request->input('per_page', 15);
         $search     = $request->input('search', '');
         $estado     = $request->input('estado', 'pendiente');
@@ -41,11 +43,13 @@ class BoletaController extends Controller
 
     public function show(Boleta $boleta)
     {
+        Gate::authorize('view', $boleta);
         return new BoletaResourceBackend($boleta);
     }
 
     public function update(UpdateBoletaRequest $request, Boleta $boleta)
     {
+        Gate::authorize('update', $boleta);
         if ($request->estado === 'aceptada') {
             $this->boletaService->aceptar(
                 boleta:       $boleta,

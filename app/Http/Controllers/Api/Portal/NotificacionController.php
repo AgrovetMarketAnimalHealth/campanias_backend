@@ -10,10 +10,8 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
-class NotificacionController extends Controller
-{
-    public function index(Request $request)
-    {
+class NotificacionController extends Controller{
+    public function index(Request $request){
         try {
             $cliente = $this->getAuthenticatedCliente();
 
@@ -57,28 +55,21 @@ class NotificacionController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-    public function show(string $id)
-    {
+    public function show(string $id){
         try {
             $cliente = $this->getAuthenticatedCliente();
-
             $notificacion = Notificacion::where('cliente_id', $cliente->id)
                 ->enviado()
                 ->whereIn('tipo', $this->getTiposPermitidos())
                 ->findOrFail($id);
-
-            // Marcar como leída sin disparar audit
             if (!$notificacion->leido_at) {
                 $notificacion->leido_at = now();
                 $notificacion->saveQuietly();
             }
-
             return response()->json([
                 'success' => true,
                 'data'    => new NotificacionResource($notificacion),
             ]);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
@@ -92,9 +83,7 @@ class NotificacionController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-    public function marcarLeida(string $id)
-    {
+    public function marcarLeida(string $id){
         try {
             $cliente = $this->getAuthenticatedCliente();
 
@@ -110,7 +99,6 @@ class NotificacionController extends Controller
                 ]);
             }
 
-            // saveQuietly para no disparar HasAuditFields con UUID
             $notificacion->leido_at = now();
             $notificacion->saveQuietly();
 
@@ -132,9 +120,7 @@ class NotificacionController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-    public function contadorNoLeidas()
-    {
+    public function contadorNoLeidas(){
         try {
             $cliente = $this->getAuthenticatedCliente();
 
@@ -157,9 +143,7 @@ class NotificacionController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-    private function getAuthenticatedCliente()
-    {
+    private function getAuthenticatedCliente(){
         $cliente = Auth::guard('sanctum')->user();
 
         if (!$cliente) {
@@ -168,9 +152,7 @@ class NotificacionController extends Controller
 
         return $cliente;
     }
-
-    private function getTiposPermitidos(): array
-    {
+    private function getTiposPermitidos(): array{
         return [
             'registro_cliente',
             'reenvio_verificacion',

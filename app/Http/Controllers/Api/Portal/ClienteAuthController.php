@@ -13,18 +13,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\File;
-class ClienteAuthController extends Controller
-{
-    // ─────────────────────────────────────────
-    // REGISTRO (sin password)
-    // ─────────────────────────────────────────
-    public function register(StoreClienteRequest $request): JsonResponse
-    {
+class ClienteAuthController extends Controller{
+    public function register(StoreClienteRequest $request): JsonResponse{
         DB::beginTransaction();
         try {
             $cliente = Cliente::create([
@@ -71,7 +64,6 @@ class ClienteAuthController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             if (isset($cliente)) {
-                // Eliminar archivos subidos si algo falla
                 Storage::disk('public')->deleteDirectory("clientes/{$cliente->id}");
             }
             return response()->json([
@@ -82,11 +74,7 @@ class ClienteAuthController extends Controller
             ], 500);
         }
     }
-    // ─────────────────────────────────────────
-    // LOGIN (sin password — por email, DNI o teléfono)
-    // ─────────────────────────────────────────
-    public function login(Request $request): JsonResponse
-    {
+    public function login(Request $request): JsonResponse{
         $request->validate([
             'identificador' => 'required|string',
         ]);
@@ -102,7 +90,6 @@ class ClienteAuthController extends Controller
             ], 429);
         }
 
-        // Buscar cliente por email, DNI o teléfono
         $cliente = Cliente::where('email', $identificador)
             ->orWhere('dni', $identificador)
             ->orWhere('telefono', $identificador)
@@ -150,18 +137,13 @@ class ClienteAuthController extends Controller
             60 * 8,
             '/',
             null,
-            config('app.env') === 'production', // secure
-            false,  // httpOnly
+            config('app.env') === 'production',
+            false,
             false,
             'Lax'
         );
     }
-
-    // ─────────────────────────────────────────
-    // VERIFICAR EMAIL
-    // ─────────────────────────────────────────
-    public function verificarEmail(string $token): JsonResponse
-    {
+    public function verificarEmail(string $token): JsonResponse{
         $cliente = Cliente::where('email_verification_token', $token)
             ->whereNull('email_verified_at')
             ->where('email_verification_expires_at', '>', now())
@@ -173,14 +155,12 @@ class ClienteAuthController extends Controller
                 'message' => 'El enlace es inválido, ya fue usado, o expiró.',
             ], 422);
         }
-
         $cliente->update([
             'email_verified_at'             => now(),
             'email_verification_token'      => null,
             'email_verification_expires_at' => null,
             'estado'                        => 'activo',
         ]);
-
         $cliente->tokens()->delete();
         $authToken = $cliente->createToken('cliente-token')->plainTextToken;
 
@@ -198,27 +178,19 @@ class ClienteAuthController extends Controller
             60 * 8,
             '/',
             null,
-            config('app.env') === 'production', // secure
+            config('app.env') === 'production',
             true,
             false,
             'Lax'
         );
     }
-
-    // ─────────────────────────────────────────
-    // REENVIAR VERIFICACIÓN
-    // ─────────────────────────────────────────
-    public function reenviarVerificacion(Request $request): JsonResponse
-    {
+    public function reenviarVerificacion(Request $request): JsonResponse{
         $request->validate([
             'email' => 'required|email',
         ]);
-
         $cliente = Cliente::where('email', $request->email)
             ->whereNull('email_verified_at')
             ->first();
-
-        // Respuesta idéntica si el correo existe o no (evita user enumeration)
         if (!$cliente) {
             return response()->json([
                 'success' => true,
@@ -227,7 +199,6 @@ class ClienteAuthController extends Controller
         }
 
         $key = 'reenviar-verificacion:' . $cliente->id;
-
         if (RateLimiter::tooManyAttempts($key, 3)) {
             $segundos = RateLimiter::availableIn($key);
             return response()->json([
@@ -235,20 +206,15 @@ class ClienteAuthController extends Controller
                 'message' => "Demasiados intentos. Espera {$segundos} segundos.",
             ], 429);
         }
-
         RateLimiter::hit($key, 600);
-
         DB::table('clientes')
             ->where('id', $cliente->id)
             ->update([
                 'email_verification_token'      => Str::random(64),
                 'email_verification_expires_at' => now()->addHours(24),
             ]);
-
         $cliente->refresh();
-
         EnviarEmailRegistro::dispatch($cliente)->onQueue('emails');
-
         Notificacion::create([
             'cliente_id'         => $cliente->id,
             'tipo'               => 'reenvio_verificacion',
@@ -258,18 +224,12 @@ class ClienteAuthController extends Controller
             'estado_envio'       => 'pendiente',
             'intentos'           => RateLimiter::attempts($key),
         ]);
-
         return response()->json([
             'success' => true,
             'message' => 'Si el correo existe y no está verificado, recibirás un enlace.',
         ]);
     }
-
-    // ─────────────────────────────────────────
-    // LOGOUT
-    // ─────────────────────────────────────────
-    public function logout(Request $request): JsonResponse
-    {
+    public function logout(Request $request): JsonResponse{
         $cliente = Auth::guard('sanctum')->user();
         if ($cliente) {
             $request->user()->currentAccessToken()->delete();
@@ -279,18 +239,11 @@ class ClienteAuthController extends Controller
             'message' => 'Sesión cerrada.',
         ])->cookie(Cookie::forget('auth_token'));
     }
-
-    // ─────────────────────────────────────────
-    // ME (usuario autenticado)
-    // ─────────────────────────────────────────
-    public function me(Request $request): JsonResponse
-    {
+    public function me(Request $request): JsonResponse{
         $cliente = Auth::guard('sanctum')->user();
-
         if (!$cliente) {
             return response()->json(['success' => false, 'message' => 'No autenticado.'], 401);
         }
-
         return response()->json([
             'success' => true,
             'cliente' => [
