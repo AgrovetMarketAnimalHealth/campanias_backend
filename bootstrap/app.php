@@ -1,6 +1,6 @@
 <?php
-
 use App\Http\Middleware\AuthenticateCliente;
+use App\Http\Middleware\CheckPasswordReset;
 use App\Http\Middleware\ClienteEmailVerificado;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -22,18 +22,23 @@ return Application::configure(basePath: dirname(__DIR__))
             'appearance',
             'sidebar_state',
         ]);
+
         $middleware->validateCsrfTokens(except: [
             'api/*',
         ]);
+
         $middleware->alias([
-            'cliente.verified' => ClienteEmailVerificado::class,
-            'auth.cliente'     => AuthenticateCliente::class,
+            'cliente.verified'   => ClienteEmailVerificado::class,
+            'auth.cliente'       => AuthenticateCliente::class,
+            'password.reset'     => CheckPasswordReset::class,
         ]);
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
         $middleware->api(prepend: [
             TokenFromCookie::class,
         ]);

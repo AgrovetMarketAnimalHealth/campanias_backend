@@ -10,7 +10,7 @@ use Spatie\Permission\Models\Role;
 
 class RolesWebController extends Controller
 {
-    public function index(): Response
+    public function page(): Response
     {
         Gate::authorize('viewAny', Role::class);
         return Inertia::render('roles/indexroles');

@@ -1,21 +1,20 @@
 import { Link } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { LayoutGrid, FileText, Users, Bell, Shield, UserCog } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
+    Sidebar, SidebarContent, SidebarFooter,
+    SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import type { NavItem } from '@/types';
+import type { NavItem, Auth } from '@/types';
 import AppLogo from './app-logo';
 import { dashboard } from '@/routes';
 import boletas from '@/routes/boletas';
 import clientes from '@/routes/clientes';
+import notificaciones from '@/routes/notificaciones';
+import roles from '@/routes/roles';
+import usuarios from '@/routes/usuarios';
 
 const mainNavItems: NavItem[] = [
     {
@@ -23,22 +22,50 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
-];
+]
 
 const panelNavItems: NavItem[] = [
     {
         title: 'Boletas',
         href: boletas.index(),
         icon: FileText,
+        permission: 'ver boletas',
     },
     {
         title: 'Clientes',
         href: clientes.index(),
         icon: Users,
+        permission: 'ver clientes',
     },
-];
+    {
+        title: 'Notificaciones',
+        href: notificaciones.index(),
+        icon: Bell,
+        permission: 'ver notificaciones',
+    },
+    {
+        title: 'Usuarios',
+        href: usuarios.index(),
+        icon: UserCog,
+        permission: 'ver usuarios',
+    },
+    {
+        title: 'Roles',
+        href: roles.index(),
+        icon: Shield,
+        permission: 'ver roles',
+    },
+]
 
 export function AppSidebar() {
+    const { auth } = usePage<{ auth: Auth }>().props
+    const perms = auth.permissions ?? []
+    const isAdmin = auth.roles?.includes('administrador')
+
+    const filteredPanel = panelNavItems.filter(item =>
+        !item.permission || isAdmin || perms.includes(item.permission)
+    )
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -52,15 +79,13 @@ export function AppSidebar() {
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
-
             <SidebarContent>
                 <NavMain items={mainNavItems} />
-                <NavMain items={panelNavItems} />
+                <NavMain items={filteredPanel} />
             </SidebarContent>
-
             <SidebarFooter>
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
-    );
+    )
 }

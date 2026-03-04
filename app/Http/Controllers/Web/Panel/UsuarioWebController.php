@@ -10,7 +10,7 @@ use Inertia\Response;
 
 class UsuarioWebController extends Controller
 {
-    public function index(): Response
+    public function page(): Response
     {
         Gate::authorize('viewAny', User::class);
         return Inertia::render('usuarios/indexusuarios');

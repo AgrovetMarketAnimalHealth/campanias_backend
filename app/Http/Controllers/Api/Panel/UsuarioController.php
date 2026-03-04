@@ -27,19 +27,15 @@ class UsuarioController extends Controller{
             $query->where(function ($q) use ($searchTerms) {
                 foreach ($searchTerms as $term) {
                     $q->orWhere(function ($subQuery) use ($term) {
-                        $subQuery->where('name', 'ILIKE', '%' . $term . '%')
-                            ->orWhere('email', 'ILIKE', '%' . $term . '%')
-                            ->orWhere('dni', 'ILIKE', '%' . $term . '%')
-                            ->orWhere('apellidos', 'ILIKE', '%' . $term . '%')
-                            ->orWhere('nacimiento', 'ILIKE', '%' . $term . '%')
-                            ->orWhere('status', 'ILIKE', '%' . $term . '%')
-                            ->orWhere('username', 'ILIKE', '%' . $term . '%');
+                        $subQuery->where('name', 'LIKE', '%' . $term . '%')
+                            ->orWhere('email', 'LIKE', '%' . $term . '%')
+                            ->orWhere('activo', 'LIKE', '%' . $term . '%');
                     });
                 }
             });
         }
         if (isset($estado)) {
-            $query->where('status', $estado);
+            $query->where('activo', $estado);
         }
         if (isset($onlineStatus)) {
             if ($onlineStatus == '1') {
@@ -62,7 +58,6 @@ class UsuarioController extends Controller{
     public function store(StoreUsuarioRequest $request){
         Gate::authorize('create', User::class);
         $validated = $request->validated();
-        $validated['nacimiento'] = Carbon::createFromFormat('d/m/Y', $validated['nacimiento'])->format('Y-m-d');
         $validated['password'] = Hash::make($validated['password']);
         $validated['restablecimiento'] = 0;
         $user = User::create($validated);

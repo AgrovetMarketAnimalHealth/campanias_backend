@@ -1,10 +1,9 @@
 <?php
-
 namespace App\Http\Controllers\Web\Panel;
 
 use App\Http\Controllers\Controller;
-use App\Models\Notificacion;
 use Illuminate\Support\Facades\Gate;
+use App\Models\Notificacion;
 use Inertia\Inertia;
 use Inertia\Response;
 

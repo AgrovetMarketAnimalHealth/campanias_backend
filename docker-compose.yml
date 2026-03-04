@@ -1,5 +1,4 @@
 services:
-
   app:
     build:
       context: ./docker/php
@@ -10,31 +9,6 @@ services:
     working_dir: /var/www
     volumes:
       - .:/var/www
-    depends_on:
-      mysql:
-        condition: service_healthy
-      minio:
-        condition: service_started
-    networks:
-      - campanias
-    environment:
-      DB_CONNECTION: mysql
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_DATABASE: campanias
-      DB_USERNAME: campanias_user
-      DB_PASSWORD: password
-
-  worker:
-    build:
-      context: ./docker/php
-      dockerfile: Dockerfile
-    container_name: campanias_worker
-    restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - .:/var/www
-    command: php artisan queue:work --queue=emails,default --sleep=3 --tries=3 --backoff=60 --timeout=90
     depends_on:
       mysql:
         condition: service_healthy
@@ -96,22 +70,6 @@ services:
     networks:
       - campanias
 
-  minio:
-    image: minio/minio
-    container_name: campanias_minio
-    restart: unless-stopped
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: campanias_user
-      MINIO_ROOT_PASSWORD: campanias_password
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-    networks:
-      - campanias
-
   node:
     build:
       context: ./docker/node
@@ -153,5 +111,4 @@ networks:
 
 volumes:
   mysql_data:
-  minio_data:
   node_modules_data:
