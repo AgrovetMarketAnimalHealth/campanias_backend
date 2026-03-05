@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Panel\BoletaController;
 use App\Http\Controllers\Api\Panel\ClienteAdminController;
+use App\Http\Controllers\Api\Panel\ClientePuntoController;
 use App\Http\Controllers\Api\Panel\NotificacionesController;
 use App\Http\Controllers\Api\Panel\RolesController;
 use App\Http\Controllers\Api\Panel\UsuarioController;
@@ -57,6 +58,10 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
         Route::prefix('notificacion')->controller(NotificacionesController::class)->group(function () {
             Route::get('/',              'index')->name('panel.notificacion.index');
             Route::post('{id}/reenviar', 'reenviar')->name('panel.notificacion.reenviar');
+        });
+
+        Route::prefix( 'punto')->controller(ClientePuntoController::class)->group(function () {
+            Route::get('/',              'index')->name('panel.punto.index');
         });
 
         Route::prefix('usuario')->group(function () {

@@ -22,25 +22,24 @@ class UpdateBoletaRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                // Solo valida único entre aceptadas si se está aceptando
+                // Solo bloquea duplicados al ACEPTAR
+                // Al rechazar siempre se permite
                 $esAceptada
                     ? Rule::unique('boletas', 'numero_boleta')
                         ->ignore($this->route('boleta')->id)
-                        ->where(fn ($query) => $query->where('estado', 'aceptada'))
+                        ->where(fn ($query) => $query->whereIn('estado', ['pendiente', 'aceptada']))
                     : null,
             ]),
 
-            // Aceptada: mínimo 1000 | Rechazada: solo que sea positivo
             'monto' => [
                 'required',
                 'numeric',
+                // Al aceptar exige mínimo 1000, al rechazar solo que sea positivo
                 $esAceptada ? 'min:1000' : 'min:0.01',
             ],
 
-            // Puntos: el admin los ingresa manualmente al aceptar
             'puntos' => ['required_if:estado,aceptada', 'integer', 'min:1'],
 
-            // Observacion: obligatoria al rechazar para explicar el motivo
             'observacion' => [
                 !$esAceptada ? 'required' : 'nullable',
                 'string',
@@ -53,7 +52,7 @@ class UpdateBoletaRequest extends FormRequest
     {
         return [
             'numero_boleta.required' => 'El número de comprobante es obligatorio.',
-            'numero_boleta.unique'   => 'Este número de comprobante ya fue aceptado anteriormente. Debe ser rechazado.',
+            'numero_boleta.unique'   => 'Este número de comprobante ya existe en el sistema.',
             'monto.required'         => 'El monto es obligatorio.',
             'monto.min'              => 'El monto mínimo para aceptar un comprobante es de S/ 1,000.',
             'puntos.required_if'     => 'Los puntos son obligatorios al aceptar.',
@@ -67,7 +66,6 @@ class UpdateBoletaRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // No se puede procesar una boleta que ya fue aceptada o rechazada
             if ($this->route('boleta')->estado !== 'pendiente') {
                 $validator->errors()->add('estado', 'La boleta ya fue procesada anteriormente.');
             }
