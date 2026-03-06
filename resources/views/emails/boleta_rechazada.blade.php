@@ -112,7 +112,7 @@
             <div class="links">
                 <a href="{{ config('app.frontend_url') }}/portal/terminos-condiciones">Términos y condiciones</a>
                 &bull;
-                <a href="{{ config('app.frontend_url') }}/portal/politicas-privacidad">Políticas de privacidad</a>
+                <a href="{{ config('app.frontend_url') }}/portal/politicas-de-privacidad">Políticas de privacidad</a>
             </div>
 
         </div>

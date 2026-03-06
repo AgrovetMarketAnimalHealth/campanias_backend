@@ -8,6 +8,7 @@ use App\Jobs\EnviarEmailRegistro;
 use App\Models\Boleta;
 use App\Models\Cliente;
 use App\Models\Notificacion;
+use App\Services\DeviceTrustService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +17,22 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+
 class ClienteAuthController extends Controller{
+    private const COOKIE_MINUTOS = 60 * 24 * 30 * 4;
+    private function makeCookie(string $token): \Symfony\Component\HttpFoundation\Cookie{
+        return cookie(
+            'auth_token',
+            $token,
+            self::COOKIE_MINUTOS,
+            '/',
+            config('app.env') === 'production' ? 'atrevia.vet' : null,
+            true,
+            true,
+            false,
+            'Strict'
+        );
+    }
     public function register(StoreClienteRequest $request): JsonResponse{
         DB::beginTransaction();
         try {
@@ -38,7 +54,7 @@ class ClienteAuthController extends Controller{
 
             $archivo       = $request->file('archivo_comprobante');
             $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
-            
+
             $rutaComprobante = $archivo->storeAs(
                 "clientes/{$cliente->id}/comprobantes",
                 $nombreArchivo,
@@ -77,10 +93,8 @@ class ClienteAuthController extends Controller{
         $request->validate([
             'identificador' => 'required|string',
         ]);
-
         $identificador = trim($request->identificador);
         $key = 'login:' . Str::lower($identificador) . '|' . $request->ip();
-
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $segundos = RateLimiter::availableIn($key);
             return response()->json([
@@ -88,7 +102,6 @@ class ClienteAuthController extends Controller{
                 'message' => "Demasiados intentos fallidos. Espera {$segundos} segundos.",
             ], 429);
         }
-
         $cliente = Cliente::where('email', $identificador)
             ->orWhere('dni', $identificador)
             ->orWhere('telefono', $identificador)
@@ -101,9 +114,7 @@ class ClienteAuthController extends Controller{
                 'message' => 'No se encontró una cuenta con ese dato.',
             ], 401);
         }
-
         RateLimiter::clear($key);
-
         if (!$cliente->email_verified_at) {
             return response()->json([
                 'success' => false,
@@ -111,17 +122,15 @@ class ClienteAuthController extends Controller{
                 'message' => 'Debes verificar tu correo electrónico antes de ingresar.',
             ], 403);
         }
-
         if ($cliente->estado !== 'activo') {
             return response()->json([
                 'success' => false,
                 'message' => 'Tu cuenta no está activa. Contacta al soporte.',
             ], 403);
         }
-
         $cliente->tokens()->delete();
         $token = $cliente->createToken('cliente-token')->plainTextToken;
-
+        app(DeviceTrustService::class)->guardarDispositivo($request, $cliente->id);
         return response()->json([
             'success' => true,
             'message' => 'Inicio de sesión exitoso.',
@@ -130,24 +139,13 @@ class ClienteAuthController extends Controller{
                 'nombre' => $cliente->nombre,
                 'email'  => $cliente->email,
             ],
-        ])->cookie(
-            'auth_token',
-            $token,
-            60 * 8,
-            '/',
-            null,
-            config('app.env') === 'production',
-            false,
-            false,
-            'Lax'
-        );
+        ])->withCookie($this->makeCookie($token));
     }
     public function verificarEmail(string $token): JsonResponse{
         $cliente = Cliente::where('email_verification_token', $token)
             ->whereNull('email_verified_at')
             ->where('email_verification_expires_at', '>', now())
             ->first();
-
         if (!$cliente) {
             return response()->json([
                 'success' => false,
@@ -162,7 +160,7 @@ class ClienteAuthController extends Controller{
         ]);
         $cliente->tokens()->delete();
         $authToken = $cliente->createToken('cliente-token')->plainTextToken;
-
+        app(DeviceTrustService::class)->guardarDispositivo(request(), $cliente->id);
         return response()->json([
             'success' => true,
             'message' => '¡Correo verificado! Bienvenido.',
@@ -171,17 +169,7 @@ class ClienteAuthController extends Controller{
                 'nombre' => $cliente->nombre,
                 'email'  => $cliente->email,
             ],
-        ])->cookie(
-            'auth_token',
-            $authToken,
-            60 * 8,
-            '/',
-            null,
-            config('app.env') === 'production',
-            true,
-            false,
-            'Lax'
-        );
+        ])->withCookie($this->makeCookie($authToken));
     }
     public function reenviarVerificacion(Request $request): JsonResponse{
         $request->validate([
@@ -196,7 +184,6 @@ class ClienteAuthController extends Controller{
                 'message' => 'Si el correo existe y no está verificado, recibirás un enlace.',
             ]);
         }
-
         $key = 'reenviar-verificacion:' . $cliente->id;
         if (RateLimiter::tooManyAttempts($key, 3)) {
             $segundos = RateLimiter::availableIn($key);
@@ -212,6 +199,7 @@ class ClienteAuthController extends Controller{
                 'email_verification_token'      => Str::random(64),
                 'email_verification_expires_at' => now()->addHours(24),
             ]);
+
         $cliente->refresh();
         EnviarEmailRegistro::dispatch($cliente)->onQueue('emails');
         Notificacion::create([
@@ -223,6 +211,7 @@ class ClienteAuthController extends Controller{
             'estado_envio'       => 'pendiente',
             'intentos'           => RateLimiter::attempts($key),
         ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Si el correo existe y no está verificado, recibirás un enlace.',
@@ -233,16 +222,21 @@ class ClienteAuthController extends Controller{
         if ($cliente) {
             $request->user()->currentAccessToken()->delete();
         }
+
         return response()->json([
             'success' => true,
             'message' => 'Sesión cerrada.',
-        ])->cookie(Cookie::forget('auth_token'));
+        ])->withCookie(Cookie::forget('auth_token'));
     }
     public function me(Request $request): JsonResponse{
         $cliente = Auth::guard('sanctum')->user();
         if (!$cliente) {
-            return response()->json(['success' => false, 'message' => 'No autenticado.'], 401);
+            return response()->json([
+                'success' => false,
+                'message' => 'No autenticado.',
+            ], 401);
         }
+
         return response()->json([
             'success' => true,
             'cliente' => [

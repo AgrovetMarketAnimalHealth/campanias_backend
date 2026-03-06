@@ -52,7 +52,7 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
 
         Route::prefix('cliente')->controller(ClienteAdminController::class)->group(function () {
             Route::get('/',              'index')->name('panel.cliente.index');
-            Route::get('{id}/boletas',   'boletas')->name('panel.cliente.boletas');
+            Route::get('{cliente}/boletas',   'boletas')->name('panel.cliente.boletas');
         });
 
         Route::prefix('notificacion')->controller(NotificacionesController::class)->group(function () {

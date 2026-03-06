@@ -11,7 +11,7 @@ class ClientePuntoResource extends JsonResource
     {
         return [
             'id'                   => $this->id,
-            'imagen'               => asset('img/logo-atrevia.webp'),
+            'imagen'               => asset('/promo-concierto/backoffice/img/logo-atrevia.webp'),
             'puntos'               => $this->puntos,
             'cliente_id'           => $this->cliente_id,
             'cliente_tipo'         => $this->cliente->tipo_persona,

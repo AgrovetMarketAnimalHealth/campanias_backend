@@ -24,11 +24,11 @@ class BoletaResourceC extends JsonResource
     private function resolverUrlArchivo(): ?string
     {
         if (!$this->archivo) {
-            return asset('img/images.png');
+            return asset('promo-concierto/backoffice/img/images.png');
         }
 
         if (!Storage::disk('public')->exists($this->archivo)) {
-            return asset('img/images.png');
+            return asset('promo-concierto/backoffice/img/images.png');
         }
 
         return Storage::disk('public')->url($this->archivo);
