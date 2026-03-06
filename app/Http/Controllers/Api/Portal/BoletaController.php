@@ -8,7 +8,6 @@ use App\Models\Boleta;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\File;
 
 class BoletaController extends Controller{
     public function resumen(Request $request): JsonResponse{

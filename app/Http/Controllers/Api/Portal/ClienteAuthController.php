@@ -39,7 +39,6 @@ class ClienteAuthController extends Controller{
             $archivo       = $request->file('archivo_comprobante');
             $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
             
-            // Storage se encarga de crear la carpeta automáticamente
             $rutaComprobante = $archivo->storeAs(
                 "clientes/{$cliente->id}/comprobantes",
                 $nombreArchivo,

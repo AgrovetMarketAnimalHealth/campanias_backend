@@ -34,5 +34,17 @@ class EnviarEmailRegistro implements ShouldQueue
             clienteId:    $this->cliente->id,
             boletaId:     $this->boletaId,
         );
+
+        $brevo->enviar(
+            destinatario: config('services.brevo.from_email'),
+            asunto:       '🔔 Nuevo registro pendiente – ' . $this->cliente->nombre . ' ' . $this->cliente->apellidos,
+            cuerpo:       view('emails.admin.nuevo-registro', [
+                            'cliente'  => $this->cliente,
+                            'boletaId' => $this->boletaId,
+                        ])->render(),
+            tipo:         'registro_admin',
+            clienteId:    $this->cliente->id,
+            boletaId:     $this->boletaId,
+        );
     }
 }

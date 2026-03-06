@@ -154,11 +154,9 @@
 
             <!-- LINKS LEGALES -->
             <div class="links">
-                <a href="{{ config('app.frontend_url') }}/terminos-condiciones">Términos y condiciones</a>
+                <a href="{{ config('app.frontend_url') }}/portal/terminos-condiciones">Términos y condiciones</a>
                 &bull;
-                <a href="{{ config('app.frontend_url') }}/politicas-privacidad">Políticas de privacidad</a>
-                &bull;
-                <a href="{{ config('app.frontend_url') }}/bases-atrevia">Bases legales</a>
+                <a href="{{ config('app.frontend_url') }}/portal/politicas-privacidad">Políticas de privacidad</a>
             </div>
 
         </div>

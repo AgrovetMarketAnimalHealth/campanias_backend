@@ -22,16 +22,30 @@ class EnviarEmailBoleta implements ShouldQueue
         public readonly ?int    $userId = null,
     ) {}
 
-    public function handle(BrevoService $brevo): void
-    {
+    public function handle(BrevoService $brevo): void{
+        // ── Email al cliente ──────────────────────────────────────────
         $brevo->enviar(
             destinatario: $this->cliente->email,
             asunto:       '¡Recibimos tu comprobante!',
-            cuerpo: view('emails.boleta-recibida', [
-                'cliente' => $this->cliente,
-                'boleta'  => $this->boleta,
-            ])->render(),
+            cuerpo:       view('emails.boleta-recibida', [
+                            'cliente' => $this->cliente,
+                            'boleta'  => $this->boleta,
+                        ])->render(),
             tipo:      'boleta_recibida',
+            clienteId: $this->cliente->id,
+            boletaId:  $this->boleta->id,
+            userId:    $this->userId,
+        );
+
+        // ── Notificación interna al admin ─────────────────────────────
+        $brevo->enviar(
+            destinatario: config('services.brevo.from_email'),
+            asunto:       '📎 Nuevo comprobante recibido – ' . $this->cliente->nombre . ' ' . $this->cliente->apellidos,
+            cuerpo:       view('emails.admin.nuevo-comprobante', [
+                            'cliente' => $this->cliente,
+                            'boleta'  => $this->boleta,
+                        ])->render(),
+            tipo:      'registro_admin',
             clienteId: $this->cliente->id,
             boletaId:  $this->boleta->id,
             userId:    $this->userId,

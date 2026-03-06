@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignUuid('boleta_id')->nullable()->constrained('boletas')->nullOnDelete();
             $table->enum('tipo', [
                 'registro_cliente',
+                'registro_admin',
                 'boleta_recibida',
                 'boleta_aceptada',
                 'boleta_rechazada',
