@@ -12,6 +12,7 @@ use App\Http\Controllers\Web\Panel\NotificacionWebController;
 use App\Http\Controllers\Web\Panel\RolesWebController;
 use App\Http\Controllers\Web\Panel\UsuarioWebController;
 use App\Http\Controllers\Web\Panel\BoletaWebController;
+use App\Http\Controllers\Web\Panel\ReportesWebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -20,7 +21,7 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
         return Inertia::render('welcome');
     })->name('home');
 
-    // Ruta para cambiar password (sin password.reset para evitar loop)
+    #Ruta para cambiar password (sin password.reset para evitar loop)
     Route::middleware(['auth'])->group(function () {
         Route::get('change-password', [PasswordController::class, 'edit'])
             ->name('password.change');
@@ -42,6 +43,13 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
             Route::get('/notificaciones', [NotificacionWebController::class, 'index'])->name('notificaciones.index');
             Route::get('/roles',          [RolesWebController::class,        'page'])->name('roles.index');
             Route::get('/usuarios',       [UsuarioWebController::class,      'page'])->name('usuarios.index');
+            
+            #Reportes
+            Route::prefix('reportes')->controller(ReportesWebController::class)->group(function () {
+                Route::get('/clientes', 'index')->name('reportes.clientes.index');
+                Route::get('/top',      'indextop')->name('reportes.top.index');
+                Route::get('/puntos',   'indexpuntos')->name('reportes.puntos.index');
+            });
         });
 
         Route::prefix('boleta')->controller(BoletaController::class)->group(function () {
@@ -60,8 +68,11 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
             Route::post('{id}/reenviar', 'reenviar')->name('panel.notificacion.reenviar');
         });
 
-        Route::prefix( 'punto')->controller(ClientePuntoController::class)->group(function () {
-            Route::get('/',              'index')->name('panel.punto.index');
+        Route::prefix('punto')->controller(ClientePuntoController::class)->group(function () {
+            Route::get('/',                          'index')->name('panel.punto.index');
+            Route::post('/exportar-boletos',         'exportarBoletos')->name('panel.punto.exportar');
+            Route::get('/estado-boletos/{filename}', 'estadoBoletos')->name('panel.punto.estado');
+            Route::get('/descargar/{filename}',      'descargarBoletos')->name('panel.punto.descargar');
         });
 
         Route::prefix('usuario')->group(function () {

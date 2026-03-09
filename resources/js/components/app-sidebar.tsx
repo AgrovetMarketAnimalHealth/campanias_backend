@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
-import { LayoutGrid, FileText, Users, Bell, Shield, UserCog } from 'lucide-react';
+import { LayoutGrid, FileText, Users, Bell, Shield, UserCog, BarChart2, Trophy, Star } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -15,6 +15,7 @@ import clientes from '@/routes/clientes';
 import notificaciones from '@/routes/notificaciones';
 import roles from '@/routes/roles';
 import usuarios from '@/routes/usuarios';
+import reportes from '@/routes/reportes';
 
 const mainNavItems: NavItem[] = [
     {
@@ -57,12 +58,37 @@ const panelNavItems: NavItem[] = [
     },
 ]
 
+const reportesNavItems: NavItem[] = [
+    {
+        title: 'Clientes',
+        href: reportes.clientes.index(),
+        icon: BarChart2,
+        permission: 'ver clientes',
+    },
+    {
+        title: 'Top',
+        href: reportes.top.index(),
+        icon: Trophy,
+        permission: 'ver clientes',
+    },
+    {
+        title: 'Puntos',
+        href: reportes.puntos.index(),
+        icon: Star,
+        permission: 'ver puntos',
+    },
+]
+
 export function AppSidebar() {
     const { auth } = usePage<{ auth: Auth }>().props
     const perms = auth.permissions ?? []
     const isAdmin = auth.roles?.includes('administrador')
 
     const filteredPanel = panelNavItems.filter(item =>
+        !item.permission || isAdmin || perms.includes(item.permission)
+    )
+
+    const filteredReportes = reportesNavItems.filter(item =>
         !item.permission || isAdmin || perms.includes(item.permission)
     )
 
@@ -82,6 +108,7 @@ export function AppSidebar() {
             <SidebarContent>
                 <NavMain items={mainNavItems} />
                 <NavMain items={filteredPanel} />
+                <NavMain label="Reportes" items={filteredReportes} />
             </SidebarContent>
             <SidebarFooter>
                 <NavUser />
