@@ -9,12 +9,12 @@ use Illuminate\Support\Str;
 class SeedMasivoDatos extends Command
 {
     protected $signature = 'seed:masivo
-                            {--clientes=100000       : Total de clientes a crear}
-                            {--boletas=100000        : Total de boletas a crear}
-                            {--puntos=100000         : Total de puntos a crear}
-                            {--notificaciones=100000 : Total de notificaciones a crear}
-                            {--chunk=500             : Tamaño del lote para inserts}
-                            {--fresh                 : Truncar tablas antes de insertar}';
+                        {--clientes=10       : Total de clientes a crear}
+                        {--boletas=10        : Total de boletas a crear}
+                        {--puntos=10         : Total de puntos a crear}
+                        {--notificaciones=10 : Total de notificaciones a crear}
+                        {--chunk=500         : Tamaño del lote para inserts}
+                        {--fresh              : Truncar tablas antes de insertar}';
 
     protected $description = 'Genera 100k+ registros por tabla para pruebas de rendimiento';
 

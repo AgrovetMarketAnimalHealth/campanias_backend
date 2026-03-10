@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Panel\BoletaController;
 use App\Http\Controllers\Api\Panel\ClienteAdminController;
 use App\Http\Controllers\Api\Panel\ClientePuntoController;
 use App\Http\Controllers\Api\Panel\NotificacionesController;
+use App\Http\Controllers\Api\Panel\ReportesClientesController;
 use App\Http\Controllers\Api\Panel\RolesController;
 use App\Http\Controllers\Api\Panel\UsuarioController;
 use App\Http\Controllers\Settings\PasswordController;
@@ -73,6 +74,13 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
             Route::post('/exportar-boletos',         'exportarBoletos')->name('panel.punto.exportar');
             Route::get('/estado-boletos/{filename}', 'estadoBoletos')->name('panel.punto.estado');
             Route::get('/descargar/{filename}',      'descargarBoletos')->name('panel.punto.descargar');
+        });
+        
+        Route::prefix('customers')->controller(ReportesClientesController::class)->group(function () {
+            Route::get('/metricas',       'metricas')       ->name('metricas');
+            Route::get('/listado',        'listado')        ->name('listado');
+            Route::get('/exportar',       'exportarExcel')  ->name('exportar');
+            Route::post('/enviar-reporte','enviarReporteDiario')->name('enviar');
         });
 
         Route::prefix('usuario')->group(function () {

@@ -1,9 +1,12 @@
 import { Head } from '@inertiajs/react'
+import * as React from 'react'
 import AppLayout from '@/layouts/app-layout'
 import type { BreadcrumbItem } from '@/types'
 import reportes from '@/routes/reportes'
 import { PuntosTable } from './components/PuntosTable'
 import { ExportarBoletos } from './components/ExportarBoletos'
+import { puntoService } from './services/puntoService'
+import type { PaginatedResponse, Punto } from './types/index'
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -13,6 +16,19 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function Puntos() {
+    const [data, setData]       = React.useState<PaginatedResponse<Punto> | null>(null)
+    const [loading, setLoading] = React.useState(true)
+    const [page, setPage]       = React.useState(1)
+
+    React.useEffect(() => {
+        setLoading(true)
+        puntoService
+            .getPuntos({ page, per_page: 50 })
+            .then((res) => setData(res))
+            .catch(console.error)
+            .finally(() => setLoading(false))
+    }, [page])
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Puntos" />
@@ -26,7 +42,12 @@ export default function Puntos() {
                     </div>
                     <ExportarBoletos />
                 </div>
-                <PuntosTable />
+                <PuntosTable
+                    data={data}
+                    loading={loading}
+                    page={page}
+                    onPageChange={setPage}
+                />
             </div>
         </AppLayout>
     )

@@ -8,13 +8,23 @@ use App\Models\Punto;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class ReportesWebController extends Controller
-{
-    public function index(): Response
-    {
+class ReportesWebController extends Controller{
+    public function index(): Response{
         Gate::authorize('viewAny', Cliente::class);
-        return Inertia::render('reportes/clientes/indexclientes');
+        $metricas = [
+            'total_inscritos' => Cliente::count(),
+            'inscritos_hoy' => Cliente::whereDate('created_at', today())->count(),
+            'inscritos_mes' => Cliente::whereMonth('created_at', now()->month)
+                                    ->whereYear('created_at', now()->year)->count(),
+            'activos' => Cliente::where('estado', 'activo')->count(),
+            'pendientes' => Cliente::where('estado', 'pendiente')->count(),
+            'rechazados' => Cliente::where('estado', 'rechazado')->count(),
+        ];
+        return Inertia::render('reportes/clientes/indexclientes', [
+            'metricas' => $metricas
+        ]);
     }
+    
     public function indextop(): Response
     {
         Gate::authorize('viewAny', Cliente::class);

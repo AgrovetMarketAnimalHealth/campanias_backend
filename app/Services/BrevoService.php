@@ -75,4 +75,70 @@ class BrevoService
             ]);
         }
     }
+    public function enviarConAdjunto(
+        string  $destinatario,
+        string  $asunto,
+        string  $cuerpo,
+        string  $tipo,
+        string  $adjuntoPath,
+        string  $nombreAdjunto,
+        ?string $clienteId = null,
+        ?string $boletaId  = null,
+        ?int    $userId    = null,
+    ): void {
+        $notificacion = Notificacion::create([
+            'cliente_id'         => $clienteId,
+            'boleta_id'          => $boletaId,
+            'user_id'            => $userId,
+            'tipo'               => $tipo,
+            'destinatario_email' => $destinatario,
+            'asunto'             => $asunto,
+            'cuerpo'             => $cuerpo,
+            'estado_envio'       => 'pendiente',
+            'intentos'           => 0,
+            'created_by'         => $userId,
+        ]);
+
+        try {
+            // Codificar el archivo en base64 para Brevo
+            $contenidoBase64 = base64_encode(file_get_contents($adjuntoPath));
+
+            $response = Http::withHeaders([
+                'api-key'      => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ])->post("{$this->baseUrl}/smtp/email", [
+                'sender' => [
+                    'email' => $this->fromEmail,
+                    'name'  => $this->fromName,
+                ],
+                'to'          => [['email' => $destinatario]],
+                'subject'     => $asunto,
+                'htmlContent' => $cuerpo,
+                'attachment'  => [
+                    [
+                        'content' => $contenidoBase64,
+                        'name'    => $nombreAdjunto,
+                    ],
+                ],
+            ]);
+
+            $notificacion->update([
+                'estado_envio'     => $response->successful() ? 'enviado' : 'fallido',
+                'brevo_message_id' => $response->json('messageId'),
+                'respuesta_brevo'  => $response->body(),
+                'enviado_at'       => now(),
+                'intentos'         => 1,
+                'updated_by'       => $userId,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Brevo adjunto error: ' . $e->getMessage());
+
+            $notificacion->update([
+                'estado_envio'    => 'fallido',
+                'respuesta_brevo' => $e->getMessage(),
+                'intentos'        => 1,
+                'updated_by'      => $userId,
+            ]);
+        }
+    }
 }
