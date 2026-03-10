@@ -172,18 +172,20 @@ export default function Clientes({ metricas }: Props) {
 
                 {/* ── Gráfico ── */}
                 <div className="px-4 lg:px-6">
-                    <GraficoInscritos
-                        datos={metrPeriodo?.inscritos_por_mes ?? []}
-                        loading={loadingChart}
-                        totalPeriodo={metrPeriodo?.total_periodo ?? 0}
-                        fechaInicio={fechaInicio}
-                        fechaFin={fechaFin}
-                        preset={preset}
-                        onPresetChange={handlePresetChange}
-                        onFechaInicioChange={setFechaInicio}
-                        onFechaFinChange={setFechaFin}
-                        onConsultar={handleConsultar}
-                    />
+                    {/* ── Gráfico ── */}
+                    <div className="px-4 lg:px-6">
+                        <GraficoInscritos
+                            datos={metrPeriodo}
+                            loading={loadingChart}
+                            fechaInicio={fechaInicio}
+                            fechaFin={fechaFin}
+                            preset={preset}
+                            onPresetChange={handlePresetChange}
+                            onFechaInicioChange={setFechaInicio}
+                            onFechaFinChange={setFechaFin}
+                            onConsultar={handleConsultar}
+                        />
+                    </div>
                 </div>
 
                 {/* ── Tabla ── */}

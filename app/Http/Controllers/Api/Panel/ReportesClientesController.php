@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Panel;
 
 use App\Http\Controllers\Controller;
+use App\Models\Boleta;
 use App\Models\Cliente;
 use App\Services\BrevoService;
 use Illuminate\Http\Request;
@@ -39,8 +40,8 @@ class ReportesClientesController extends Controller
             ? $request->date('fecha_fin')->endOfDay()
             : now()->endOfDay();
 
-        // Inscritos agrupados por día dentro del rango
-        $inscritosPorDia = Cliente::query()
+        // Boletas agrupadas por día dentro del rango
+        $inscritosPorDia = Boleta::query()
             ->selectRaw('DATE(created_at) as fecha, COUNT(*) as total')
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->groupByRaw('DATE(created_at)')
@@ -51,8 +52,8 @@ class ReportesClientesController extends Controller
                 'total' => (int) $row->total,
             ]);
 
-        // Inscritos por mes (para gráfico de barras histórico)
-        $inscritosPorMes = Cliente::query()
+        // Boletas por mes (total general)
+        $inscritosPorMes = Boleta::query()
             ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as mes, COUNT(*) as total")
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m')")
@@ -63,32 +64,90 @@ class ReportesClientesController extends Controller
                 'total' => (int) $row->total,
             ]);
 
-        // Inscritos por estado
-        $porEstado = Cliente::query()
+        // Boletas por mes separadas por estado (aceptada / rechazada)
+        $inscritosPorMesEstado = Boleta::query()
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as mes, estado, COUNT(*) as total")
+            ->whereIn('estado', ['aceptada', 'rechazada'])
+            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
+            ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m'), estado")
+            ->orderBy('mes')
+            ->get()
+            ->groupBy('mes')
+            ->map(fn($rows) => [
+                'mes'       => $rows->first()->mes,
+                'aceptada'  => (int) ($rows->firstWhere('estado', 'aceptada')?->total ?? 0),
+                'rechazada' => (int) ($rows->firstWhere('estado', 'rechazada')?->total ?? 0),
+            ])
+            ->values();
+
+        // Boletas por día separadas por estado
+        $inscritosPorDiaEstado = Boleta::query()
+            ->selectRaw('DATE(created_at) as fecha, estado, COUNT(*) as total')
+            ->whereIn('estado', ['aceptada', 'rechazada'])
+            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
+            ->groupByRaw('DATE(created_at), estado')
+            ->orderBy('fecha')
+            ->get()
+            ->groupBy('fecha')
+            ->map(fn($rows) => [
+                'fecha'     => $rows->first()->fecha,
+                'aceptada'  => (int) ($rows->firstWhere('estado', 'aceptada')?->total ?? 0),
+                'rechazada' => (int) ($rows->firstWhere('estado', 'rechazada')?->total ?? 0),
+            ])
+            ->values();
+
+        // Boletas por estado (pendiente / aceptada / rechazada)
+        $porEstado = Boleta::query()
             ->selectRaw('estado, COUNT(*) as total')
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->groupBy('estado')
             ->get()
             ->mapWithKeys(fn($row) => [$row->estado => (int) $row->total]);
 
-        // Inscritos por tipo de persona
-        $porTipoPersona = Cliente::query()
-            ->selectRaw('tipo_persona, COUNT(*) as total')
-            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
-            ->groupBy('tipo_persona')
+        // Boletas por tipo de persona del cliente relacionado
+        $porTipoPersona = Boleta::query()
+            ->join('clientes', 'boletas.cliente_id', '=', 'clientes.id')
+            ->selectRaw('clientes.tipo_persona, COUNT(*) as total')
+            ->whereBetween('boletas.created_at', [$fechaInicio, $fechaFin])
+            ->groupBy('clientes.tipo_persona')
             ->get()
             ->mapWithKeys(fn($row) => [$row->tipo_persona => (int) $row->total]);
+
+        // Detalle reciente de boletas con hora AM/PM usando Carbon
+        $recientes = Boleta::query()
+            ->with('cliente:id,nombre,apellidos,tipo_persona')
+            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get()
+            ->map(fn($b) => [
+                'id'              => $b->id,
+                'codigo'          => $b->codigo,
+                'estado'          => $b->estado,
+                'monto'           => (float) $b->monto,
+                'puntos_otorgados'=> $b->puntos_otorgados,
+                'observacion'     => $b->observacion,
+                'fecha'           => \Carbon\Carbon::parse($b->created_at)->format('d/m/Y'),
+                'hora'            => \Carbon\Carbon::parse($b->created_at)->format('h:i A'), // 08:45 PM
+                'cliente'         => $b->cliente
+                    ? trim("{$b->cliente->nombre} {$b->cliente->apellidos}")
+                    : '—',
+                'tipo_persona'    => $b->cliente?->tipo_persona ?? '—',
+            ]);
 
         return response()->json([
             'rango' => [
                 'inicio' => $fechaInicio->toDateString(),
                 'fin'    => $fechaFin->toDateString(),
             ],
-            'total_periodo'      => $inscritosPorDia->sum('total'),
-            'inscritos_por_dia'  => $inscritosPorDia,
-            'inscritos_por_mes'  => $inscritosPorMes,
-            'por_estado'         => $porEstado,
-            'por_tipo_persona'   => $porTipoPersona,
+            'total_periodo'              => $inscritosPorDia->sum('total'),
+            'inscritos_por_dia'          => $inscritosPorDia,
+            'inscritos_por_mes'          => $inscritosPorMes,
+            'inscritos_por_mes_estado'   => $inscritosPorMesEstado,
+            'inscritos_por_dia_estado'   => $inscritosPorDiaEstado,
+            'por_estado'                 => $porEstado,
+            'por_tipo_persona'           => $porTipoPersona,
+            'recientes'                  => $recientes,
         ]);
     }
 

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts'
 import {
     Card,
     CardContent,
@@ -9,6 +9,8 @@ import {
 } from '@/components/ui/card'
 import {
     ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
     ChartTooltip,
     ChartTooltipContent,
     type ChartConfig,
@@ -22,20 +24,23 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import type { InscritosPorMes, Preset } from '../types'
-import { labelMes, hoy, fechaHaceNMeses } from '../utils'
+import type { MetricasPeriodo, Preset } from '../types'
+import { hoy, fechaHaceNMeses } from '../utils'
 
 const chartConfig = {
-    total: {
-        label: 'Inscritos',
+    aceptada: {
+        label: 'Aceptadas',
         color: 'var(--chart-1)',
+    },
+    rechazada: {
+        label: 'Rechazadas',
+        color: 'var(--chart-2)',
     },
 } satisfies ChartConfig
 
 interface GraficoInscritosProps {
-    datos: InscritosPorMes[]
+    datos: MetricasPeriodo | null
     loading: boolean
-    totalPeriodo: number
     fechaInicio: string
     fechaFin: string
     preset: Preset
@@ -52,10 +57,20 @@ const PRESETS: { key: Preset; label: string; meses: number }[] = [
     { key: '12m', label: '1 año',   meses: 12 },
 ]
 
+function labelDia(fecha: string) {
+    const d = new Date(fecha + 'T00:00:00')
+    return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })
+}
+
+function labelMes(mes: string) {
+    const [year, month] = mes.split('-')
+    const d = new Date(Number(year), Number(month) - 1, 1)
+    return d.toLocaleDateString('es-PE', { month: 'short', year: 'numeric' })
+}
+
 export function GraficoInscritos({
     datos,
     loading,
-    totalPeriodo,
     fechaInicio,
     fechaFin,
     preset,
@@ -65,16 +80,33 @@ export function GraficoInscritos({
     onConsultar,
 }: GraficoInscritosProps) {
 
-    const chartData = datos.map((d) => ({
-        mes: labelMes(d.mes),
-        total: d.total,
-    }))
+    const usarDias = preset === '1m'
+
+    const chartData = React.useMemo(() => {
+        if (!datos) return []
+
+        if (usarDias) {
+            return (datos.inscritos_por_dia_estado ?? []).map((d) => ({
+                label: labelDia(d.fecha),
+                aceptada: d.aceptada,
+                rechazada: d.rechazada,
+            }))
+        }
+
+        return (datos.inscritos_por_mes_estado ?? []).map((d) => ({
+            label: labelMes(d.mes),
+            aceptada: d.aceptada,
+            rechazada: d.rechazada,
+        }))
+    }, [datos, usarDias])
+
+    const totalPeriodo = datos?.total_periodo ?? 0
 
     return (
         <Card className="pt-0">
             <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
                 <div className="grid flex-1 gap-1">
-                    <CardTitle>Inscritos por mes</CardTitle>
+                    <CardTitle>Boletas por {usarDias ? 'día' : 'mes'}</CardTitle>
                     <CardDescription>
                         {totalPeriodo > 0
                             ? `${totalPeriodo.toLocaleString()} inscritos en el período`
@@ -82,9 +114,7 @@ export function GraficoInscritos({
                     </CardDescription>
                 </div>
 
-                {/* Controles de filtro */}
                 <div className="flex flex-wrap items-center gap-2">
-                    {/* Select de preset rápido */}
                     <Select
                         value={preset}
                         onValueChange={(val) => {
@@ -104,7 +134,6 @@ export function GraficoInscritos({
                         </SelectContent>
                     </Select>
 
-                    {/* Rango personalizado */}
                     <Input
                         type="date"
                         value={fechaInicio}
@@ -134,24 +163,25 @@ export function GraficoInscritos({
                         Sin datos para el período seleccionado
                     </div>
                 ) : (
-                    <ChartContainer
-                        config={chartConfig}
-                        className="aspect-auto h-[250px] w-full"
-                    >
-                        <BarChart data={chartData} margin={{ left: -8 }}>
+                    <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+                        <AreaChart data={chartData}>
+                            <defs>
+                                <linearGradient id="fillAceptada" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%"  stopColor="var(--color-aceptada)" stopOpacity={0.8} />
+                                    <stop offset="95%" stopColor="var(--color-aceptada)" stopOpacity={0.1} />
+                                </linearGradient>
+                                <linearGradient id="fillRechazada" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%"  stopColor="var(--color-rechazada)" stopOpacity={0.8} />
+                                    <stop offset="95%" stopColor="var(--color-rechazada)" stopOpacity={0.1} />
+                                </linearGradient>
+                            </defs>
                             <CartesianGrid vertical={false} />
                             <XAxis
-                                dataKey="mes"
+                                dataKey="label"
                                 tickLine={false}
                                 axisLine={false}
                                 tickMargin={8}
-                                minTickGap={16}
-                            />
-                            <YAxis
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={8}
-                                allowDecimals={false}
+                                minTickGap={usarDias ? 16 : 32}
                             />
                             <ChartTooltip
                                 cursor={false}
@@ -162,13 +192,24 @@ export function GraficoInscritos({
                                     />
                                 }
                             />
-                            <Bar
-                                dataKey="total"
-                                fill="var(--color-total)"
-                                radius={[6, 6, 0, 0]}
-                                maxBarSize={56}
+                            <Area
+                                dataKey="rechazada"
+                                type="natural"
+                                fill="url(#fillRechazada)"
+                                stroke="var(--color-rechazada)"
+                                stackId="a"
                             />
-                        </BarChart>
+                            <Area
+                                dataKey="aceptada"
+                                type="natural"
+                                fill="url(#fillAceptada)"
+                                stroke="var(--color-aceptada)"
+                                stackId="a"
+                            />
+                            <ChartLegend
+                                content={(props) => <ChartLegendContent {...props} />}
+                            />
+                        </AreaChart>
                     </ChartContainer>
                 )}
             </CardContent>

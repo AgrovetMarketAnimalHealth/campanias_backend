@@ -26,10 +26,25 @@ export interface InscritosPorMes {
     total: number
 }
 
+export interface InscritosPorMesEstado {
+    mes: string
+    aceptada: number   // ← era 'activo'
+    rechazada: number  // ← era 'rechazado'
+}
+
+export interface InscritosPorDiaEstado {
+    fecha: string
+    aceptada: number
+    rechazada: number
+}
+
 export interface MetricasPeriodo {
     rango: { inicio: string; fin: string }
     total_periodo: number
+    inscritos_por_dia: { fecha: string; total: number }[]
     inscritos_por_mes: InscritosPorMes[]
+    inscritos_por_mes_estado: InscritosPorMesEstado[]
+    inscritos_por_dia_estado: InscritosPorDiaEstado[]
     por_estado: Record<string, number>
     por_tipo_persona: Record<string, number>
 }
