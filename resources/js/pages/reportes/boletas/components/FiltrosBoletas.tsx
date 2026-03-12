@@ -1,9 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-    Select, SelectContent, SelectItem,
-    SelectTrigger, SelectValue,
-} from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Preset } from '../types'
 import { hoy, fechaHaceNMeses } from '../utils'
 
@@ -15,7 +12,7 @@ const PRESETS: { key: Preset; label: string; meses: number | null }[] = [
     { key: '12m', label: '1 año',   meses: 12   },
 ]
 
-interface FiltrosReporteProps {
+interface Props {
     fechaInicio: string
     fechaFin: string
     estado: string
@@ -27,14 +24,13 @@ interface FiltrosReporteProps {
     onConsultar: () => void
 }
 
-export function FiltrosReporte({
+export function FiltrosBoletas({
     fechaInicio, fechaFin, estado, preset,
     onFechaInicioChange, onFechaFinChange, onEstadoChange,
     onPresetChange, onConsultar,
-}: FiltrosReporteProps) {
+}: Props) {
     return (
         <div className="flex flex-wrap items-center gap-2">
-            {/* Presets */}
             <div className="flex gap-1">
                 {PRESETS.map((p) => (
                     <Button
@@ -50,37 +46,21 @@ export function FiltrosReporte({
                     </Button>
                 ))}
             </div>
-
             <div className="w-px h-6 bg-border mx-1" />
-
-            {/* Rango personalizado */}
-            <Input
-                type="date"
-                value={fechaInicio}
-                onChange={(e) => onFechaInicioChange(e.target.value)}
-                className="w-36 h-9 text-sm"
-            />
+            <Input type="date" value={fechaInicio} onChange={(e) => onFechaInicioChange(e.target.value)} className="w-36 h-9 text-sm" />
             <span className="text-muted-foreground text-sm">→</span>
-            <Input
-                type="date"
-                value={fechaFin}
-                onChange={(e) => onFechaFinChange(e.target.value)}
-                className="w-36 h-9 text-sm"
-            />
-
-            {/* Estado */}
+            <Input type="date" value={fechaFin} onChange={(e) => onFechaFinChange(e.target.value)} className="w-36 h-9 text-sm" />
             <Select value={estado || 'todos'} onValueChange={(v) => onEstadoChange(v === 'todos' ? '' : v)}>
                 <SelectTrigger className="w-36 h-9 text-sm">
                     <SelectValue placeholder="Todos los estados" />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="activo">Activo</SelectItem>
                     <SelectItem value="pendiente">Pendiente</SelectItem>
-                    <SelectItem value="rechazado">Rechazado</SelectItem>
+                    <SelectItem value="aceptada">Aceptada</SelectItem>
+                    <SelectItem value="rechazada">Rechazada</SelectItem>
                 </SelectContent>
             </Select>
-
             <Button size="sm" onClick={onConsultar}>Consultar</Button>
         </div>
     )

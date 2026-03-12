@@ -23,6 +23,8 @@ return new class extends Migration
                 'puntos_acreditados',
                 'bienvenida',
                 'reenvio_verificacion',
+                'reporte_diario_inscritos',
+                'reporte_boletas'
             ]);
             $table->string('destinatario_email');
             $table->string('asunto');

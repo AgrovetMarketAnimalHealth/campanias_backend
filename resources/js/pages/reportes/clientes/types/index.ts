@@ -15,38 +15,29 @@ export interface Cliente {
 export interface MetricasGenerales {
     total_inscritos: number
     inscritos_hoy: number
-    inscritos_mes: number
     activos: number
     pendientes: number
     rechazados: number
-}
-
-export interface InscritosPorMes {
-    mes: string   // 'YYYY-MM'
-    total: number
-}
-
-export interface InscritosPorMesEstado {
-    mes: string
-    aceptada: number   // ← era 'activo'
-    rechazada: number  // ← era 'rechazado'
-}
-
-export interface InscritosPorDiaEstado {
-    fecha: string
-    aceptada: number
-    rechazada: number
 }
 
 export interface MetricasPeriodo {
     rango: { inicio: string; fin: string }
     total_periodo: number
     inscritos_por_dia: { fecha: string; total: number }[]
-    inscritos_por_mes: InscritosPorMes[]
-    inscritos_por_mes_estado: InscritosPorMesEstado[]
-    inscritos_por_dia_estado: InscritosPorDiaEstado[]
+    inscritos_por_mes: { mes: string; total: number }[]
     por_estado: Record<string, number>
     por_tipo_persona: Record<string, number>
+    recientes: RecienteCliente[]
+}
+
+export interface RecienteCliente {
+    id: string
+    nombre: string
+    email: string
+    estado: string
+    tipo_persona: string
+    fecha: string
+    hora: string
 }
 
 export interface PaginatedResponse<T> {
@@ -59,4 +50,4 @@ export interface PaginatedResponse<T> {
     to: number
 }
 
-export type Preset = '1m' | '3m' | '6m' | '12m'
+export type Preset = 'hoy' | '1m' | '3m' | '6m' | '12m'

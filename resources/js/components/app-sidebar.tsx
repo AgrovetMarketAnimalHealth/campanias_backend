@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
-import { LayoutGrid, FileText, Users, Bell, Shield, UserCog, BarChart2, Trophy, Star } from 'lucide-react';
+import { LayoutGrid, FileText, Users, Bell, Shield, UserCog, BarChart2, Star } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -66,9 +66,9 @@ const reportesNavItems: NavItem[] = [
         permission: 'ver clientes',
     },
     {
-        title: 'Top',
-        href: reportes.top.index(),
-        icon: Trophy,
+        title: 'Boletas',
+        href: reportes.boletas.index(),
+        icon: BarChart2,
         permission: 'ver clientes',
     },
     {

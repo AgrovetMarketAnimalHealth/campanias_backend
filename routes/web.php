@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Panel\BoletaController;
 use App\Http\Controllers\Api\Panel\ClienteAdminController;
 use App\Http\Controllers\Api\Panel\ClientePuntoController;
 use App\Http\Controllers\Api\Panel\NotificacionesController;
+use App\Http\Controllers\Api\Panel\ReporteBoletasController;
 use App\Http\Controllers\Api\Panel\ReportesClientesController;
 use App\Http\Controllers\Api\Panel\RolesController;
 use App\Http\Controllers\Api\Panel\UsuarioController;
@@ -48,7 +49,7 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
             #Reportes
             Route::prefix('reportes')->controller(ReportesWebController::class)->group(function () {
                 Route::get('/clientes', 'index')->name('reportes.clientes.index');
-                Route::get('/top',      'indextop')->name('reportes.top.index');
+                Route::get('/boletas',      'indexBoletas')->name('reportes.boletas.index');
                 Route::get('/puntos',   'indexpuntos')->name('reportes.puntos.index');
             });
         });
@@ -77,10 +78,17 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
         });
         
         Route::prefix('customers')->controller(ReportesClientesController::class)->group(function () {
-            Route::get('/metricas',       'metricas')       ->name('metricas');
-            Route::get('/listado',        'listado')        ->name('listado');
-            Route::get('/exportar',       'exportarExcel')  ->name('exportar');
-            Route::post('/enviar-reporte','enviarReporteDiario')->name('enviar');
+            Route::get('/metricas', 'metricas')->name('customers.metricas');
+            Route::get('/listado', 'listado')->name('customers.listado');
+            Route::get('/exportar', 'exportarExcel')->name('customers.exportar');
+            Route::post('/enviar-reporte','enviarReporteDiario')->name('customers.enviar');
+        });
+
+        Route::prefix('tickets')->controller(ReporteBoletasController::class)->group(function () {
+            Route::get('/metricas', 'metricas')->name('tickets.metricas');
+            Route::get('/listado', 'listado')->name('tickets.listado');
+            Route::get('/exportar', 'exportarExcel')->name('tickets.exportar');
+            Route::post('/enviar-reporte','enviarReporte')->name('tickets.enviar');
         });
 
         Route::prefix('usuario')->group(function () {

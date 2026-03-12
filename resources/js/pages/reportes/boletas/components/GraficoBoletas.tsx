@@ -1,67 +1,61 @@
 import * as React from 'react'
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Legend } from 'recharts'
 import {
-    Card, CardContent, CardDescription,
-    CardHeader, CardTitle,
+    Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card'
 import {
-    ChartContainer, ChartTooltip, ChartTooltipContent,
-    type ChartConfig,
+    ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig,
 } from '@/components/ui/chart'
 import type { MetricasPeriodo, Preset } from '../types'
 import { labelDia, labelMes } from '../utils'
 
 const chartConfig = {
-    total: {
-        label: 'Inscritos',
-        color: 'var(--chart-1)',
-    },
+    pendiente: { label: 'Pendientes', color: 'var(--chart-3)' },
+    aceptada:  { label: 'Aceptadas',  color: 'var(--chart-1)' },
+    rechazada: { label: 'Rechazadas', color: 'var(--chart-2)' },
 } satisfies ChartConfig
 
-interface GraficoInscritosProps {
+interface Props {
     datos: MetricasPeriodo | null
     loading: boolean
     preset: Preset
 }
 
-export function GraficoInscritos({ datos, loading, preset }: GraficoInscritosProps) {
+export function GraficoBoletas({ datos, loading, preset }: Props) {
     const usarDias = preset === 'hoy' || preset === '1m'
 
     const chartData = React.useMemo(() => {
         if (!datos) return []
-
         if (usarDias) {
-            const lista = Array.isArray(datos.inscritos_por_dia) ? datos.inscritos_por_dia : []
+            const lista = Array.isArray(datos.por_dia) ? datos.por_dia : []
             return lista.map((d) => ({
-                label: labelDia(d.fecha),
-                total: d.total,
+                label:     labelDia(d.fecha),
+                pendiente: d.pendiente,
+                aceptada:  d.aceptada,
+                rechazada: d.rechazada,
             }))
         }
-
-        const lista = Array.isArray(datos.inscritos_por_mes) ? datos.inscritos_por_mes : []
+        const lista = Array.isArray(datos.por_mes) ? datos.por_mes : []
         return lista.map((d) => ({
-            label: labelMes(d.mes),
-            total: d.total,
+            label:     labelMes(d.mes),
+            pendiente: d.pendiente,
+            aceptada:  d.aceptada,
+            rechazada: d.rechazada,
         }))
     }, [datos, usarDias])
-
-    const totalPeriodo = datos?.total_periodo ?? 0
 
     return (
         <Card className="pt-0">
             <CardHeader className="border-b py-5">
-                <CardTitle>
-                    Inscritos por {usarDias ? 'día' : 'mes'}
-                </CardTitle>
+                <CardTitle>Boletas por {usarDias ? 'día' : 'mes'}</CardTitle>
                 <CardDescription>
                     {loading
                         ? 'Cargando datos…'
-                        : totalPeriodo > 0
-                            ? `${totalPeriodo.toLocaleString()} inscritos en el período`
+                        : (datos?.total_periodo ?? 0) > 0
+                            ? `${(datos!.total_periodo).toLocaleString()} boletas en el período`
                             : 'Sin datos para el período seleccionado'}
                 </CardDescription>
             </CardHeader>
-
             <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
                 {loading ? (
                     <div className="flex h-[250px] w-full items-center justify-center">
@@ -74,11 +68,7 @@ export function GraficoInscritos({ datos, loading, preset }: GraficoInscritosPro
                 ) : (
                     <div className="min-w-0 w-full">
                         <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                            <BarChart
-                                data={chartData}
-                                margin={{ left: 0, right: 8, top: 4, bottom: 0 }}
-                                barCategoryGap="30%"
-                            >
+                            <LineChart data={chartData} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
                                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                                 <XAxis
                                     dataKey="label"
@@ -97,22 +87,13 @@ export function GraficoInscritos({ datos, loading, preset }: GraficoInscritosPro
                                     tick={{ fontSize: 12 }}
                                 />
                                 <ChartTooltip
-                                    cursor={{ fill: 'var(--muted)', opacity: 0.4 }}
-                                    content={
-                                        <ChartTooltipContent
-                                            labelFormatter={(v) => v}
-                                            indicator="dot"
-                                        />
-                                    }
+                                    content={<ChartTooltipContent labelFormatter={(v) => v} indicator="dot" />}
                                 />
-                                <Bar
-                                    dataKey="total"
-                                    fill="var(--color-total)"
-                                    radius={[4, 4, 0, 0]}
-                                    isAnimationActive={false}
-                                    maxBarSize={48}
-                                />
-                            </BarChart>
+                                <Legend />
+                                <Line dataKey="pendiente" stroke="var(--color-pendiente)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                                <Line dataKey="aceptada"  stroke="var(--color-aceptada)"  strokeWidth={2} dot={false} isAnimationActive={false} />
+                                <Line dataKey="rechazada" stroke="var(--color-rechazada)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                            </LineChart>
                         </ChartContainer>
                     </div>
                 )}

@@ -7,7 +7,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { clienteService } from '../services/clienteService'
+import { boletaService } from '../services/boletaService'
 
 interface Props {
     open: boolean
@@ -16,25 +16,21 @@ interface Props {
     fechaFin: string
 }
 
-export function EnviarReporteDialog({ open, onClose, fechaInicio, fechaFin }: Props) {
+export function EnviarBoletasDialog({ open, onClose, fechaInicio, fechaFin }: Props) {
     const [email,   setEmail]   = React.useState('')
     const [loading, setLoading] = React.useState(false)
     const [error,   setError]   = React.useState<string | null>(null)
     const [success, setSuccess] = React.useState(false)
 
     function handleClose() {
-        setEmail('')
-        setError(null)
-        setSuccess(false)
-        onClose()
+        setEmail(''); setError(null); setSuccess(false); onClose()
     }
 
     async function handleEnviar() {
         if (!email) return
-        setLoading(true)
-        setError(null)
+        setLoading(true); setError(null)
         try {
-            await clienteService.enviarReporte({ email_destino: email, fecha_inicio: fechaInicio, fecha_fin: fechaFin })
+            await boletaService.enviarReporte({ email_destino: email, fecha_inicio: fechaInicio, fecha_fin: fechaFin })
             setSuccess(true)
             setTimeout(handleClose, 1800)
         } catch {
@@ -49,26 +45,22 @@ export function EnviarReporteDialog({ open, onClose, fechaInicio, fechaFin }: Pr
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <IconSend className="size-5" />
-                        Enviar reporte por email
+                        <IconSend className="size-5" /> Enviar reporte de boletas
                     </DialogTitle>
                     <DialogDescription>
-                        Se generará un Excel con los inscritos del período{' '}
-                        <strong>{fechaInicio}</strong> al <strong>{fechaFin}</strong>{' '}
-                        y se enviará al correo indicado.
+                        Excel con boletas del período <strong>{fechaInicio}</strong> al <strong>{fechaFin}</strong>.
                     </DialogDescription>
                 </DialogHeader>
-
                 {success ? (
-                    <div className="py-4 text-center text-sm font-medium text-green-600 dark:text-green-400">
+                    <div className="py-4 text-center text-sm font-medium text-green-600">
                         ✅ Reporte enviado correctamente a {email}
                     </div>
                 ) : (
                     <div className="flex flex-col gap-3 py-2">
                         <div className="flex flex-col gap-1.5">
-                            <Label htmlFor="email-destino">Email de destino</Label>
+                            <Label htmlFor="email-boletas">Email de destino</Label>
                             <Input
-                                id="email-destino"
+                                id="email-boletas"
                                 type="email"
                                 placeholder="correo@ejemplo.com"
                                 value={email}
@@ -79,7 +71,6 @@ export function EnviarReporteDialog({ open, onClose, fechaInicio, fechaFin }: Pr
                         {error && <p className="text-xs text-destructive">{error}</p>}
                     </div>
                 )}
-
                 <DialogFooter>
                     <Button variant="outline" onClick={handleClose} disabled={loading}>Cancelar</Button>
                     {!success && (

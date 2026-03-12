@@ -3,13 +3,10 @@
 namespace App\Http\Controllers\Api\Panel;
 
 use App\Http\Controllers\Controller;
-use App\Models\Boleta;
 use App\Models\Cliente;
 use App\Services\BrevoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Inertia\Inertia;
-use Inertia\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -17,14 +14,9 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class ReportesClientesController extends Controller
-{
+class ReportesClientesController extends Controller{
     public function __construct(private readonly BrevoService $brevo) {}
-    /**
-     * API: Retorna métricas diarias/por rango para los gráficos.
-     */
-    public function metricas(Request $request)
-    {
+    public function metricas(Request $request){
         Gate::authorize('viewAny', Cliente::class);
 
         $request->validate([
@@ -32,16 +24,17 @@ class ReportesClientesController extends Controller
             'fecha_fin'    => 'nullable|date|after_or_equal:fecha_inicio',
         ]);
 
+        // Por defecto: HOY (diario)
         $fechaInicio = $request->filled('fecha_inicio')
             ? $request->date('fecha_inicio')->startOfDay()
-            : now()->startOfMonth();
+            : now()->startOfDay();
 
         $fechaFin = $request->filled('fecha_fin')
             ? $request->date('fecha_fin')->endOfDay()
             : now()->endOfDay();
 
-        // Boletas agrupadas por día dentro del rango
-        $inscritosPorDia = Boleta::query()
+        // Inscritos por día en el rango — query liviana, no carga colección
+        $inscritosPorDia = Cliente::query()
             ->selectRaw('DATE(created_at) as fecha, COUNT(*) as total')
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->groupByRaw('DATE(created_at)')
@@ -52,87 +45,37 @@ class ReportesClientesController extends Controller
                 'total' => (int) $row->total,
             ]);
 
-        // Boletas por mes (total general)
-        $inscritosPorMes = Boleta::query()
-            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as mes, COUNT(*) as total")
-            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
-            ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m')")
-            ->orderBy('mes')
-            ->get()
-            ->map(fn($row) => [
-                'mes'   => $row->mes,
-                'total' => (int) $row->total,
-            ]);
-
-        // Boletas por mes separadas por estado (aceptada / rechazada)
-        $inscritosPorMesEstado = Boleta::query()
-            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as mes, estado, COUNT(*) as total")
-            ->whereIn('estado', ['aceptada', 'rechazada'])
-            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
-            ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m'), estado")
-            ->orderBy('mes')
-            ->get()
-            ->groupBy('mes')
-            ->map(fn($rows) => [
-                'mes'       => $rows->first()->mes,
-                'aceptada'  => (int) ($rows->firstWhere('estado', 'aceptada')?->total ?? 0),
-                'rechazada' => (int) ($rows->firstWhere('estado', 'rechazada')?->total ?? 0),
-            ])
-            ->values();
-
-        // Boletas por día separadas por estado
-        $inscritosPorDiaEstado = Boleta::query()
-            ->selectRaw('DATE(created_at) as fecha, estado, COUNT(*) as total')
-            ->whereIn('estado', ['aceptada', 'rechazada'])
-            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
-            ->groupByRaw('DATE(created_at), estado')
-            ->orderBy('fecha')
-            ->get()
-            ->groupBy('fecha')
-            ->map(fn($rows) => [
-                'fecha'     => $rows->first()->fecha,
-                'aceptada'  => (int) ($rows->firstWhere('estado', 'aceptada')?->total ?? 0),
-                'rechazada' => (int) ($rows->firstWhere('estado', 'rechazada')?->total ?? 0),
-            ])
-            ->values();
-
-        // Boletas por estado (pendiente / aceptada / rechazada)
-        $porEstado = Boleta::query()
+        // Por estado — una sola query agrupada
+        $porEstado = Cliente::query()
             ->selectRaw('estado, COUNT(*) as total')
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->groupBy('estado')
             ->get()
             ->mapWithKeys(fn($row) => [$row->estado => (int) $row->total]);
 
-        // Boletas por tipo de persona del cliente relacionado
-        $porTipoPersona = Boleta::query()
-            ->join('clientes', 'boletas.cliente_id', '=', 'clientes.id')
-            ->selectRaw('clientes.tipo_persona, COUNT(*) as total')
-            ->whereBetween('boletas.created_at', [$fechaInicio, $fechaFin])
-            ->groupBy('clientes.tipo_persona')
+        // Por tipo persona — una sola query agrupada
+        $porTipoPersona = Cliente::query()
+            ->selectRaw('tipo_persona, COUNT(*) as total')
+            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
+            ->groupBy('tipo_persona')
             ->get()
             ->mapWithKeys(fn($row) => [$row->tipo_persona => (int) $row->total]);
 
-        // Detalle reciente de boletas con hora AM/PM usando Carbon
-        $recientes = Boleta::query()
-            ->with('cliente:id,nombre,apellidos,tipo_persona')
+        // Solo los últimos 10 recientes — limit estricto, sin cargar más
+        $recientes = Cliente::query()
+            ->select(['id', 'nombre', 'apellidos', 'tipo_persona', 'email', 'estado', 'created_at'])
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->orderByDesc('created_at')
             ->limit(10)
             ->get()
-            ->map(fn($b) => [
-                'id'              => $b->id,
-                'codigo'          => $b->codigo,
-                'estado'          => $b->estado,
-                'monto'           => (float) $b->monto,
-                'puntos_otorgados'=> $b->puntos_otorgados,
-                'observacion'     => $b->observacion,
-                'fecha'           => \Carbon\Carbon::parse($b->created_at)->format('d/m/Y'),
-                'hora'            => \Carbon\Carbon::parse($b->created_at)->format('h:i A'), // 08:45 PM
-                'cliente'         => $b->cliente
-                    ? trim("{$b->cliente->nombre} {$b->cliente->apellidos}")
-                    : '—',
-                'tipo_persona'    => $b->cliente?->tipo_persona ?? '—',
+            ->map(fn($c) => [
+                'id'           => $c->id,
+                'nombre'       => trim("{$c->nombre} {$c->apellidos}"),
+                'email'        => $c->email,
+                'estado'       => $c->estado,
+                'tipo_persona' => $c->tipo_persona,
+                'fecha'        => $c->created_at->format('d/m/Y'),
+                'hora'         => $c->created_at->format('h:i:s A'),
             ]);
 
         return response()->json([
@@ -140,22 +83,14 @@ class ReportesClientesController extends Controller
                 'inicio' => $fechaInicio->toDateString(),
                 'fin'    => $fechaFin->toDateString(),
             ],
-            'total_periodo'              => $inscritosPorDia->sum('total'),
-            'inscritos_por_dia'          => $inscritosPorDia,
-            'inscritos_por_mes'          => $inscritosPorMes,
-            'inscritos_por_mes_estado'   => $inscritosPorMesEstado,
-            'inscritos_por_dia_estado'   => $inscritosPorDiaEstado,
-            'por_estado'                 => $porEstado,
-            'por_tipo_persona'           => $porTipoPersona,
-            'recientes'                  => $recientes,
+            'total_periodo'     => $inscritosPorDia->sum('total'),
+            'inscritos_por_dia' => $inscritosPorDia,
+            'por_estado'        => $porEstado,
+            'por_tipo_persona'  => $porTipoPersona,
+            'recientes'         => $recientes,
         ]);
     }
-
-    /**
-     * API: Lista paginada de clientes inscritos con filtros de rango.
-     */
-    public function listado(Request $request)
-    {
+    public function listado(Request $request){
         Gate::authorize('viewAny', Cliente::class);
 
         $request->validate([
@@ -166,20 +101,22 @@ class ReportesClientesController extends Controller
             'per_page'     => 'nullable|integer|min:10|max:100',
         ]);
 
+        // Por defecto filtra HOY si no mandan rango
+        $fechaInicio = $request->filled('fecha_inicio')
+            ? $request->date('fecha_inicio')->startOfDay()
+            : now()->startOfDay();
+
+        $fechaFin = $request->filled('fecha_fin')
+            ? $request->date('fecha_fin')->endOfDay()
+            : now()->endOfDay();
+
         $query = Cliente::query()
             ->select([
                 'id', 'tipo_persona', 'nombre', 'apellidos',
                 'dni', 'ruc', 'departamento', 'email',
                 'telefono', 'estado', 'created_at',
-            ]);
-
-        if ($request->filled('fecha_inicio')) {
-            $query->where('created_at', '>=', $request->date('fecha_inicio')->startOfDay());
-        }
-
-        if ($request->filled('fecha_fin')) {
-            $query->where('created_at', '<=', $request->date('fecha_fin')->endOfDay());
-        }
+            ])
+            ->whereBetween('created_at', [$fechaInicio, $fechaFin]);
 
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
@@ -194,24 +131,18 @@ class ReportesClientesController extends Controller
                   ->paginate($request->integer('per_page', 25))
         );
     }
-
-    /**
-     * Exporta el listado de inscritos a Excel con filtros opcionales.
-     */
-    public function exportarExcel(Request $request): StreamedResponse
-    {
+    public function exportarExcel(Request $request): StreamedResponse{
         Gate::authorize('viewAny', Cliente::class);
 
         $request->validate([
             'fecha_inicio' => 'nullable|date',
             'fecha_fin'    => 'nullable|date|after_or_equal:fecha_inicio',
             'estado'       => 'nullable|in:pendiente,activo,rechazado',
+            'tipo_persona' => 'nullable|in:natural,juridica',
         ]);
 
         $clientes = $this->obtenerClientesParaExportar($request);
-
         $spreadsheet = $this->construirSpreadsheet($clientes, $request);
-
         $nombreArchivo = 'inscritos_' . now()->format('Ymd_His') . '.xlsx';
 
         return response()->streamDownload(function () use ($spreadsheet) {
@@ -222,109 +153,119 @@ class ReportesClientesController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$nombreArchivo}\"",
         ]);
     }
-
-    /**
-     * Envía el reporte diario por email (usado por el comando cron).
-     * También puede ser llamado manualmente desde el panel.
-     */
-    public function enviarReporteDiario(Request $request)
-    {
+    public function enviarReporteDiario(Request $request){
         Gate::authorize('viewAny', Cliente::class);
 
         $request->validate([
             'email_destino' => 'required|email',
+            'fecha_inicio'  => 'nullable|date',
+            'fecha_fin'     => 'nullable|date|after_or_equal:fecha_inicio',
         ]);
 
-        $this->despacharReporteDiario($request->email_destino);
+        $this->despacharReporteDiario(
+            emailDestino:  $request->email_destino,
+            fechaInicio:   $request->fecha_inicio,
+            fechaFin:      $request->fecha_fin,
+        );
 
         return response()->json(['message' => 'Reporte enviado correctamente.']);
     }
 
-    // -------------------------------------------------------------------------
-    // Métodos internos reutilizables (también usados por el comando Artisan)
-    // -------------------------------------------------------------------------
-
-    public function despacharReporteDiario(string $emailDestino): void
-    {
-        $hoy       = now()->startOfDay();
-        $finHoy    = now()->endOfDay();
-
+    public function despacharReporteDiario(
+        string $emailDestino,
+        ?string $fechaInicio = null,
+        ?string $fechaFin    = null,
+    ): void {
+        // Si no viene rango (cron), usa hoy
         $request = new Request([
-            'fecha_inicio' => $hoy->toDateString(),
-            'fecha_fin'    => $finHoy->toDateString(),
+            'fecha_inicio' => $fechaInicio ?? now()->toDateString(),
+            'fecha_fin'    => $fechaFin    ?? now()->toDateString(),
         ]);
 
         $clientes = $this->obtenerClientesParaExportar($request);
-
         $spreadsheet = $this->construirSpreadsheet($clientes, $request);
 
-        // Guardar temporalmente
-        $tmpPath = sys_get_temp_dir() . '/reporte_inscritos_' . now()->format('Ymd') . '.xlsx';
+        $tmpPath = sys_get_temp_dir() . '/reporte_inscritos_' . now()->format('Ymd_His') . '.xlsx';
         (new Xlsx($spreadsheet))->save($tmpPath);
 
-        $totalHoy = $clientes->count();
+        // Asunto diferente si es rango o si es diario
+        $esDiario = $fechaInicio === null && $fechaFin === null;
+        $asunto   = $esDiario
+            ? 'Reporte Diario de Inscritos — ' . now()->format('d/m/Y')
+            : 'Reporte de Inscritos ' . $request->fecha_inicio . ' al ' . $request->fecha_fin;
 
-        // Construir HTML del email
-        $cuerpoHtml = $this->construirEmailHtml($totalHoy, $clientes);
-
-        // Adjuntar Excel al email vía Brevo
         $this->brevo->enviarConAdjunto(
             destinatario: $emailDestino,
-            asunto: 'Reporte Diario de Inscritos — ' . now()->format('d/m/Y'),
-            cuerpo: $cuerpoHtml,
-            tipo: 'reporte_diario_inscritos',
-            adjuntoPath: $tmpPath,
-            nombreAdjunto: 'inscritos_' . now()->format('Ymd') . '.xlsx',
+            asunto:       $asunto,
+            cuerpo:       $this->construirEmailHtml($clientes),
+            tipo:         'reporte_diario_inscritos',
+            adjuntoPath:  $tmpPath,
+            nombreAdjunto: 'inscritos_' . now()->format('Ymd_His') . '.xlsx',
         );
 
         @unlink($tmpPath);
     }
+    private function obtenerClientesParaExportar(Request $request){
+        $fechaInicio = $request->filled('fecha_inicio')
+            ? $request->date('fecha_inicio')->startOfDay()
+            : now()->startOfDay();
 
-    private function obtenerMetricasGenerales(): array
-    {
-        return [
-            'total_inscritos'   => Cliente::count(),
-            'inscritos_hoy'     => Cliente::whereDate('created_at', today())->count(),
-            'inscritos_mes'     => Cliente::whereMonth('created_at', now()->month)
-                                          ->whereYear('created_at', now()->year)->count(),
-            'activos'           => Cliente::where('estado', 'activo')->count(),
-            'pendientes'        => Cliente::where('estado', 'pendiente')->count(),
-            'rechazados'        => Cliente::where('estado', 'rechazado')->count(),
-        ];
-    }
+        $fechaFin = $request->filled('fecha_fin')
+            ? $request->date('fecha_fin')->endOfDay()
+            : now()->endOfDay();
 
-    private function obtenerClientesParaExportar(Request $request)
-    {
         $query = Cliente::query()->select([
             'id', 'tipo_persona', 'nombre', 'apellidos',
             'dni', 'ruc', 'departamento', 'email',
             'telefono', 'estado', 'created_at',
-        ]);
-
-        if ($request->filled('fecha_inicio')) {
-            $query->where('created_at', '>=', $request->date('fecha_inicio')->startOfDay());
-        }
-
-        if ($request->filled('fecha_fin')) {
-            $query->where('created_at', '<=', $request->date('fecha_fin')->endOfDay());
-        }
+        ])->whereBetween('created_at', [$fechaInicio, $fechaFin]);
 
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
         }
 
+        if ($request->filled('tipo_persona')) {
+            $query->where('tipo_persona', $request->tipo_persona);
+        }
+
         return $query->orderByDesc('created_at')->get();
     }
-
-    private function construirSpreadsheet($clientes, Request $request): Spreadsheet
-    {
+    private function construirSpreadsheet($clientes, Request $request): Spreadsheet{
         $spreadsheet = new Spreadsheet();
+
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Inscritos');
+        $this->construirHojaListado($sheet, $clientes, $request, 'REPORTE DE INSCRITOS');
 
-        // --- Título ---
+        $sheetNatural = $spreadsheet->createSheet();
+        $sheetNatural->setTitle('Personas Naturales');
+        $this->construirHojaListado(
+            $sheetNatural,
+            $clientes->where('tipo_persona', 'natural')->values(),
+            $request,
+            'PERSONAS NATURALES'
+        );
+
+        $sheetJuridica = $spreadsheet->createSheet();
+        $sheetJuridica->setTitle('Personas Jurídicas');
+        $this->construirHojaListado(
+            $sheetJuridica,
+            $clientes->where('tipo_persona', 'juridica')->values(),
+            $request,
+            'PERSONAS JURÍDICAS'
+        );
+
+        $sheetResumen = $spreadsheet->createSheet();
+        $sheetResumen->setTitle('Resumen General');
+        $this->construirHojaResumen($sheetResumen, $clientes);
+
+        $spreadsheet->setActiveSheetIndex(0);
+
+        return $spreadsheet;
+    }
+    private function construirHojaListado($sheet, $clientes, Request $request, string $titulo): void{
         $sheet->mergeCells('A1:K1');
-        $sheet->setCellValue('A1', 'REPORTE DE INSCRITOS — ' . now()->format('d/m/Y H:i'));
+        $sheet->setCellValue('A1', $titulo . ' — ' . now()->format('d/m/Y h:i:s A'));
         $sheet->getStyle('A1')->applyFromArray([
             'font'      => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
             'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E3A5F']],
@@ -332,35 +273,26 @@ class ReportesClientesController extends Controller
         ]);
         $sheet->getRowDimension(1)->setRowHeight(28);
 
-        // --- Subtítulo rango ---
-        $inicio = $request->filled('fecha_inicio') ? $request->fecha_inicio : 'Inicio';
-        $fin    = $request->filled('fecha_fin') ? $request->fecha_fin : now()->toDateString();
+        $inicio = $request->filled('fecha_inicio') ? $request->fecha_inicio : now()->toDateString();
+        $fin    = $request->filled('fecha_fin')    ? $request->fecha_fin    : now()->toDateString();
 
         $sheet->mergeCells('A2:K2');
-        $sheet->setCellValue('A2', "Período: {$inicio} al {$fin}  |  Total inscritos: " . $clientes->count());
+        $sheet->setCellValue('A2', "Período: {$inicio} al {$fin}  |  Total: " . $clientes->count());
         $sheet->getStyle('A2')->applyFromArray([
             'font'      => ['italic' => true, 'color' => ['rgb' => '444444']],
             'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'EAF0FB']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
         ]);
 
-        // --- Encabezados ---
         $encabezados = [
-            'A' => '#',
-            'B' => 'Tipo Persona',
-            'C' => 'Nombre',
-            'D' => 'Apellidos',
-            'E' => 'DNI',
-            'F' => 'RUC',
-            'G' => 'Departamento',
-            'H' => 'Email',
-            'I' => 'Teléfono',
-            'J' => 'Estado',
-            'K' => 'Fecha Inscripción',
+            'A' => '#', 'B' => 'Tipo Persona', 'C' => 'Nombre',
+            'D' => 'Apellidos', 'E' => 'DNI', 'F' => 'RUC',
+            'G' => 'Departamento', 'H' => 'Email',
+            'I' => 'Teléfono', 'J' => 'Estado', 'K' => 'Fecha Inscripción',
         ];
 
-        foreach ($encabezados as $col => $titulo) {
-            $sheet->setCellValue("{$col}3", $titulo);
+        foreach ($encabezados as $col => $encabezado) {
+            $sheet->setCellValue("{$col}3", $encabezado);
         }
 
         $sheet->getStyle('A3:K3')->applyFromArray([
@@ -370,11 +302,9 @@ class ReportesClientesController extends Controller
             'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'FFFFFF']]],
         ]);
 
-        // --- Datos ---
         $fila = 4;
         foreach ($clientes as $i => $cliente) {
-            $esPar = ($i % 2 === 0);
-            $bgColor = $esPar ? 'F8FAFF' : 'FFFFFF';
+            $bgColor = ($i % 2 === 0) ? 'F8FAFF' : 'FFFFFF';
 
             $sheet->setCellValue("A{$fila}", $i + 1);
             $sheet->setCellValue("B{$fila}", ucfirst($cliente->tipo_persona));
@@ -386,96 +316,102 @@ class ReportesClientesController extends Controller
             $sheet->setCellValue("H{$fila}", $cliente->email);
             $sheet->setCellValue("I{$fila}", $cliente->telefono);
             $sheet->setCellValue("J{$fila}", ucfirst($cliente->estado));
-            $sheet->setCellValue("K{$fila}", $cliente->created_at->format('d/m/Y H:i'));
+            $sheet->setCellValue("K{$fila}", $cliente->created_at->format('d/m/Y h:i:s A'));
 
             $sheet->getStyle("A{$fila}:K{$fila}")->applyFromArray([
                 'fill'    => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => $bgColor]],
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D1D5DB']]],
             ]);
 
-            // Color por estado
-            $coloresEstado = [
-                'activo'    => '16A34A',
-                'pendiente' => 'D97706',
-                'rechazado' => 'DC2626',
-            ];
-            $colorEstado = $coloresEstado[$cliente->estado] ?? '6B7280';
-            $sheet->getStyle("J{$fila}")->getFont()->getColor()->setRGB($colorEstado);
+            $coloresEstado = ['activo' => '16A34A', 'pendiente' => 'D97706', 'rechazado' => 'DC2626'];
+            $sheet->getStyle("J{$fila}")->getFont()->getColor()->setRGB($coloresEstado[$cliente->estado] ?? '6B7280');
             $sheet->getStyle("J{$fila}")->getFont()->setBold(true);
 
             $fila++;
         }
 
-        // --- Anchos de columna ---
         $anchos = ['A' => 6, 'B' => 14, 'C' => 20, 'D' => 20, 'E' => 13,
-                   'F' => 13, 'G' => 16, 'H' => 28, 'I' => 14, 'J' => 12, 'K' => 18];
+                   'F' => 13, 'G' => 16, 'H' => 28, 'I' => 14, 'J' => 12, 'K' => 26];
         foreach ($anchos as $col => $ancho) {
             $sheet->getColumnDimension($col)->setWidth($ancho);
         }
-
-        // --- Segunda hoja: Resumen por mes ---
-        $sheetResumen = $spreadsheet->createSheet();
-        $sheetResumen->setTitle('Resumen por Mes');
-        $this->construirHojaResumenMes($sheetResumen, $clientes);
-
-        $spreadsheet->setActiveSheetIndex(0);
-
-        return $spreadsheet;
     }
+    private function construirHojaResumen($sheet, $clientes): void{
+        $total     = $clientes->count();
+        $naturales = $clientes->where('tipo_persona', 'natural');
+        $juridicas = $clientes->where('tipo_persona', 'juridica');
 
-    private function construirHojaResumenMes($sheet, $clientes): void
-    {
-        $sheet->mergeCells('A1:C1');
-        $sheet->setCellValue('A1', 'INSCRITOS POR MES');
+        $sheet->mergeCells('A1:D1');
+        $sheet->setCellValue('A1', 'RESUMEN GENERAL DE INSCRITOS');
         $sheet->getStyle('A1')->applyFromArray([
-            'font' => ['bold' => true, 'size' => 13, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E3A5F']],
+            'font'      => ['bold' => true, 'size' => 13, 'color' => ['rgb' => 'FFFFFF']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E3A5F']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        ]);
+        $sheet->getRowDimension(1)->setRowHeight(24);
+
+        $sheet->setCellValue('A2', 'Estado');
+        $sheet->setCellValue('B2', 'Total');
+        $sheet->setCellValue('C2', 'Naturales');
+        $sheet->setCellValue('D2', 'Jurídicas');
+        $sheet->getStyle('A2:D2')->applyFromArray([
+            'font'      => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '2563EB']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
         ]);
 
-        $sheet->setCellValue('A2', 'Mes');
-        $sheet->setCellValue('B2', 'Total Inscritos');
-        $sheet->setCellValue('C2', '% del Total');
-        $sheet->getStyle('A2:C2')->applyFromArray([
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '2563EB']],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-        ]);
+        $fila  = 3;
+        $estados = [
+            'activo'    => ['label' => 'Activos',    'color' => '16A34A'],
+            'pendiente' => ['label' => 'Pendientes', 'color' => 'D97706'],
+            'rechazado' => ['label' => 'Rechazados', 'color' => 'DC2626'],
+        ];
 
-        $porMes = $clientes->groupBy(fn($c) => $c->created_at->format('Y-m'))
-            ->map->count()
-            ->sortKeys();
-
-        $total = $clientes->count();
-        $fila = 3;
-
-        foreach ($porMes as $mes => $cantidad) {
-            $porcentaje = $total > 0 ? round(($cantidad / $total) * 100, 2) : 0;
-            $sheet->setCellValue("A{$fila}", $mes);
-            $sheet->setCellValue("B{$fila}", $cantidad);
-            $sheet->setCellValue("C{$fila}", "{$porcentaje}%");
+        foreach ($estados as $estado => $cfg) {
+            $sheet->setCellValue("A{$fila}", $cfg['label']);
+            $sheet->setCellValue("B{$fila}", $clientes->where('estado', $estado)->count());
+            $sheet->setCellValue("C{$fila}", $naturales->where('estado', $estado)->count());
+            $sheet->setCellValue("D{$fila}", $juridicas->where('estado', $estado)->count());
+            $sheet->getStyle("A{$fila}")->getFont()->getColor()->setRGB($cfg['color']);
+            $sheet->getStyle("A{$fila}")->getFont()->setBold(true);
+            $sheet->getStyle("A{$fila}:D{$fila}")->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D1D5DB']]],
+            ]);
             $fila++;
         }
 
-        $sheet->getStyle("A{$fila}:C{$fila}")->getFont()->setBold(true);
         $sheet->setCellValue("A{$fila}", 'TOTAL');
         $sheet->setCellValue("B{$fila}", $total);
-        $sheet->setCellValue("C{$fila}", '100%');
+        $sheet->setCellValue("C{$fila}", $naturales->count());
+        $sheet->setCellValue("D{$fila}", $juridicas->count());
+        $sheet->getStyle("A{$fila}:D{$fila}")->applyFromArray([
+            'font'    => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill'    => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E3A5F']],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'FFFFFF']]],
+        ]);
 
-        $sheet->getColumnDimension('A')->setWidth(14);
-        $sheet->getColumnDimension('B')->setWidth(18);
+        $sheet->getColumnDimension('A')->setWidth(16);
+        $sheet->getColumnDimension('B')->setWidth(12);
         $sheet->getColumnDimension('C')->setWidth(14);
+        $sheet->getColumnDimension('D')->setWidth(14);
     }
+    private function construirEmailHtml($clientes): string{
+        $totalHoy  = $clientes->count();
+        $naturales = $clientes->where('tipo_persona', 'natural')->count();
+        $juridicas = $clientes->where('tipo_persona', 'juridica')->count();
 
-    private function construirEmailHtml($totalHoy, $clientes): string
-    {
+        // Rango de fechas del conjunto
+        $desde = $clientes->min('created_at')?->format('d/m/Y') ?? now()->format('d/m/Y');
+        $hasta = $clientes->max('created_at')?->format('d/m/Y') ?? now()->format('d/m/Y');
+        $rangoLabel = $desde === $hasta ? $desde : "{$desde} — {$hasta}";
+
         $filas = $clientes->take(20)->map(fn($c) => "
             <tr>
                 <td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;'>{$c->nombre} {$c->apellidos}</td>
                 <td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;'>{$c->email}</td>
                 <td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;'>" . ucfirst($c->tipo_persona) . "</td>
                 <td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;'>" . ucfirst($c->estado) . "</td>
-                <td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;'>{$c->created_at->format('H:i')}</td>
+                <td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;'>{$c->created_at->format('d/m/Y h:i:s A')}</td>
             </tr>")->implode('');
 
         $nota = $clientes->count() > 20
@@ -485,12 +421,18 @@ class ReportesClientesController extends Controller
         return "
         <div style='font-family:Arial,sans-serif;max-width:700px;margin:0 auto;'>
             <div style='background:#1E3A5F;color:#fff;padding:24px;border-radius:8px 8px 0 0;'>
-                <h2 style='margin:0;'>📊 Reporte Diario de Inscritos</h2>
-                <p style='margin:4px 0 0;opacity:.8;'>" . now()->format('d/m/Y') . "</p>
+                <h2 style='margin:0;'>📊 Reporte de Inscritos</h2>
+                <p style='margin:4px 0 0;opacity:.8;font-size:14px;'>{$rangoLabel}</p>
             </div>
-            <div style='background:#f8faff;padding:20px;'>
-                <div style='background:#2563EB;color:#fff;display:inline-block;padding:12px 24px;border-radius:8px;font-size:28px;font-weight:bold;'>
-                    {$totalHoy} inscritos hoy
+            <div style='background:#f8faff;padding:20px;display:flex;gap:16px;flex-wrap:wrap;'>
+                <div style='background:#2563EB;color:#fff;padding:12px 24px;border-radius:8px;font-size:24px;font-weight:bold;text-align:center;'>
+                    {$totalHoy}<br><span style='font-size:13px;font-weight:normal;'>Total período</span>
+                </div>
+                <div style='background:#0369A1;color:#fff;padding:12px 24px;border-radius:8px;font-size:24px;font-weight:bold;text-align:center;'>
+                    {$naturales}<br><span style='font-size:13px;font-weight:normal;'>Naturales</span>
+                </div>
+                <div style='background:#7C3AED;color:#fff;padding:12px 24px;border-radius:8px;font-size:24px;font-weight:bold;text-align:center;'>
+                    {$juridicas}<br><span style='font-size:13px;font-weight:normal;'>Jurídicas</span>
                 </div>
             </div>
             <table style='width:100%;border-collapse:collapse;'>
@@ -500,7 +442,7 @@ class ReportesClientesController extends Controller
                         <th style='padding:8px 10px;text-align:left;'>Email</th>
                         <th style='padding:8px 10px;text-align:left;'>Tipo</th>
                         <th style='padding:8px 10px;text-align:left;'>Estado</th>
-                        <th style='padding:8px 10px;text-align:left;'>Hora</th>
+                        <th style='padding:8px 10px;text-align:left;'>Fecha y Hora</th>
                     </tr>
                 </thead>
                 <tbody>{$filas}</tbody>
