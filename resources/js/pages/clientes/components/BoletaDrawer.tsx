@@ -19,6 +19,10 @@ interface BoletaDrawerProps {
     onClose: () => void
 }
 
+function isPdf(url: string) {
+    return url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('application/pdf')
+}
+
 export function BoletaDrawer({ boleta, open, onClose }: BoletaDrawerProps) {
     if (!boleta) return null
 
@@ -91,24 +95,49 @@ export function BoletaDrawer({ boleta, open, onClose }: BoletaDrawerProps) {
                             <IconPhoto className="size-3" /> Comprobante
                         </span>
                         {boleta.archivo_url ? (
-                            <div className="relative group overflow-hidden rounded-lg border bg-muted">
-                                <img
-                                    src={boleta.archivo_url}
-                                    alt="Comprobante de boleta"
-                                    className="w-full object-contain max-h-64 transition-transform group-hover:scale-105"
-                                />
-                                <a
-                                    href={boleta.archivo_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <Button size="sm" variant="secondary">
-                                        <IconExternalLink className="size-4 mr-1" />
-                                        Ver completo
-                                    </Button>
-                                </a>
-                            </div>
+                            isPdf(boleta.archivo_url) ? (
+                                // PDF → mostrar en iframe
+                                <div className="flex flex-col gap-2">
+                                    <div className="rounded-lg border overflow-hidden bg-muted">
+                                        <iframe
+                                            src={boleta.archivo_url}
+                                            title="Comprobante PDF"
+                                            className="w-full h-64"
+                                        />
+                                    </div>
+                                    <a
+                                        href={boleta.archivo_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="w-full"
+                                    >
+                                        <Button size="sm" variant="outline" className="w-full">
+                                            <IconExternalLink className="size-4 mr-1" />
+                                            Abrir PDF completo
+                                        </Button>
+                                    </a>
+                                </div>
+                            ) : (
+                                // Imagen → comportamiento original
+                                <div className="relative group overflow-hidden rounded-lg border bg-muted">
+                                    <img
+                                        src={boleta.archivo_url}
+                                        alt="Comprobante de boleta"
+                                        className="w-full object-contain max-h-64 transition-transform group-hover:scale-105"
+                                    />
+                                    <a
+                                        href={boleta.archivo_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <Button size="sm" variant="secondary">
+                                            <IconExternalLink className="size-4 mr-1" />
+                                            Ver completo
+                                        </Button>
+                                    </a>
+                                </div>
+                            )
                         ) : (
                             <div className="flex items-center justify-center h-32 rounded-lg border border-dashed bg-muted text-muted-foreground text-sm">
                                 Sin comprobante adjunto

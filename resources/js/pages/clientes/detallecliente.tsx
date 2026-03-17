@@ -8,7 +8,7 @@ import { ClienteSectionCards } from './components/ClienteSectionCards'
 import { BoletasTable } from './components/BoletasTable'
 import { tipoPersonaLabel } from './utils'
 import type { Cliente, Boleta, PaginatedResponse } from './types'
-import { IconArrowLeft, IconUser, IconBuilding, IconMailCheck } from '@tabler/icons-react'
+import { IconArrowLeft, IconUser, IconBuilding, IconMailCheck, IconMailX, IconCopy, IconCheck } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
@@ -16,15 +16,25 @@ import { IconLoader2 } from '@tabler/icons-react'
 
 interface Props {
     clienteId: string
+    verificationUrl: string | null
 }
 
-export default function DetalleCliente({ clienteId }: Props) {
+export default function DetalleCliente({ clienteId, verificationUrl }: Props) {
     const [cliente, setCliente]     = React.useState<Cliente | null>(null)
     const [boletas, setBoletas]     = React.useState<PaginatedResponse<Boleta> | null>(null)
     const [loadingC, setLoadingC]   = React.useState(true)
     const [loadingB, setLoadingB]   = React.useState(true)
     const [boletaPage, setBoletaPage]     = React.useState(1)
     const [boletaEstado, setBoletaEstado] = React.useState('')
+    const [copied, setCopied]       = React.useState(false)
+
+    const handleCopy = () => {
+        if (!verificationUrl) return
+        navigator.clipboard.writeText(verificationUrl).then(() => {
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        })
+    }
 
     // Cargar datos del cliente desde la lista
     React.useEffect(() => {
@@ -105,13 +115,45 @@ export default function DetalleCliente({ clienteId }: Props) {
                                 <Label className="text-xs text-muted-foreground">Estado</Label>
                                 <p className="mt-1 font-medium text-sm capitalize">{cliente.estado}</p>
                             </div>
-                            <div className="rounded-lg border bg-card p-4">
+
+                            {/* Email verificado — ocupa más espacio si hay URL */}
+                            <div className={`rounded-lg border bg-card p-4 ${verificationUrl ? 'col-span-2 sm:col-span-3 lg:col-span-2' : ''}`}>
                                 <Label className="text-xs text-muted-foreground">Email verificado</Label>
-                                <p className="mt-1 text-sm flex items-center gap-1.5">
-                                    {cliente.email_verificado
-                                        ? <><IconMailCheck className="size-4 text-emerald-500" /> <span className="font-medium text-emerald-600">Sí</span></>
-                                        : <span className="text-muted-foreground">No</span>}
-                                </p>
+                                {cliente.email_verificado ? (
+                                    <p className="mt-1 text-sm flex items-center gap-1.5">
+                                        <IconMailCheck className="size-4 text-emerald-500" />
+                                        <span className="font-medium text-emerald-600">Sí</span>
+                                    </p>
+                                ) : verificationUrl ? (
+                                    <div className="mt-2 flex flex-col gap-2">
+                                        <p className="text-sm flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium">
+                                            <IconMailX className="size-4" />
+                                            No verificado
+                                        </p>
+                                        <div className="flex items-center gap-2 rounded-md border bg-muted px-2 py-1.5">
+                                            <span className="flex-1 truncate font-mono text-xs text-muted-foreground select-all">
+                                                {verificationUrl}
+                                            </span>
+                                            <button
+                                                onClick={handleCopy}
+                                                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                                                title="Copiar enlace"
+                                            >
+                                                {copied
+                                                    ? <IconCheck className="size-4 text-emerald-500" />
+                                                    : <IconCopy className="size-4" />}
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            Copia el enlace y envíaselo al cliente para verificar su email.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <p className="mt-1 text-sm flex items-center gap-1.5">
+                                        <IconMailX className="size-4 text-amber-500" />
+                                        <span className="text-muted-foreground">No verificado</span>
+                                    </p>
+                                )}
                             </div>
                         </div>
 

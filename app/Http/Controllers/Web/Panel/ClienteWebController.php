@@ -16,8 +16,15 @@ class ClienteWebController extends Controller{
     public function show(string $id): Response{
         $cliente = Cliente::findOrFail($id);
         Gate::authorize('view', $cliente);
+        $verificationUrl = null;
+        if (! $cliente->email_verified_at && $cliente->email_verification_token) {
+            $verificationUrl = rtrim(config('app.frontend_url'), '/')
+                . '/promo-concierto/email/verify/'
+                . $cliente->email_verification_token;
+        }
         return Inertia::render('clientes/detallecliente', [
-            'clienteId' => $cliente->id,
+            'clienteId'       => $cliente->id,
+            'verificationUrl' => $verificationUrl,
         ]);
     }
 }
