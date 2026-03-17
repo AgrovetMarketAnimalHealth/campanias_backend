@@ -64,7 +64,7 @@ import type { Boleta, BoletaFiltros, BoletaPaginado, EstadoBoleta } from '../typ
 
 // ─── Drag Handle ─────────────────────────────────────────────────────────────
 
-function DragHandle({ id }: { id: number }) {
+function DragHandle({ id }: { id: string }) {
     const { attributes, listeners } = useSortable({ id });
     return (
         <Button
@@ -127,6 +127,7 @@ export function BoletasDataTable() {
     const [searchInput, setSearchInput] = React.useState('');
     const searchTimeout = React.useRef<ReturnType<typeof setTimeout>>();
     const sortableId = React.useId();
+    const abortControllerRef = React.useRef<AbortController | null>(null);
 
     const sensors = useSensors(
         useSensor(MouseSensor, {}),
@@ -135,11 +136,22 @@ export function BoletasDataTable() {
     );
 
     const fetchData = React.useCallback(async (params: BoletaFiltros) => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+
         setLoading(true);
         try {
-            const data = await boletaService.index(params);
+            const sendParams: Partial<BoletaFiltros> = { ...params };
+            if (!sendParams.estado || (sendParams.estado as string) === 'todos') {
+                delete sendParams.estado;
+            }
+
+            const data = await boletaService.index(sendParams);
             setPaginado(data);
-        } catch {
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name === 'AbortError') return;
             toast.error('Error al cargar las boletas');
         } finally {
             setLoading(false);
@@ -197,6 +209,17 @@ export function BoletasDataTable() {
         }
     }
 
+    // ── Paginación: fuente de verdad = meta del servidor ──────────────────────
+    const currentPage = paginado?.meta.current_page ?? 1;
+    const lastPage    = paginado?.meta.last_page    ?? 1;
+    const totalItems  = paginado?.meta.total        ?? 0;
+    const fromItem    = paginado?.meta.from         ?? 0;
+    const toItem      = paginado?.meta.to           ?? 0;
+
+    const goToPage = (page: number) => {
+        setFiltros(f => ({ ...f, page }));
+    };
+
     const boletas = paginado?.data ?? [];
 
     const columns: ColumnDef<Boleta>[] = [
@@ -242,7 +265,9 @@ export function BoletasDataTable() {
             header: 'N° Comprobante',
             cell: ({ row }) => (
                 <span className="font-mono text-xs">
-                    {row.original.numero_boleta || <span className="text-muted-foreground">—</span>}
+                    {row.original.numero_boleta
+                        ? row.original.numero_boleta
+                        : <span className="text-muted-foreground">—</span>}
                 </span>
             ),
         },
@@ -358,7 +383,7 @@ export function BoletasDataTable() {
         getCoreRowModel: getCoreRowModel(),
         manualPagination: true,
         manualFiltering: true,
-        pageCount: paginado?.last_page ?? 1,
+        pageCount: lastPage,
     });
 
     return (
@@ -377,7 +402,7 @@ export function BoletasDataTable() {
 
                 <div className="flex flex-col gap-1">
                     <Label className="text-xs text-muted-foreground">Estado</Label>
-                    <Select value={filtros.estado} onValueChange={handleEstado}>
+                    <Select value={filtros.estado || 'todos'} onValueChange={handleEstado}>
                         <SelectTrigger size="sm" className="w-36">
                             <SelectValue />
                         </SelectTrigger>
@@ -392,11 +417,21 @@ export function BoletasDataTable() {
 
                 <div className="flex flex-col gap-1">
                     <Label className="text-xs text-muted-foreground">Desde</Label>
-                    <Input type="date" className="h-8 w-36 text-sm" value={filtros.fecha_desde} onChange={e => handleFecha('fecha_desde', e.target.value)} />
+                    <Input
+                        type="date"
+                        className="h-8 w-36 text-sm"
+                        value={filtros.fecha_desde}
+                        onChange={e => handleFecha('fecha_desde', e.target.value)}
+                    />
                 </div>
                 <div className="flex flex-col gap-1">
                     <Label className="text-xs text-muted-foreground">Hasta</Label>
-                    <Input type="date" className="h-8 w-36 text-sm" value={filtros.fecha_hasta} onChange={e => handleFecha('fecha_hasta', e.target.value)} />
+                    <Input
+                        type="date"
+                        className="h-8 w-36 text-sm"
+                        value={filtros.fecha_hasta}
+                        onChange={e => handleFecha('fecha_hasta', e.target.value)}
+                    />
                 </div>
 
                 <div className="ml-auto">
@@ -479,8 +514,8 @@ export function BoletasDataTable() {
                 <div className="flex items-center justify-between px-4 lg:px-6">
                     <div className="text-sm text-muted-foreground hidden lg:block">
                         {table.getFilteredSelectedRowModel().rows.length > 0
-                            ? `${table.getFilteredSelectedRowModel().rows.length} de ${paginado.total} seleccionadas`
-                            : `Mostrando ${paginado.from ?? 0}–${paginado.to ?? 0} de ${paginado.total} boletas`}
+                            ? `${table.getFilteredSelectedRowModel().rows.length} de ${totalItems} seleccionadas`
+                            : `Mostrando ${fromItem}–${toItem} de ${totalItems} boletas`}
                     </div>
                     <div className="flex w-full items-center gap-6 lg:w-fit">
                         <div className="hidden items-center gap-2 lg:flex">
@@ -501,28 +536,36 @@ export function BoletasDataTable() {
                         </div>
 
                         <div className="flex items-center text-sm font-medium">
-                            Página {paginado.current_page} de {paginado.last_page}
+                            Página {currentPage} de {lastPage}
                         </div>
 
                         <div className="ml-auto flex items-center gap-2 lg:ml-0">
-                            <Button variant="outline" size="icon" className="hidden size-8 lg:flex"
-                                onClick={() => setFiltros(f => ({ ...f, page: 1 }))}
-                                disabled={paginado.current_page === 1}>
+                            <Button
+                                variant="outline" size="icon" className="hidden size-8 lg:flex"
+                                onClick={() => goToPage(1)}
+                                disabled={loading || currentPage === 1}
+                            >
                                 <IconChevronsLeft className="size-4" />
                             </Button>
-                            <Button variant="outline" size="icon" className="size-8"
-                                onClick={() => setFiltros(f => ({ ...f, page: f.page - 1 }))}
-                                disabled={paginado.current_page === 1}>
+                            <Button
+                                variant="outline" size="icon" className="size-8"
+                                onClick={() => goToPage(currentPage - 1)}
+                                disabled={loading || currentPage === 1}
+                            >
                                 <IconChevronLeft className="size-4" />
                             </Button>
-                            <Button variant="outline" size="icon" className="size-8"
-                                onClick={() => setFiltros(f => ({ ...f, page: f.page + 1 }))}
-                                disabled={paginado.current_page === paginado.last_page}>
+                            <Button
+                                variant="outline" size="icon" className="size-8"
+                                onClick={() => goToPage(currentPage + 1)}
+                                disabled={loading || currentPage === lastPage}
+                            >
                                 <IconChevronRight className="size-4" />
                             </Button>
-                            <Button variant="outline" size="icon" className="hidden size-8 lg:flex"
-                                onClick={() => setFiltros(f => ({ ...f, page: paginado.last_page }))}
-                                disabled={paginado.current_page === paginado.last_page}>
+                            <Button
+                                variant="outline" size="icon" className="hidden size-8 lg:flex"
+                                onClick={() => goToPage(lastPage)}
+                                disabled={loading || currentPage === lastPage}
+                            >
                                 <IconChevronsRight className="size-4" />
                             </Button>
                         </div>

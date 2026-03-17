@@ -4,258 +4,137 @@
 <meta charset="UTF-8"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: DejaVu Sans, sans-serif;
-    font-size: 9px;
-    background: #fff;
-  }
-
-  /* Página: 3 columnas x 5 filas = 15 boletos por hoja A4 */
-  .pagina {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 6mm;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(5, 1fr);
-    gap: 3mm;
-    page-break-after: always;
-  }
-
-  .boleto {
-    border: 1.5px dashed #aaa;
-    border-radius: 6px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    height: 54mm;
-    position: relative;
-  }
-
-  /* Franja lateral tipo/color */
-  .boleto.natural  { border-left: 4px solid #2563eb; }
-  .boleto.juridica { border-left: 4px solid #d97706; }
-
-  /* Cabecera con logo */
-  .boleto__header {
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 3mm 3mm 2mm;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2mm;
-  }
-
-  .boleto__logo {
-    height: 14mm;
-    display: flex;
-    align-items: center;
-  }
-
-  .boleto__logo img {
-    max-height: 100%;
-    max-width: 22mm;
-    object-fit: contain;
-  }
-
-  .boleto__num {
-    text-align: right;
-    line-height: 1.3;
-  }
-
-  .boleto__num .num-label {
-    font-size: 6px;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: .3px;
-    display: block;
-  }
-
-  .boleto__num .num-value {
-    font-size: 11px;
-    font-weight: 700;
-    color: #1e293b;
-  }
-
-  /* Cuerpo del boleto */
-  .boleto__body {
-    padding: 2mm 3mm;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .boleto__nombre {
-    font-size: 9.5px;
-    font-weight: 700;
-    color: #1e293b;
-    line-height: 1.2;
-    margin-bottom: 1.5mm;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .boleto__datos {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1mm 2mm;
-  }
-
-  .dato {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.2;
-  }
-
-  .dato__lbl {
-    font-size: 6px;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: .2px;
-  }
-
-  .dato__val {
-    font-size: 7.5px;
-    color: #334155;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Pie: puntos y contador */
-  .boleto__footer {
-    padding: 1.5mm 3mm;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid #e2e8f0;
-  }
-
-  .boleto.natural  .boleto__footer { background: #eff6ff; }
-  .boleto.juridica .boleto__footer { background: #fffbeb; }
-
-  .footer__sorteo {
-    font-size: 6.5px;
-    color: #64748b;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .3px;
-  }
-
-  .footer__pts {
-    font-size: 7px;
-    font-weight: 700;
-  }
-
-  .boleto.natural  .footer__pts { color: #2563eb; }
-  .boleto.juridica .footer__pts { color: #d97706; }
-
-  /* Instrucción de recorte */
-  .recortar-tip {
-    text-align: center;
-    font-size: 7px;
-    color: #cbd5e1;
-    margin: 1mm 0 0;
-    letter-spacing: .5px;
-    text-transform: uppercase;
-  }
+  body { font-family: DejaVu Sans, sans-serif; background: #fff; color: #000; margin: 2mm; }
+  .pagina { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .pagina > tbody > tr > td { width: 33.33%; vertical-align: top; padding: 0.6mm; }
+  .ticket { width: 100%; border: 0.5px solid #7B2FBE; }
+  .talon-head { background: #7B2FBE; padding: 1.8mm 1mm; text-align: center; position: relative; }
+  .talon-head img { height: 5mm; max-width: 22mm; filter: brightness(0) invert(1); display: block; margin: 0 auto; }
+  .talon-head-txt { font-size: 14px; font-weight: 800; color: #fff; letter-spacing: 2px; text-transform: uppercase; display: block; line-height: 1; }
+  .pts-badge { position: absolute; top: 0.6mm; right: 0.6mm; background: #F0C040; color: #5A1F8A; font-size: 11px; font-weight: 800; padding: 0.8mm 1.2mm; white-space: nowrap; line-height: 1.2; }
+  .t-tipo-wrap { background: #EDD9FA; text-align: center; border-bottom: 0.3px solid #C9A0E8; border-top: 0.3px solid #C9A0E8; padding: 1mm 0; line-height: 1; }
+  .t-tipo { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #5A1F8A; line-height: 1; display: block; }
+  .talon-body { padding: 1.8mm 1.5mm 1mm; }
+  .t-campo { margin-bottom: 1.5mm; padding-bottom: 1.2mm; border-bottom: 0.3px solid #EAE0FA; }
+  .t-campo:last-child { border-bottom: none; margin-bottom: 0; }
+  .t-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.2px; color: #aaa; display: block; line-height: 1.2; }
+  .t-val { font-size: 11px; font-weight: 700; color: #111; display: block; white-space: normal; word-break: break-word; line-height: 1.3; }
+  .t-val-sm { font-size: 10px; font-weight: 600; color: #111; display: block; white-space: normal; word-break: break-word; line-height: 1.3; }
+  .t-footer { border-top: 2.5px dashed #C9A0E8; margin-top: 1.2mm; padding: 1.5mm 0 1.8mm; background: #F5EEFF; text-align: center; }
+  .t-cod-lbl { font-size: 10px; text-transform: uppercase; color: #aaa; display: block; line-height: 1.3; letter-spacing: 0.3px; }
+  .t-cod-val { font-size: 16px; font-weight: 800; color: #7B2FBE; display: block; letter-spacing: 0.5px; line-height: 1.4; }
+  .t-cod-sub { font-size: 10px; color: #bbb; display: block; line-height: 1.3; }
 </style>
 </head>
 <body>
 
 @php
-  $porPagina = 15; // 3 columnas x 5 filas
+  $todos = [];
+  foreach ($puntos as $registro) {
+      $cantidad = (int) ($registro->puntos ?? 0);
+      if ($cantidad <= 0) continue;
+      $cliente      = $registro->cliente;
+      $tipo         = strtolower($cliente->tipo_persona ?? 'natural');
+      $esJ          = $tipo === 'juridica';
+      $nombre       = trim(($cliente->nombre ?? '') . ' ' . ($cliente->apellidos ?? ''));
+      $razonSoc     = $cliente->razon_social ?? $nombre;
+      $docVal       = $esJ ? ($cliente->ruc ?? '-') : ($cliente->dni ?? '-');
+      $tipoLabel    = $esJ ? 'Persona Jurídica' : 'Persona Natural';
+      $codigoBoleta = $registro->boleta->codigo ?? '-';
+      $puntosTxt    = number_format((float)($registro->puntos ?? 0), 0) . ' pts';
+      $imagen       = $registro->imagen ?? '';
+      for ($i = 1; $i <= $cantidad; $i++) {
+          $todos[] = [
+              'tipoLabel'    => $tipoLabel,
+              'esJuridica'   => $esJ,
+              'nombre'       => $nombre,
+              'razonSoc'     => $razonSoc,
+              'docVal'       => $docVal,
+              'email'        => $cliente->email        ?? '-',
+              'telefono'     => $cliente->telefono     ?? '-',
+              'departamento' => $cliente->departamento ?? '-',
+              'codigo'       => $codigoBoleta,
+              'puntos'       => $puntosTxt,
+              'imagen'       => $imagen,
+              'tickNum'      => $i,
+              'tickTotal'    => $cantidad,
+          ];
+      }
+  }
+  // Una sola tabla continua — sin saltos forzados
+  while (count($todos) % 3 !== 0) { $todos[] = null; }
+  $filas = array_chunk($todos, 3);
 @endphp
 
-@foreach($puntos as $registro)
-  @php
-    $cantidad  = (int) $registro->puntos;  // puntos = cantidad de boletos
-    $tipo      = $registro->cliente->tipo ?? 'natural';
-    $nombre    = $tipo === 'juridica'
-                   ? ($registro->cliente->razon_social ?? $registro->cliente->nombre)
-                   : trim(($registro->cliente->nombre ?? '') . ' ' . ($registro->cliente->apellido ?? ''));
-    $doc       = $tipo === 'juridica'
-                   ? 'RUC: ' . ($registro->cliente->ruc ?? '-')
-                   : 'DNI: ' . ($registro->cliente->dni ?? '-');
-    $depto     = $registro->cliente->departamento ?? '-';
-    $email     = $registro->cliente->email ?? '-';
-    $telefono  = $registro->cliente->telefono ?? '-';
-    $imagen    = $registro->imagen ?? '';
-    $paginas   = (int) ceil($cantidad / $porPagina);
-  @endphp
-
-  {{-- Iterar páginas para este cliente --}}
-  @for($p = 0; $p < $paginas; $p++)
-    @php
-      $inicio = $p * $porPagina + 1;
-      $fin    = min(($p + 1) * $porPagina, $cantidad);
-    @endphp
-
-    <div class="pagina">
-      @for($b = $inicio; $b <= $fin; $b++)
-        <div class="boleto {{ $tipo }}">
-
-          {{-- Header --}}
-          <div class="boleto__header">
-            <div class="boleto__logo">
-              @if($imagen)
-                <img src="{{ $imagen }}" alt="logo"/>
-              @endif
-            </div>
-            <div class="boleto__num">
-              <span class="num-label">Boleto</span>
-              <span class="num-value">#{{ str_pad($b, 4, '0', STR_PAD_LEFT) }}</span>
-            </div>
-          </div>
-
-          {{-- Body --}}
-          <div class="boleto__body">
-            <div class="boleto__nombre">{{ $nombre }}</div>
-            <div class="boleto__datos">
-              <div class="dato">
-                <span class="dato__lbl">{{ $tipo === 'juridica' ? 'RUC' : 'DNI' }}</span>
-                <span class="dato__val">{{ $tipo === 'juridica' ? ($registro->cliente->ruc ?? '-') : ($registro->cliente->dni ?? '-') }}</span>
-              </div>
-              <div class="dato">
-                <span class="dato__lbl">Departamento</span>
-                <span class="dato__val">{{ $depto }}</span>
-              </div>
-              <div class="dato">
-                <span class="dato__lbl">Teléfono</span>
-                <span class="dato__val">{{ $telefono }}</span>
-              </div>
-              <div class="dato">
-                <span class="dato__lbl">Email</span>
-                <span class="dato__val">{{ $email }}</span>
-              </div>
-            </div>
-          </div>
-
-          {{-- Footer --}}
-          <div class="boleto__footer">
-            <span class="footer__sorteo">✂ Sorteo Promo</span>
-            <span class="footer__pts">{{ $b }} / {{ $cantidad }} boletos</span>
-          </div>
-
-        </div>
-      @endfor
-
-      {{-- Rellenar celdas vacías si la última página no está completa --}}
-      @if($fin < ($p + 1) * $porPagina)
-        @for($v = $fin + 1; $v <= ($p + 1) * $porPagina; $v++)
-          <div></div>
-        @endfor
+<table class="pagina">
+<tbody>
+@foreach($filas as $fila)
+<tr>
+  @foreach($fila as $tick)
+  <td>
+  @if($tick !== null)
+  <div class="ticket">
+    <div class="talon-head">
+      @if($tick['imagen'])
+        <img src="{{ $tick['imagen'] }}" alt="logo"/>
+      @else
+        <span class="talon-head-txt">ATREVIA</span>
       @endif
-
-    </div>{{-- .pagina --}}
-  @endfor
-
+      <span class="pts-badge">★ {{ $tick['puntos'] }}</span>
+    </div>
+    <div class="t-tipo-wrap">
+      <span class="t-tipo">{{ $tick['tipoLabel'] }}</span>
+    </div>
+    <div class="talon-body">
+      @if($tick['esJuridica'])
+        <div class="t-campo">
+          <span class="t-lbl">Razón Social</span>
+          <span class="t-val">{{ $tick['razonSoc'] }}</span>
+        </div>
+        <div class="t-campo">
+          <span class="t-lbl">RUC</span>
+          <span class="t-val">{{ $tick['docVal'] }}</span>
+        </div>
+        <div class="t-campo">
+          <span class="t-lbl">Rep. Legal</span>
+          <span class="t-val">{{ $tick['nombre'] }}</span>
+        </div>
+      @else
+        <div class="t-campo">
+          <span class="t-lbl">Nombre</span>
+          <span class="t-val">{{ $tick['nombre'] }}</span>
+        </div>
+        <div class="t-campo">
+          <span class="t-lbl">DNI</span>
+          <span class="t-val">{{ $tick['docVal'] }}</span>
+        </div>
+      @endif
+      <div class="t-campo">
+        <span class="t-lbl">Teléfono</span>
+        <span class="t-val">{{ $tick['telefono'] }}</span>
+      </div>
+      <div class="t-campo">
+        <span class="t-lbl">Departamento</span>
+        <span class="t-val">{{ $tick['departamento'] }}</span>
+      </div>
+      <div class="t-campo">
+        <span class="t-lbl">Email</span>
+        <span class="t-val-sm">{{ $tick['email'] }}</span>
+      </div>
+      <div class="t-footer">
+        <span class="t-cod-lbl">N° Boleto</span>
+        <span class="t-cod-val">{{ $tick['codigo'] }}</span>
+        <span class="t-cod-sub">({{ $tick['tickNum'] }} de {{ $tick['tickTotal'] }})</span>
+      </div>
+    </div>
+  </div>
+  @endif
+  </td>
+  @endforeach
+</tr>
 @endforeach
+</tbody>
+</table>
 
 </body>
 </html>

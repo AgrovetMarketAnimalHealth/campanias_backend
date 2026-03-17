@@ -24,7 +24,22 @@ export const clienteService = {
         const filtered = Object.fromEntries(
             Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
         )
-        const { data } = await axios.get(`/promo-concierto/backoffice/cliente/${clienteId}/boletas`, { params: filtered })
+        const { data } = await axios.get(
+            `/promo-concierto/backoffice/cliente/${clienteId}/boletas`,
+            { params: filtered }
+        )
         return data
+    },
+
+    async updateCliente(
+        clienteId: string,
+        payload: Record<string, string>
+    ): Promise<Cliente> {
+        const { data } = await axios.put(
+            `/promo-concierto/backoffice/cliente/${clienteId}`,
+            payload
+        )
+        // El backend devuelve { data: Cliente } via ClienteResource
+        return data.data
     },
 }
