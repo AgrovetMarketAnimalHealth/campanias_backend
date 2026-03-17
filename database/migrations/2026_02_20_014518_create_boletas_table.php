@@ -13,8 +13,9 @@ return new class extends Migration
             $table->string('codigo')->unique();
             $table->string('archivo');
             $table->integer('puntos_otorgados')->default(0);
-            $table->string('numero_boleta')->default('0');        // ✅ cambiado a string
-            $table->decimal('monto', 10, 2)->default(0.00);       // ✅ nuevo campo monto
+            $table->string('numero_boleta')->default('0');
+            $table->string('ruc_veterinaria', 11)->nullable();
+            $table->decimal('monto', 10, 2)->default(0.00);
             $table->enum('estado', ['pendiente', 'aceptada', 'rechazada'])->default('pendiente');
             $table->text('observacion')->nullable();
             $table->uuid('created_by')->nullable();
@@ -25,6 +26,8 @@ return new class extends Migration
             $table->index('estado');
             $table->index('cliente_id');
             $table->index('created_at');
+            $table->index('ruc_veterinaria');
+            $table->unique(['numero_boleta', 'ruc_veterinaria'], 'unique_boleta_por_veterinaria');
         });
     }
 

@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Http\Requests\Admin\Boleta;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateBoletaRequest extends FormRequest
 {
@@ -18,23 +18,22 @@ class UpdateBoletaRequest extends FormRequest
         return [
             'estado' => ['required', 'in:aceptada,rechazada'],
 
-            'numero_boleta' => array_filter([
+            'ruc_veterinaria' => [
+                'required',
+                'string',
+                'size:11',
+                'regex:/^[0-9]{11}$/',
+            ],
+
+            'numero_boleta' => [
                 'required',
                 'string',
                 'max:100',
-                // Solo bloquea duplicados al ACEPTAR
-                // Al rechazar siempre se permite
-                $esAceptada
-                    ? Rule::unique('boletas', 'numero_boleta')
-                        ->ignore($this->route('boleta')->id)
-                        ->where(fn ($query) => $query->whereIn('estado', ['pendiente', 'aceptada']))
-                    : null,
-            ]),
+            ],
 
             'monto' => [
                 'required',
                 'numeric',
-                // Al aceptar exige mínimo 1000, al rechazar solo que sea positivo
                 $esAceptada ? 'min:1000' : 'min:0.01',
             ],
 
@@ -51,15 +50,17 @@ class UpdateBoletaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'numero_boleta.required' => 'El número de comprobante es obligatorio.',
-            'numero_boleta.unique'   => 'Este número de comprobante ya existe en el sistema.',
-            'monto.required'         => 'El monto es obligatorio.',
-            'monto.min'              => 'El monto mínimo para aceptar un comprobante es de S/ 1,000.',
-            'puntos.required_if'     => 'Los puntos son obligatorios al aceptar.',
-            'puntos.min'             => 'Los puntos deben ser mayor a 0.',
-            'puntos.integer'         => 'Los puntos deben ser números enteros.',
-            'observacion.required'   => 'La observación es obligatoria al rechazar.',
-            'observacion.max'        => 'La observación no puede superar los 1,000 caracteres.',
+            'ruc_veterinaria.required' => 'El RUC de la veterinaria es obligatorio.',
+            'ruc_veterinaria.size'     => 'El RUC debe tener exactamente 11 dígitos.',
+            'ruc_veterinaria.regex'    => 'El RUC solo debe contener números.',
+            'numero_boleta.required'   => 'El número de comprobante es obligatorio.',
+            'monto.required'           => 'El monto es obligatorio.',
+            'monto.min'                => 'El monto mínimo para aceptar un comprobante es de S/ 1,000.',
+            'puntos.required_if'       => 'Los puntos son obligatorios al aceptar.',
+            'puntos.min'               => 'Los puntos deben ser mayor a 0.',
+            'puntos.integer'           => 'Los puntos deben ser números enteros.',
+            'observacion.required'     => 'La observación es obligatoria al rechazar.',
+            'observacion.max'          => 'La observación no puede superar los 1,000 caracteres.',
         ];
     }
 

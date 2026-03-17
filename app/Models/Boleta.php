@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use App\Concerns\Traits\HasAuditFields;
@@ -22,6 +21,7 @@ class Boleta extends Model implements AuditableContract
         'archivo',
         'puntos_otorgados',
         'numero_boleta',
+        'ruc_veterinaria',
         'monto',
         'estado',
         'observacion',
@@ -34,6 +34,7 @@ class Boleta extends Model implements AuditableContract
         'created_by'       => 'string',
         'puntos_otorgados' => 'integer',
         'monto'            => 'decimal:2',
+        'ruc_veterinaria'  => 'string',
         'created_at'       => 'datetime',
         'updated_at'       => 'datetime',
         'deleted_at'       => 'datetime',
