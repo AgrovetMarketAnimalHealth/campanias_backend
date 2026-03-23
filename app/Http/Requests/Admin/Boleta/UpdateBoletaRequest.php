@@ -43,7 +43,6 @@ class UpdateBoletaRequest extends FormRequest
             'observacion' => [
                 !$esAceptada ? 'required' : 'nullable',
                 'string',
-                'max:1000',
             ],
         ];
     }
@@ -59,7 +58,6 @@ class UpdateBoletaRequest extends FormRequest
             'puntos.min'             => 'Los puntos deben ser mayor a 0.',
             'puntos.integer'         => 'Los puntos deben ser números enteros.',
             'observacion.required'   => 'La observación es obligatoria al rechazar.',
-            'observacion.max'        => 'La observación no puede superar los 1,000 caracteres.',
         ];
     }
 
