@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Panel;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\Cliente\UpdateClienteRequest;
 use App\Http\Resources\Boleta\BoletaResourceC;
 use App\Http\Resources\Cliente\ClienteResource;
 use App\Models\Cliente;
@@ -42,5 +43,18 @@ class ClienteAdminController extends Controller{
             ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 15);
         return BoletaResourceC::collection($boletas);
+    }
+    public function update(UpdateClienteRequest $request, Cliente $cliente): ClienteResource{
+        Gate::authorize('update', $cliente);
+        $data = $request->validated();
+        if (isset($data['email']) && $data['email'] !== $cliente->email) {
+            $data['email_verified_at'] = null;
+        }
+        $cliente->update($data);
+        return new ClienteResource($cliente);
+    }
+    public function show(Cliente $cliente): ClienteResource{
+        Gate::authorize('view', $cliente);
+        return new ClienteResource($cliente);
     }
 }

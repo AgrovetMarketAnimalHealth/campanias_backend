@@ -19,12 +19,12 @@ class BoletaController extends Controller
         private readonly BoletaService $boletaService
     ) {}
 
-    public function index(Request $request)
-    {
+    public function index(Request $request){
         Gate::authorize('viewAny', Boleta::class);
+
         $perPage    = $request->input('per_page', 15);
-        $search     = $request->input('search', '');
-        $estado     = $request->input('estado', 'pendiente');
+        $search     = $request->input('search');        // ✅ null por defecto
+        $estado     = $request->input('estado');        // ✅ null por defecto
         $fechaDesde = $request->input('fecha_desde');
         $fechaHasta = $request->input('fecha_hasta');
 
@@ -47,28 +47,27 @@ class BoletaController extends Controller
         return new BoletaResourceBackend($boleta);
     }
 
-    public function update(UpdateBoletaRequest $request, Boleta $boleta)
-    {
+    public function update(UpdateBoletaRequest $request, Boleta $boleta){
         Gate::authorize('update', $boleta);
         if ($request->estado === 'aceptada') {
             $this->boletaService->aceptar(
-                boleta:       $boleta,
-                puntos:       $request->puntos,
-                monto:        $request->monto,
-                numeroBoleta: $request->numero_boleta,
-                observacion:  $request->observacion,
+                boleta:         $boleta,
+                puntos:         $request->puntos,
+                monto:          $request->monto,
+                numeroBoleta:   $request->numero_boleta,
+                rucVeterinaria: $request->ruc_veterinaria,
+                observacion:    $request->observacion,
             );
         }
-
         if ($request->estado === 'rechazada') {
             $this->boletaService->rechazar(
-                boleta:       $boleta,
-                observacion:  $request->observacion,
-                monto:        $request->monto,
-                numeroBoleta: $request->numero_boleta,
+                boleta:         $boleta,
+                observacion:    $request->observacion,
+                monto:          $request->monto,
+                numeroBoleta:   $request->numero_boleta,
+                rucVeterinaria: $request->ruc_veterinaria,
             );
         }
-
         return new BoletaResourceBackend($boleta->fresh());
     }
 }

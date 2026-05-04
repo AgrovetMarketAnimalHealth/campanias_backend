@@ -61,8 +61,10 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
         });
 
         Route::prefix('cliente')->controller(ClienteAdminController::class)->group(function () {
-            Route::get('/',              'index')->name('panel.cliente.index');
-            Route::get('{cliente}/boletas',   'boletas')->name('panel.cliente.boletas');
+            Route::get('/',                    'index')   ->name('panel.cliente.index');
+            Route::get('{cliente}',            'show')    ->name('panel.cliente.show');
+            Route::put('{cliente}',            'update')  ->name('panel.cliente.update');
+            Route::get('{cliente}/boletas',    'boletas') ->name('panel.cliente.boletas');
         });
 
         Route::prefix('notificacion')->controller(NotificacionesController::class)->group(function () {

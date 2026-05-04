@@ -20,19 +20,24 @@ import {
 } from '@/components/ui/table'
 import {
     DropdownMenu, DropdownMenuContent,
-    DropdownMenuItem, DropdownMenuTrigger,
+    DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { clienteService } from '../services/clienteService'
+import { ClienteEditDrawer } from './ClienteEditDrawer'
 import { tipoPersonaLabel } from '../utils'
 import type { Cliente, PaginatedResponse, TipoPersona } from '../types'
 import clientes from '@/routes/clientes'
 
 export function ClientesTable() {
-    const [data, setData]           = React.useState<PaginatedResponse<Cliente> | null>(null)
-    const [loading, setLoading]     = React.useState(true)
-    const [search, setSearch]       = React.useState('')
-    const [tipoPersona, setTipo]    = React.useState<TipoPersona>('todas')
-    const [page, setPage]           = React.useState(1)
+    const [data, setData]         = React.useState<PaginatedResponse<Cliente> | null>(null)
+    const [loading, setLoading]   = React.useState(true)
+    const [search, setSearch]     = React.useState('')
+    const [tipoPersona, setTipo]  = React.useState<TipoPersona>('todas')
+    const [page, setPage]         = React.useState(1)
+
+    // Edit drawer
+    const [editCliente, setEditCliente]   = React.useState<Cliente | null>(null)
+    const [editOpen, setEditOpen]         = React.useState(false)
 
     React.useEffect(() => {
         const t = setTimeout(() => {
@@ -47,6 +52,21 @@ export function ClientesTable() {
 
     function goToDetalle(id: string) {
         router.visit(clientes.show(id).url)
+    }
+
+    function openEdit(cliente: Cliente) {
+        setEditCliente(cliente)
+        setEditOpen(true)
+    }
+
+    function handleUpdated(updated: Cliente) {
+        setData(prev => {
+            if (!prev) return prev
+            return {
+                ...prev,
+                data: prev.data.map(c => c.id === updated.id ? updated : c),
+            }
+        })
     }
 
     const columns: ColumnDef<Cliente>[] = [
@@ -98,9 +118,15 @@ export function ClientesTable() {
                 const { boletas_aceptadas, boletas_pendientes, boletas_rechazadas } = row.original
                 return (
                     <div className="flex items-center gap-1.5 text-xs">
-                        <span className="rounded-full px-2 py-0.5 font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">{boletas_aceptadas}</span>
-                        <span className="rounded-full px-2 py-0.5 font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">{boletas_pendientes}</span>
-                        <span className="rounded-full px-2 py-0.5 font-medium bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">{boletas_rechazadas}</span>
+                        <span className="rounded-full px-2 py-0.5 font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                            {boletas_aceptadas ?? 0}
+                        </span>
+                        <span className="rounded-full px-2 py-0.5 font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                            {boletas_pendientes ?? 0}
+                        </span>
+                        <span className="rounded-full px-2 py-0.5 font-medium bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">
+                            {boletas_rechazadas ?? 0}
+                        </span>
                     </div>
                 )
             },
@@ -114,6 +140,23 @@ export function ClientesTable() {
                     {row.original.total_puntos.toLocaleString()}
                 </span>
             ),
+        },
+        {
+            accessorKey: 'estado',
+            header: 'Estado',
+            cell: ({ row }) => {
+                const estado = row.original.estado
+                const color =
+                    estado === 'activo'    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' :
+                    estado === 'pendiente' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' :
+                    estado === 'rechazado' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' :
+                    'bg-muted text-muted-foreground'
+                return (
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${color}`}>
+                        {estado}
+                    </span>
+                )
+            },
         },
         {
             accessorKey: 'email_verificado',
@@ -131,9 +174,13 @@ export function ClientesTable() {
                             <IconDotsVertical className="size-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-32">
+                    <DropdownMenuContent align="end" className="w-36">
                         <DropdownMenuItem onClick={() => goToDetalle(row.original.id)}>
-                            Detalle
+                            Ver detalle
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => openEdit(row.original)}>
+                            Editar
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -153,101 +200,111 @@ export function ClientesTable() {
     const total    = data?.meta.total ?? 0
 
     return (
-        <div className="flex flex-col gap-4 px-4 lg:px-6">
-            {/* Filtros */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-1 rounded-lg border bg-muted p-1 w-fit">
-                    {(['todas', 'natural', 'juridica'] as TipoPersona[]).map((tipo) => (
-                        <button
-                            key={tipo}
-                            onClick={() => { setTipo(tipo); setPage(1) }}
-                            className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-all ${
-                                tipoPersona === tipo
-                                    ? 'bg-background shadow-sm text-foreground'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                        >
-                            {tipo === 'todas' ? 'Todas' : tipo === 'natural' ? 'Natural' : 'Jurídica'}
-                        </button>
-                    ))}
-                </div>
-                <div className="relative w-full sm:w-72">
-                    <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar nombre, dni, email..."
-                        className="pl-9"
-                        value={search}
-                        onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                    />
-                </div>
-            </div>
-
-            {/* Tabla */}
-            <div className="overflow-hidden rounded-lg border">
-                <Table>
-                    <TableHeader className="bg-muted sticky top-0 z-10">
-                        {table.getHeaderGroups().map((hg) => (
-                            <TableRow key={hg.id}>
-                                {hg.headers.map((header) => (
-                                    <TableHead key={header.id}>
-                                        {flexRender(header.column.columnDef.header, header.getContext())}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
+        <>
+            <div className="flex flex-col gap-4 px-4 lg:px-6">
+                {/* Filtros */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-1 rounded-lg border bg-muted p-1 w-fit">
+                        {(['todas', 'natural', 'juridica'] as TipoPersona[]).map((tipo) => (
+                            <button
+                                key={tipo}
+                                onClick={() => { setTipo(tipo); setPage(1) }}
+                                className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-all ${
+                                    tipoPersona === tipo
+                                        ? 'bg-background shadow-sm text-foreground'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                {tipo === 'todas' ? 'Todas' : tipo === 'natural' ? 'Natural' : 'Jurídica'}
+                            </button>
                         ))}
-                    </TableHeader>
-                    <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={columns.length} className="h-32 text-center">
-                                    <IconLoader2 className="size-5 animate-spin mx-auto text-muted-foreground" />
-                                </TableCell>
-                            </TableRow>
-                        ) : table.getRowModel().rows.length ? (
-                            table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id} className="hover:bg-muted/50">
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </TableCell>
+                    </div>
+                    <div className="relative w-full sm:w-72">
+                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar nombre, dni, email..."
+                            className="pl-9"
+                            value={search}
+                            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                        />
+                    </div>
+                </div>
+
+                {/* Tabla */}
+                <div className="overflow-hidden rounded-lg border">
+                    <Table>
+                        <TableHeader className="bg-muted sticky top-0 z-10">
+                            {table.getHeaderGroups().map((hg) => (
+                                <TableRow key={hg.id}>
+                                    {hg.headers.map((header) => (
+                                        <TableHead key={header.id}>
+                                            {flexRender(header.column.columnDef.header, header.getContext())}
+                                        </TableHead>
                                     ))}
                                 </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
-                                    No se encontraron clientes.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                            ))}
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} className="h-32 text-center">
+                                        <IconLoader2 className="size-5 animate-spin mx-auto text-muted-foreground" />
+                                    </TableCell>
+                                </TableRow>
+                            ) : table.getRowModel().rows.length ? (
+                                table.getRowModel().rows.map((row) => (
+                                    <TableRow key={row.id} className="hover:bg-muted/50">
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
+                                        No se encontraron clientes.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
 
-            {/* Paginación — usa meta.last_page y meta.total del JSON */}
-            <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                    {total} clientes — Página {page} de {lastPage}
-                </span>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" className="hidden size-8 lg:flex"
-                        disabled={page === 1} onClick={() => setPage(1)}>
-                        <IconChevronsLeft className="size-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" className="size-8"
-                        disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-                        <IconChevronLeft className="size-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" className="size-8"
-                        disabled={page === lastPage} onClick={() => setPage((p) => p + 1)}>
-                        <IconChevronRight className="size-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" className="hidden size-8 lg:flex"
-                        disabled={page === lastPage} onClick={() => setPage(lastPage)}>
-                        <IconChevronsRight className="size-4" />
-                    </Button>
+                {/* Paginación */}
+                <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                        {total} clientes — Página {page} de {lastPage}
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" className="hidden size-8 lg:flex"
+                            disabled={page === 1} onClick={() => setPage(1)}>
+                            <IconChevronsLeft className="size-4" />
+                        </Button>
+                        <Button variant="outline" size="icon" className="size-8"
+                            disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+                            <IconChevronLeft className="size-4" />
+                        </Button>
+                        <Button variant="outline" size="icon" className="size-8"
+                            disabled={page === lastPage} onClick={() => setPage((p) => p + 1)}>
+                            <IconChevronRight className="size-4" />
+                        </Button>
+                        <Button variant="outline" size="icon" className="hidden size-8 lg:flex"
+                            disabled={page === lastPage} onClick={() => setPage(lastPage)}>
+                            <IconChevronsRight className="size-4" />
+                        </Button>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            {/* Drawer edición — fuera del div para evitar z-index issues */}
+            <ClienteEditDrawer
+                cliente={editCliente}
+                open={editOpen}
+                onClose={() => setEditOpen(false)}
+                onUpdated={handleUpdated}
+            />
+        </>
     )
 }

@@ -5,6 +5,12 @@ const camposBase = {
         .string({ required_error: 'El número de comprobante es requerido' })
         .min(1, 'El número de comprobante es requerido')
         .max(100, 'Máximo 100 caracteres'),
+
+    ruc_veterinaria: z
+        .string({ required_error: 'El RUC de la veterinaria es requerido' })
+        .length(11, 'El RUC debe tener exactamente 11 dígitos')
+        .regex(/^[0-9]{11}$/, 'El RUC solo debe contener números'),
+
     monto: z
         .number({ invalid_type_error: 'El monto es requerido' })
         .min(0.01, 'El monto debe ser mayor a 0'),
@@ -12,6 +18,9 @@ const camposBase = {
 
 export const aceptarBoletaSchema = z.object({
     ...camposBase,
+    monto: z
+        .number({ invalid_type_error: 'El monto es requerido' })
+        .min(1000, 'El monto mínimo para aceptar es S/ 1,000'),
     puntos: z
         .number({ invalid_type_error: 'Los puntos son requeridos' })
         .int('Los puntos deben ser números enteros')

@@ -23,7 +23,7 @@ import type { Boleta } from '../types/boleta.types';
 import {
     IconUser, IconId, IconCalendar, IconFileText, IconPhoto,
     IconCircleCheckFilled, IconXboxX, IconReceipt, IconCurrencyDollar,
-    IconAlertCircle, IconCircleCheck,
+    IconAlertCircle, IconCircleCheck, IconBuildingStore,
 } from '@tabler/icons-react';
 
 interface Props {
@@ -54,7 +54,6 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
     const isPdf = (url: string) =>
         /\.pdf(\?.*)?$/i.test(url) || url.includes('/pdf');
 
-    // Limpia el feedback al cambiar de acción
     React.useEffect(() => { setFeedback(null); }, [accion]);
 
     function buildErrorDetails(errors: Record<string, string[]>): string[] {
@@ -63,12 +62,23 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
 
     const aceptarForm = useForm<AceptarBoletaForm>({
         resolver: zodResolver(aceptarBoletaSchema),
-        defaultValues: { numero_boleta: '', monto: undefined, puntos: undefined, observacion: '' },
+        defaultValues: {
+            numero_boleta: '',
+            ruc_veterinaria: '',
+            monto: undefined,
+            puntos: undefined,
+            observacion: '',
+        },
     });
 
     const rechazarForm = useForm<RechazarBoletaForm>({
         resolver: zodResolver(rechazarBoletaSchema),
-        defaultValues: { numero_boleta: '', monto: undefined, observacion: '' },
+        defaultValues: {
+            numero_boleta: '',
+            ruc_veterinaria: '',
+            monto: undefined,
+            observacion: '',
+        },
     });
 
     const handleAceptar = aceptarForm.handleSubmit(async (values) => {
@@ -77,6 +87,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
             const updated = await boletaService.update(boleta.id, {
                 estado: 'aceptada',
                 numero_boleta: values.numero_boleta,
+                ruc_veterinaria: values.ruc_veterinaria,
                 monto: values.monto,
                 puntos: values.puntos,
                 observacion: values.observacion,
@@ -99,6 +110,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
             const updated = await boletaService.update(boleta.id, {
                 estado: 'rechazada',
                 numero_boleta: values.numero_boleta,
+                ruc_veterinaria: values.ruc_veterinaria,
                 monto: values.monto,
                 observacion: values.observacion,
             });
@@ -114,7 +126,6 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
         }
     });
 
-    // Bloque de Alert reutilizable
     const FeedbackAlert = feedback ? (
         <Alert variant={feedback.type === 'error' ? 'destructive' : 'default'}>
             {feedback.type === 'error'
@@ -149,6 +160,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                 </DrawerHeader>
 
                 <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+
                     {/* Info cliente */}
                     <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
                         <div className="flex items-center gap-2 font-medium text-xs uppercase text-muted-foreground tracking-wide">
@@ -199,6 +211,12 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                             </div>
                             <div className="rounded-lg border p-3">
                                 <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                                    <IconBuildingStore className="size-3" /> RUC Veterinaria
+                                </p>
+                                <p className="font-mono text-sm">{boleta.ruc_veterinaria || '—'}</p>
+                            </div>
+                            <div className="rounded-lg border p-3 col-span-2">
+                                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                                     <IconCalendar className="size-3" /> Fecha
                                 </p>
                                 <p className="font-medium text-xs">{boleta.created_at}</p>
@@ -216,7 +234,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
 
                     <Separator />
 
-                    {/* Comprobante (imagen o PDF) */}
+                    {/* Comprobante */}
                     {boleta.archivo ? (
                         <div className="space-y-2">
                             <p className="text-xs text-muted-foreground flex items-center gap-1 uppercase tracking-wide font-medium">
@@ -247,6 +265,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                                     </>
                                 )}
                             </div>
+                            
                             <a
                                 href={boleta.archivo}
                                 target="_blank"
@@ -308,13 +327,34 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                                             )}
                                         </div>
                                         <div className="flex flex-col gap-1.5">
+                                            <Label htmlFor="ruc_vet_a">RUC Veterinaria *</Label>
+                                            <div className="relative">
+                                                <IconBuildingStore className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                                                <Input
+                                                    id="ruc_vet_a"
+                                                    placeholder="Ej: 20512345678"
+                                                    maxLength={11}
+                                                    className="pl-8"
+                                                    {...aceptarForm.register('ruc_veterinaria')}
+                                                />
+                                            </div>
+                                            {aceptarForm.formState.errors.ruc_veterinaria && (
+                                                <p className="text-xs text-destructive">
+                                                    {aceptarForm.formState.errors.ruc_veterinaria.message}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="flex flex-col gap-1.5">
                                             <Label htmlFor="monto_a">Monto (S/) *</Label>
                                             <Input
                                                 id="monto_a"
                                                 type="number"
                                                 step="0.01"
-                                                min="0.01"
-                                                placeholder="Ej: 1500.00"
+                                                min="1000"
+                                                placeholder="Mín: 1,000.00"
                                                 {...aceptarForm.register('monto', { valueAsNumber: true })}
                                             />
                                             {aceptarForm.formState.errors.monto && (
@@ -323,23 +363,24 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                                                 </p>
                                             )}
                                         </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <Label htmlFor="puntos_a">Puntos a otorgar *</Label>
+                                            <Input
+                                                id="puntos_a"
+                                                type="number"
+                                                step="1"
+                                                min="1"
+                                                placeholder="Ej: 3"
+                                                {...aceptarForm.register('puntos', { valueAsNumber: true })}
+                                            />
+                                            {aceptarForm.formState.errors.puntos && (
+                                                <p className="text-xs text-destructive">
+                                                    {aceptarForm.formState.errors.puntos.message}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <Label htmlFor="puntos_a">Puntos a otorgar *</Label>
-                                        <Input
-                                            id="puntos_a"
-                                            type="number"
-                                            step="1"
-                                            min="1"
-                                            placeholder="Ej: 3"
-                                            {...aceptarForm.register('puntos', { valueAsNumber: true })}
-                                        />
-                                        {aceptarForm.formState.errors.puntos && (
-                                            <p className="text-xs text-destructive">
-                                                {aceptarForm.formState.errors.puntos.message}
-                                            </p>
-                                        )}
-                                    </div>
+
                                     <div className="flex flex-col gap-1.5">
                                         <Label htmlFor="obs-aceptar">Observación (opcional)</Label>
                                         <Textarea
@@ -384,22 +425,42 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                                             )}
                                         </div>
                                         <div className="flex flex-col gap-1.5">
-                                            <Label htmlFor="monto_r">Monto (S/) *</Label>
-                                            <Input
-                                                id="monto_r"
-                                                type="number"
-                                                step="0.01"
-                                                min="0.01"
-                                                placeholder="Ej: 1500.00"
-                                                {...rechazarForm.register('monto', { valueAsNumber: true })}
-                                            />
-                                            {rechazarForm.formState.errors.monto && (
+                                            <Label htmlFor="ruc_vet_r">RUC Veterinaria *</Label>
+                                            <div className="relative">
+                                                <IconBuildingStore className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                                                <Input
+                                                    id="ruc_vet_r"
+                                                    placeholder="Ej: 20512345678"
+                                                    maxLength={11}
+                                                    className="pl-8"
+                                                    {...rechazarForm.register('ruc_veterinaria')}
+                                                />
+                                            </div>
+                                            {rechazarForm.formState.errors.ruc_veterinaria && (
                                                 <p className="text-xs text-destructive">
-                                                    {rechazarForm.formState.errors.monto.message}
+                                                    {rechazarForm.formState.errors.ruc_veterinaria.message}
                                                 </p>
                                             )}
                                         </div>
                                     </div>
+
+                                    <div className="flex flex-col gap-1.5">
+                                        <Label htmlFor="monto_r">Monto (S/) *</Label>
+                                        <Input
+                                            id="monto_r"
+                                            type="number"
+                                            step="0.01"
+                                            min="0.01"
+                                            placeholder="Ej: 1500.00"
+                                            {...rechazarForm.register('monto', { valueAsNumber: true })}
+                                        />
+                                        {rechazarForm.formState.errors.monto && (
+                                            <p className="text-xs text-destructive">
+                                                {rechazarForm.formState.errors.monto.message}
+                                            </p>
+                                        )}
+                                    </div>
+
                                     <div className="flex flex-col gap-1.5">
                                         <Label htmlFor="obs-rechazar">Motivo del rechazo *</Label>
                                         <Textarea
@@ -430,6 +491,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                             )}
                         </>
                     )}
+
                 </div>
 
                 <DrawerFooter>
@@ -437,6 +499,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                         <Button variant="outline">Cerrar</Button>
                     </DrawerClose>
                 </DrawerFooter>
+
             </DrawerContent>
         </Drawer>
     );

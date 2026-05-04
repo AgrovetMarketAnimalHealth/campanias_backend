@@ -10,9 +10,9 @@ class ClientePuntoResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'                   => $this->id,
+            'id'                   => $this->cliente_id,
             'imagen'               => asset('/promo-concierto/backoffice/img/logo-atrevia.webp'),
-            'puntos'               => $this->puntos,
+            'puntos'               => (int) $this->puntos,
             'cliente_id'           => $this->cliente_id,
             'cliente_tipo'         => $this->cliente->tipo_persona,
             'cliente_nom'          => $this->cliente->nombre,
@@ -22,6 +22,7 @@ class ClientePuntoResource extends JsonResource
             'cliente_email'        => $this->cliente->email,
             'cliente_departamento' => $this->cliente->departamento,
             'telefono'             => $this->cliente->telefono,
+            'cliente_estado'       => $this->cliente->estado,
         ];
     }
 }

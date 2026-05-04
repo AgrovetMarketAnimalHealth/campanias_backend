@@ -12,6 +12,7 @@ export interface Boleta {
     puntos_otorgados: number;
     monto: number;
     numero_boleta: string;
+    ruc_veterinaria: string | null;
     estado: EstadoBoleta;
     observacion: string;
     created_at: string;
@@ -20,12 +21,20 @@ export interface Boleta {
 
 export interface BoletaPaginado {
     data: Boleta[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    from: number;
-    to: number;
+    meta: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+        from: number;
+        to: number;
+    };
+    links: {
+        first: string | null;
+        last: string | null;
+        prev: string | null;
+        next: string | null;
+    };
 }
 
 export interface BoletaFiltros {
@@ -40,6 +49,7 @@ export interface BoletaFiltros {
 export interface UpdateBoletaPayload {
     estado: 'aceptada' | 'rechazada';
     numero_boleta: string;
+    ruc_veterinaria: string;
     monto: number;
     puntos?: number;
     observacion?: string;

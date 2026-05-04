@@ -17,14 +17,16 @@ class BoletaResourceBackend extends JsonResource
             'cliente_ruc'      => $this->cliente->ruc,
             'cliente_nom'      => $this->cliente->nombre . ' ' . $this->cliente->apellidos,
             'codigo'           => $this->codigo,
+            'numero_boleta'    => $this->numero_boleta,  // ✅ agregado
+            'monto'            => $this->monto,          // ✅ agregado
             'archivo'          => $this->resolverUrlArchivo(),
             'puntos_otorgados' => $this->puntos_otorgados ?? 0,
             'estado'           => $this->estado,
             'observacion'      => $this->observacion ?? '-',
             'created_at'       => Carbon::parse($this->created_at)->format('d-m-Y H:i:s A'),
             'updated_at'       => $this->updated_at
-                ? Carbon::parse($this->updated_at)->format('d-m-Y h:i:s A')
-                : null,
+                            ? Carbon::parse($this->updated_at)->format('d-m-Y h:i:s A')
+                            : null,
         ];
     }
 
