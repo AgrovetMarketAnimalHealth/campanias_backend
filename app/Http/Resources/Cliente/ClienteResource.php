@@ -26,6 +26,7 @@ class ClienteResource extends JsonResource
             'boletas_pendientes' => $this->boletas_pendientes,
             'boletas_rechazadas' => $this->boletas_rechazadas,
             'registrado_en'      => $this->created_at?->format('d/m/Y'),
+            'ganador'            => $this->ganador,
         ];
     }
 }

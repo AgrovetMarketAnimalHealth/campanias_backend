@@ -23,6 +23,7 @@ class ClientePuntoResource extends JsonResource
             'cliente_departamento' => $this->cliente->departamento,
             'telefono'             => $this->cliente->telefono,
             'cliente_estado'       => $this->cliente->estado,
+            'cliente_ganador'       => $this->cliente->ganador,
         ];
     }
 }

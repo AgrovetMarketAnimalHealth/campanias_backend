@@ -11,6 +11,7 @@ export interface Punto {
     cliente_email: string
     cliente_departamento: string
     telefono: string | null
+    cliente_ganador?: boolean
 }
 
 export interface PaginatedMeta {

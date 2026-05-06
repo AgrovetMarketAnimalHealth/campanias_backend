@@ -11,18 +11,17 @@ use Illuminate\Support\Facades\Storage;
 
 class ClientePuntoController extends Controller
 {
-    public function index(Request $request)
-    {
+    public function index(Request $request){
         $perPage = min((int) $request->input('per_page', 50), 200);
-
         $puntos = Boleta::with('cliente')
-            ->whereHas('cliente', fn($q) => $q->whereIn('estado', ['pendiente', 'activo']))
-            ->where('estado', 'aceptada')                   // solo boletas aceptadas dan puntos
-            ->selectRaw('cliente_id, SUM(puntos_otorgados) as puntos')
-            ->groupBy('cliente_id')
+            ->join('clientes', 'boletas.cliente_id', '=', 'clientes.id')
+            ->whereIn('clientes.estado', ['pendiente', 'activo'])
+            ->where('boletas.estado', 'aceptada')
+            ->selectRaw('boletas.cliente_id, SUM(boletas.puntos_otorgados) as puntos, clientes.ganador')
+            ->groupBy('boletas.cliente_id', 'clientes.ganador')
+            ->orderByDesc('clientes.ganador')
             ->orderByDesc('puntos')
             ->paginate($perPage);
-
         return ClientePuntoResource::collection($puntos);
     }
 

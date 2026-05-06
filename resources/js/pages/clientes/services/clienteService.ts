@@ -39,7 +39,6 @@ export const clienteService = {
             `/promo-concierto/backoffice/cliente/${clienteId}`,
             payload
         )
-        // El backend devuelve { data: Cliente } via ClienteResource
         return data.data
     },
 }

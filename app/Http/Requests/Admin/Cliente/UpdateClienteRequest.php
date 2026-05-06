@@ -25,6 +25,7 @@ class UpdateClienteRequest extends FormRequest
             'telefono'     => ['sometimes', 'string', 'max:20'],
             'departamento' => ['sometimes', 'string', 'max:255'],
             'estado'       => ['sometimes', Rule::in(['pendiente', 'activo', 'rechazado'])],
+            'ganador'      => ['sometimes', 'boolean'],
         ];
     }
 }

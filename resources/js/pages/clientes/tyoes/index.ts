@@ -17,6 +17,7 @@ export interface Cliente {
     boletas_pendientes: number
     boletas_rechazadas: number
     registrado_en: string
+    ganador: boolean
 }
 
 export interface Boleta {
@@ -31,7 +32,6 @@ export interface Boleta {
     fecha: string
 }
 
-// Estructura real del JSON de Laravel Resource con paginación
 export interface PaginatedMeta {
     current_page: number
     last_page: number

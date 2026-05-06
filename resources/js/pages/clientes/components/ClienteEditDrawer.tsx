@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { Checkbox } from '@/components/ui/checkbox'  // Changed from Switch
 import {
     Select,
     SelectContent,
@@ -21,7 +22,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { clienteService } from '../services/clienteService'
-import type { Cliente } from '../types'
+import type { Cliente } from '../tyoes/index'
 import { toast } from 'sonner'
 
 interface ClienteEditDrawerProps {
@@ -40,6 +41,7 @@ interface FormState {
     ruc: string
     departamento: string
     estado: string
+    ganador: boolean
 }
 
 const DEPARTAMENTOS = [
@@ -60,11 +62,11 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
         ruc: '',
         departamento: '',
         estado: '',
+        ganador: false,
     })
     const [saving, setSaving] = React.useState(false)
-    const [errors, setErrors] = React.useState<Partial<FormState>>({})
+    const [errors, setErrors] = React.useState<Partial<Record<keyof FormState, string>>>({})
 
-    // Sincronizar form cuando cambia el cliente
     React.useEffect(() => {
         if (cliente) {
             setForm({
@@ -76,6 +78,7 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
                 ruc:          cliente.ruc           ?? '',
                 departamento: cliente.departamento  ?? '',
                 estado:       cliente.estado        ?? '',
+                ganador:      cliente.ganador       ?? false,
             })
             setErrors({})
         }
@@ -85,7 +88,7 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
 
     const esNatural = cliente.tipo_persona === 'natural'
 
-    const set = (key: keyof FormState) => (
+    const set = (key: keyof Pick<FormState, 'nombre' | 'apellidos' | 'email' | 'telefono' | 'dni' | 'ruc'>) => (
         e: React.ChangeEvent<HTMLInputElement>
     ) => {
         setForm(f => ({ ...f, [key]: e.target.value }))
@@ -96,13 +99,14 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
         setSaving(true)
         setErrors({})
         try {
-            const payload: Record<string, string> = {
+            const payload: Record<string, string | boolean> = {
                 nombre:       form.nombre,
                 apellidos:    form.apellidos,
                 email:        form.email,
                 telefono:     form.telefono,
                 departamento: form.departamento,
                 estado:       form.estado,
+                ganador:      form.ganador,
             }
             if (esNatural) {
                 payload.dni = form.dni
@@ -116,7 +120,7 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
             onClose()
         } catch (err: unknown) {
             if (err && typeof err === 'object' && 'errors' in err) {
-                setErrors((err as { errors: Partial<FormState> }).errors)
+                setErrors((err as { errors: Partial<Record<keyof FormState, string>> }).errors)
             } else {
                 toast.error('Error al actualizar el cliente')
             }
@@ -234,6 +238,27 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
                             </SelectContent>
                         </Select>
                         {errors.estado && <p className="text-xs text-destructive">{errors.estado}</p>}
+                    </div>
+
+                    <Separator />
+
+                    {/* Ganador - Changed from Switch to Checkbox */}
+                    <div className="flex items-start gap-3">
+                        <Checkbox
+                            id="ganador"
+                            checked={form.ganador}
+                            onCheckedChange={(checked) =>
+                                setForm(f => ({ ...f, ganador: checked === true }))
+                            }
+                        />
+                        <div className="flex flex-col gap-0.5">
+                            <Label htmlFor="ganador" className="cursor-pointer">
+                                Ganador
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                                Marcar este cliente como ganador de la promoción.
+                            </p>
+                        </div>
                     </div>
 
                 </div>

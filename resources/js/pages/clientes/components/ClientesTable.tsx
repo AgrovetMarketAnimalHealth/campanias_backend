@@ -11,6 +11,7 @@ import {
     IconChevronsLeft, IconChevronsRight,
     IconDotsVertical, IconLoader2, IconSearch,
     IconUser, IconBuilding, IconMailCheck, IconCoins,
+    IconTrophy,
 } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,19 +26,18 @@ import {
 import { clienteService } from '../services/clienteService'
 import { ClienteEditDrawer } from './ClienteEditDrawer'
 import { tipoPersonaLabel } from '../utils'
-import type { Cliente, PaginatedResponse, TipoPersona } from '../types'
+import type { Cliente, PaginatedResponse, TipoPersona } from '../tyoes'
 import clientes from '@/routes/clientes'
 
 export function ClientesTable() {
-    const [data, setData]         = React.useState<PaginatedResponse<Cliente> | null>(null)
-    const [loading, setLoading]   = React.useState(true)
-    const [search, setSearch]     = React.useState('')
-    const [tipoPersona, setTipo]  = React.useState<TipoPersona>('todas')
-    const [page, setPage]         = React.useState(1)
+    const [data, setData]        = React.useState<PaginatedResponse<Cliente> | null>(null)
+    const [loading, setLoading]  = React.useState(true)
+    const [search, setSearch]    = React.useState('')
+    const [tipoPersona, setTipo] = React.useState<TipoPersona>('todas')
+    const [page, setPage]        = React.useState(1)
 
-    // Edit drawer
-    const [editCliente, setEditCliente]   = React.useState<Cliente | null>(null)
-    const [editOpen, setEditOpen]         = React.useState(false)
+    const [editCliente, setEditCliente] = React.useState<Cliente | null>(null)
+    const [editOpen, setEditOpen]       = React.useState(false)
 
     React.useEffect(() => {
         const t = setTimeout(() => {
@@ -74,14 +74,19 @@ export function ClientesTable() {
             accessorKey: 'nombre',
             header: 'Cliente',
             cell: ({ row }) => (
-                <div className="flex flex-col">
-                    <button
-                        className="text-left font-medium hover:underline underline-offset-4 w-fit"
-                        onClick={() => goToDetalle(row.original.id)}
-                    >
-                        {row.original.nombre} {row.original.apellidos}
-                    </button>
-                    <span className="text-muted-foreground text-xs">{row.original.email}</span>
+                <div className="flex items-center gap-2">
+                    {row.original.ganador && (
+                        <IconTrophy className="size-3.5 shrink-0 text-amber-500" />
+                    )}
+                    <div className="flex flex-col">
+                        <button
+                            className="text-left font-medium hover:underline underline-offset-4 w-fit"
+                            onClick={() => goToDetalle(row.original.id)}
+                        >
+                            {row.original.nombre} {row.original.apellidos}
+                        </button>
+                        <span className="text-muted-foreground text-xs">{row.original.email}</span>
+                    </div>
                 </div>
             ),
         },
@@ -163,6 +168,23 @@ export function ClientesTable() {
             header: 'Verificado',
             cell: ({ row }) => row.original.email_verificado
                 ? <IconMailCheck className="size-4 text-emerald-500" />
+                : <span className="text-muted-foreground text-xs">—</span>,
+        },
+        {
+            accessorKey: 'ganador',
+            header: () => (
+                <span className="flex items-center gap-1">
+                    <IconTrophy className="size-3.5" />
+                    Ganador
+                </span>
+            ),
+            cell: ({ row }) => row.original.ganador
+                ? (
+                    <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                        <IconTrophy className="size-3" />
+                        Ganador
+                    </span>
+                )
                 : <span className="text-muted-foreground text-xs">—</span>,
         },
         {
@@ -253,7 +275,14 @@ export function ClientesTable() {
                                 </TableRow>
                             ) : table.getRowModel().rows.length ? (
                                 table.getRowModel().rows.map((row) => (
-                                    <TableRow key={row.id} className="hover:bg-muted/50">
+                                    <TableRow
+                                        key={row.id}
+                                        className={`hover:bg-muted/50 ${
+                                            row.original.ganador
+                                                ? 'bg-amber-50/60 dark:bg-amber-900/10'
+                                                : ''
+                                        }`}
+                                    >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -298,7 +327,6 @@ export function ClientesTable() {
                 </div>
             </div>
 
-            {/* Drawer edición — fuera del div para evitar z-index issues */}
             <ClienteEditDrawer
                 cliente={editCliente}
                 open={editOpen}

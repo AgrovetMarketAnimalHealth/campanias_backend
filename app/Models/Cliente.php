@@ -43,6 +43,7 @@ class Cliente extends Authenticatable implements AuditableContract, MustVerifyEm
         'email_verified_at',
         'email_verification_token',
         'email_verification_expires_at',
+        'ganador',
     ];
 
     protected $hidden = [
@@ -58,6 +59,7 @@ class Cliente extends Authenticatable implements AuditableContract, MustVerifyEm
             'two_factor_confirmed_at' => 'datetime',
             'acepta_politicas'        => 'boolean',
             'acepta_terminos'         => 'boolean',
+            'ganador'                 => 'boolean',
         ];
     }
 

@@ -34,11 +34,12 @@ class GenerarBoletosSorteoJob implements ShouldQueue
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             throw new \RuntimeException("No se pudo crear ZIP: {$zipPath}");
         }
-
-        // Cargar cliente Y boleta para tener el código único BOL-2026-XXXXX
-        // Solo clientes pendientes o activos (excluye rechazados)
+        
         $puntos = Punto::with(['cliente', 'boleta'])
-            ->whereHas('cliente', fn($q) => $q->whereIn('estado', ['pendiente', 'activo']))
+            ->whereHas('cliente', function($q) {
+                $q->whereIn('estado', ['pendiente', 'activo'])
+                  ->where('ganador', false);
+            })
             ->orderByDesc('puntos')
             ->get();
 

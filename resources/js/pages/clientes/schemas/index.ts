@@ -17,6 +17,7 @@ export const clienteSchema = z.object({
     boletas_pendientes: z.number(),
     boletas_rechazadas: z.number(),
     registrado_en: z.string(),
+    ganador: z.boolean(),
 })
 
 export const boletaSchema = z.object({
