@@ -32,6 +32,7 @@ class User extends Authenticatable implements AuditableContract
         'password',
         'activo',
         'restablecimiento',
+        'campania_id',
     ];
 
     protected $hidden = [
@@ -60,5 +61,9 @@ class User extends Authenticatable implements AuditableContract
     public function notificaciones()
     {
         return $this->hasMany(Notificacion::class);
+    }
+    public function campania()
+    {
+        return $this->belongsTo(campanias::class);
     }
 }

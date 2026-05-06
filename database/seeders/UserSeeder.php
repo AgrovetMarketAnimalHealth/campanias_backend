@@ -20,12 +20,20 @@ class UserSeeder extends Seeder
             $adminRole->syncPermissions($permissions);
         }
 
+        $campanias = DB::table('campanias')->pluck('id')->toArray();
+
+        if (empty($campanias)) {
+            $this->command->warn('No hay campañas disponibles. Ejecuta primero CampaniasSeeder.');
+            $campaniaId = null;
+        }
+
         $admin_1 = User::create([
             'name'             => 'Jefferson',
             'email'            => 'jeferson.covenas@agrovetmarket.com',
             'password'         => Hash::make('12345678'),
             'activo'           => true,
             'restablecimiento' => 0,
+            'campania_id'      => $campanias[0] ?? null,
         ]);
 
         $admin_2 = User::create([
@@ -34,6 +42,7 @@ class UserSeeder extends Seeder
             'password'         => Hash::make('12345678'),
             'activo'           => true,
             'restablecimiento' => 0,
+            'campania_id'      => $campanias[1] ?? ($campanias[0] ?? null),
         ]);
 
         $admin_3 = User::create([
@@ -42,26 +51,37 @@ class UserSeeder extends Seeder
             'password'         => Hash::make('12345678'),
             'activo'           => true,
             'restablecimiento' => 0,
+            'campania_id'      => $campanias[2] ?? ($campanias[0] ?? null),
         ]);
 
         $admin_1->assignRole($adminRole);
         $admin_2->assignRole($adminRole);
         $admin_3->assignRole($personalRole);
 
-        // Insertar tokens de reset para cada usuario
         $users = [$admin_1, $admin_2, $admin_3];
 
         foreach ($users as $user) {
             $plainToken = \Illuminate\Support\Str::random(64);
 
-            DB::table('password_reset_tokens')->insert([
-                'email'      => $user->email,
-                'token'      => Hash::make($plainToken),
-                'created_at' => now(),
-            ]);
-
-            // Muestra el token plano en consola para usarlo en la URL
+            $existingToken = DB::table('password_reset_tokens')->where('email', $user->email)->first();
+            if (!$existingToken) {
+                DB::table('password_reset_tokens')->insert([
+                    'email'      => $user->email,
+                    'token'      => Hash::make($plainToken),
+                    'created_at' => now(),
+                ]);
+            } else {
+                DB::table('password_reset_tokens')->where('email', $user->email)->update([
+                    'token'      => Hash::make($plainToken),
+                    'created_at' => now(),
+                ]);
+            }
             $this->command->info("Token para {$user->email}: {$plainToken}");
         }
+        
+        $this->command->info('Usuarios creados correctamente:');
+        $this->command->info('- Jefferson (administrador)');
+        $this->command->info('- Thalia Grillo (administrador)');
+        $this->command->info('- Lionela Barrios (personal)');
     }
 }
