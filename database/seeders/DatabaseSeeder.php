@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use CampaniasSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
