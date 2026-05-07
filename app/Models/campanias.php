@@ -6,39 +6,41 @@ use App\Concerns\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class campanias extends Model implements AuditableContract
-{
+class Campanias extends Model implements AuditableContract{
     use Auditable;
     use HasAuditFields;
     use HasUuids;
     use SoftDeletes;
-
     protected $fillable = [
         'nombre',
-        'slug',
-        'descripcion',
-        'estado',
-        'fecha_inicio',
-        'fecha_fin',
+        'dominio',
+        'api_key',
         'activa',
-        'configuracion',
-        'created_by',
-        'updated_by',
-        'deleted_by',
     ];
     protected $casts = [
-        'fecha_inicio' => 'datetime',
-        'fecha_fin'    => 'datetime',
-        'configuracion' => 'array',
-        'created_at'   => 'datetime',
-        'updated_at'   => 'datetime',
-        'deleted_at'   => 'datetime',
+        'activa' => 'boolean',
     ];
-    
+    protected static function booted(){
+        static::creating(function ($campania) {
+            if (empty($campania->api_key)) {
+                $campania->api_key = Str::random(64);
+            }
+        });
+    }
     public function usuarios(){
         return $this->hasMany(User::class, 'campania_id');
+    }
+    public function creador(){
+        return $this->belongsTo(User::class, 'created_by');
+    }
+    public function actualizador(){
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+    public function eliminador(){
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 }

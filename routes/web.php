@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\Panel\BoletaController;
+use App\Http\Controllers\Api\Panel\CampaniasController;
+use App\Http\Controllers\Api\Panel\CampaniasImagenesController;
 use App\Http\Controllers\Api\Panel\ClienteAdminController;
 use App\Http\Controllers\Api\Panel\ClientePuntoController;
 use App\Http\Controllers\Api\Panel\NotificacionesController;
@@ -14,6 +16,8 @@ use App\Http\Controllers\Web\Panel\NotificacionWebController;
 use App\Http\Controllers\Web\Panel\RolesWebController;
 use App\Http\Controllers\Web\Panel\UsuarioWebController;
 use App\Http\Controllers\Web\Panel\BoletaWebController;
+use App\Http\Controllers\Web\Panel\CampaniasImagenesWebController;
+use App\Http\Controllers\Web\Panel\CompaniasWebController;
 use App\Http\Controllers\Web\Panel\ReportesWebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -39,6 +43,8 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
         })->name('dashboard');
 
         Route::prefix('panel')->group(function () {
+            Route::get('/companias/{campania_id}/imagenes', [CampaniasImagenesWebController::class, 'index'])->name('campaniasImagenes.index');
+            Route::get('/companias',      [CompaniasWebController::class,    'index'])->name('companias.index');
             Route::get('/boletas',        [BoletaWebController::class,       'index'])->name('boletas.index');
             Route::get('/clientes',       [ClienteWebController::class,      'index'])->name('clientes.index');
             Route::get('/clientes/{id}',  [ClienteWebController::class,      'show'])->name('clientes.show');
@@ -52,6 +58,26 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
                 Route::get('/boletas',      'indexBoletas')->name('reportes.boletas.index');
                 Route::get('/puntos',   'indexpuntos')->name('reportes.puntos.index');
             });
+        });
+
+        Route::prefix('campania/{campania}/imagene')->group(function () {
+            Route::get('/',                             [CampaniasImagenesController::class, 'index']);
+            Route::post('/',                            [CampaniasImagenesController::class, 'store']);
+            Route::get('/{imagen}',                     [CampaniasImagenesController::class, 'show']);
+            Route::post('/{imagen}',                    [CampaniasImagenesController::class, 'update']);   // POST porque viene multipart/form-data
+            Route::delete('/{imagen}',                  [CampaniasImagenesController::class, 'destroy']);
+            Route::delete('/{imagen}/campo/{campo}',    [CampaniasImagenesController::class, 'destroyImagen']);
+            Route::patch('/{imagen}/toggle-activa',     [CampaniasImagenesController::class, 'toggleActiva']);
+            Route::patch('/reordenar',                  [CampaniasImagenesController::class, 'reordenar']);
+        });
+
+        Route::prefix('compania')->controller(CampaniasController::class)->group(function () {
+            Route::get('/',         'index')->name('panel.campanias.index');
+            Route::post('/',        'store')->name('panel.campanias.store');
+            Route::get('{campania}',  'show')->name('panel.campanias.show');
+            Route::put('{campania}',  'update')->name('panel.campanias.update');
+            Route::delete('{campania}',  'destroy')->name('panel.campanias.destroy');
+            Route::post('{campania}/toggle-activa',  'toggleActiva')->name('panel.campanias.toggleActiva');
         });
 
         Route::prefix('boleta')->controller(BoletaController::class)->group(function () {

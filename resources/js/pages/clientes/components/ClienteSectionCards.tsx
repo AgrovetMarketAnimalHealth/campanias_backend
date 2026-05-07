@@ -8,7 +8,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card'
-import type { Cliente } from '../types'
+import type { Cliente } from '../tyoes'
 
 interface ClienteSectionCardsProps {
     cliente: Cliente

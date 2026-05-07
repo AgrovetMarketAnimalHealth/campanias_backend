@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -9,11 +10,15 @@ return new class extends Migration
     {
         Schema::create('clientes', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->enum('tipo_persona', ['natural', 'juridica']);
+            $table->foreignUuid('campania_id')->constrained('campanias')->cascadeOnDelete();
+
+            $table->enum('tipo_persona', ['natural', 'juridica','carnet_extranjeria']); #Nuevo tipo de persona para carnet de extranjería
             $table->string('nombre');
             $table->string('apellidos')->nullable();
             $table->string('dni', 20)->nullable()->unique();
             $table->string('ruc', 20)->nullable()->unique();
+            $table->string('carnet_extranjeria', 20)->nullable()->unique(); #Nuevo campo para carnet de extranjería
+
             $table->string('departamento');
             $table->string('email')->unique();
             $table->string('telefono', 20);
@@ -39,6 +44,7 @@ return new class extends Migration
             $table->index('tipo_persona');
             $table->index('estado');
             $table->index('created_at');
+            $table->index('campania_id');
         });
     }
 

@@ -15,19 +15,23 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('campania_id')->constrained('campanias')->cascadeOnDelete();
             $table->string('seccion');
-            $table->string('clave')->default('default');
-            $table->string('archivo');
-            $table->string('titulo')->nullable();
-            $table->text('descripcion')->nullable();
             $table->integer('orden')->default(0);
+
+            $table->string('imagen_desktop')->nullable();
+            $table->string('imagen_tablet')->nullable();
+            $table->string('imagen_mobile')->nullable();
+            
+            $table->boolean('visible_desktop')->default(true);
+            $table->boolean('visible_tablet')->default(true);
+            $table->boolean('visible_mobile')->default(true);
+            
             $table->boolean('activa')->default(true);
+
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
+
             $table->timestamps();
             $table->softDeletes();
-
-            $table->index(['campania_id', 'seccion']);
-            $table->unique(['campania_id', 'seccion', 'clave'], 'unique_seccion_clave_campania');
         });
     }
 

@@ -11,6 +11,11 @@ class CampaniasResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'nombre' => $this->nombre,
+            'dominio' => $this->dominio,
+            'activa' => $this->activa,
+            'created_at' => $this->created_at?->format('d-m-Y H:i:s A'),
+            'updated_at' => $this->updated_at?->format('d-m-Y H:i:s A'),
         ];
     }
 }

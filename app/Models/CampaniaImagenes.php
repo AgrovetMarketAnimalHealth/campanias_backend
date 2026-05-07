@@ -19,17 +19,32 @@ class CampaniaImagenes extends Model implements AuditableContract
     protected $fillable = [
         'campania_id',
         'seccion',
-        'clave',
-        'archivo',
-        'titulo',
-        'descripcion',
         'orden',
+
+        'imagen_desktop',
+        'imagen_tablet',
+        'imagen_mobile',
+
+        'visible_desktop',
+        'visible_tablet',
+        'visible_mobile',
+
         'activa',
     ];
+
     protected $casts = [
+        'visible_desktop' => 'boolean',
+        'visible_tablet' => 'boolean',
+        'visible_mobile' => 'boolean',
         'activa' => 'boolean',
+
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    public function campania()
+    {
+        return $this->belongsTo(Campanias::class, 'campania_id');
+    }
 }

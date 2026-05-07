@@ -14,13 +14,9 @@ return new class extends Migration
         Schema::create('campanias', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('nombre');
-            $table->string('slug')->unique();
-            $table->text('descripcion')->nullable();
-            $table->enum('estado', ['borrador', 'activa', 'pausada', 'finalizada'])->default('borrador');
-            $table->date('fecha_inicio')->nullable();
-            $table->date('fecha_fin')->nullable();
+            $table->string('dominio')->nullable()->unique();
+            $table->string('api_key')->unique();
             $table->boolean('activa')->default(false);
-            $table->json('configuracion')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->unsignedBigInteger('deleted_by')->nullable();
@@ -28,8 +24,6 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index('activa');
-            $table->index('estado');
-            $table->index(['fecha_inicio', 'fecha_fin']);
         });
     }
 

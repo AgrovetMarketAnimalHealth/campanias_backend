@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import type { Boleta } from '../types'
+import type { Boleta } from '../tyoes'
 import { estadoBadgeColor, formatMonto } from '../utils'
 
 interface BoletaDrawerProps {

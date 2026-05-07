@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Models\Boleta;
+use App\Models\Campanias;
 use App\Models\Cliente;
 use App\Models\Notificacion;
 use App\Models\User;
 use App\Policies\BoletaPolicy;
+use App\Policies\CampaniasPolicy;
 use App\Policies\ClientePolicy;
 use App\Policies\NotificacionPolicy;
 use App\Policies\PermissionPolicy;
@@ -58,6 +60,7 @@ class AppServiceProvider extends ServiceProvider
         try {
             DB::connection()->getPdo();
             if (Schema::hasTable('permissions') && Schema::hasTable('roles')) {
+                Gate::policy(Campanias::class,       CampaniasPolicy::class);
                 Gate::policy(Cliente::class,       ClientePolicy::class);
                 Gate::policy(Boleta::class,        BoletaPolicy::class);
                 Gate::policy(Notificacion::class,  NotificacionPolicy::class);

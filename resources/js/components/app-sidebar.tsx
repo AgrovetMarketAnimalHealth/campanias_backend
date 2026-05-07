@@ -16,6 +16,7 @@ import notificaciones from '@/routes/notificaciones';
 import roles from '@/routes/roles';
 import usuarios from '@/routes/usuarios';
 import reportes from '@/routes/reportes';
+import companias from '@/routes/companias';
 
 const mainNavItems: NavItem[] = [
     {
@@ -26,6 +27,11 @@ const mainNavItems: NavItem[] = [
 ]
 
 const panelNavItems: NavItem[] = [
+    {
+        title: 'Companias',
+        href: companias.index(),
+        icon: BarChart2,
+    },
     {
         title: 'Boletas',
         href: boletas.index(),
