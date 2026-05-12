@@ -27,7 +27,6 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
         return Inertia::render('welcome');
     })->name('home');
 
-    #Ruta para cambiar password (sin password.reset para evitar loop)
     Route::middleware(['auth'])->group(function () {
         Route::get('change-password', [PasswordController::class, 'edit'])
             ->name('password.change');
@@ -35,7 +34,6 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
             ->name('password.change.update');
     });
 
-    // Rutas protegidas con verificación de restablecimiento
     Route::middleware(['auth', 'verified', 'password.reset'])->group(function () {
 
         Route::get('dashboard', function () {
@@ -64,7 +62,7 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
             Route::get('/',                             [CampaniasImagenesController::class, 'index']);
             Route::post('/',                            [CampaniasImagenesController::class, 'store']);
             Route::get('/{imagen}',                     [CampaniasImagenesController::class, 'show']);
-            Route::post('/{imagen}',                    [CampaniasImagenesController::class, 'update']);   // POST porque viene multipart/form-data
+            Route::post('/{imagen}',                    [CampaniasImagenesController::class, 'update']);
             Route::delete('/{imagen}',                  [CampaniasImagenesController::class, 'destroy']);
             Route::delete('/{imagen}/campo/{campo}',    [CampaniasImagenesController::class, 'destroyImagen']);
             Route::patch('/{imagen}/toggle-activa',     [CampaniasImagenesController::class, 'toggleActiva']);

@@ -11,12 +11,10 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 class CampaniasImagenesWebController extends Controller{
-    public function index(string $campania_id)
-    {
+    public function index(string $campania_id){
         Gate::authorize('viewAny', CampaniaImagenes::class);
         $campania = Campanias::findOrFail($campania_id);
-        
-        return response()->json([
+        return Inertia::render('campaniasimagenes/indexcampaniasimagenes', [
             'campania' => new CampaniasResource($campania),
         ]);
     }

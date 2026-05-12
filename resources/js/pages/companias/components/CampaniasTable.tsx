@@ -55,6 +55,7 @@ import { Badge } from '@/components/ui/badge';
 import { CampaniaDrawer } from './CampaniaDrawer';
 import { campaniasService } from '../services/campanias.service';
 import type { Campania, PaginatedResponse, CampaniaFilters } from '../types/compania.types';
+import { router } from '@inertiajs/react'
 
 function DragHandle({ id }: { id: string }) {
     return (
@@ -68,6 +69,11 @@ function DragHandle({ id }: { id: string }) {
             <span className="sr-only">Arrastrar</span>
         </Button>
     );
+}
+const BASE = import.meta.env.VITE_BASE_URL
+
+const handleGoToImagenes = (id: string) => {
+    router.visit(`${BASE}/companias/${id}/imagenes`)
 }
 
 export function CampaniasTable() {
@@ -159,7 +165,12 @@ export function CampaniasTable() {
             accessorKey: 'nombre',
             header: 'Nombre',
             cell: ({ row }) => (
-                <div className="font-medium">{row.original.nombre}</div>
+                <button
+                    className="text-left font-medium hover:underline underline-offset-4 w-fit"
+                    onClick={() => handleGoToImagenes(row.original.id)}
+                >
+                    {row.original.nombre}
+                </button>
             ),
         },
         {

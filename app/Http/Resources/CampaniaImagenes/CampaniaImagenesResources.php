@@ -24,8 +24,8 @@ class CampaniaImagenesResources extends JsonResource{
 
             'activa'          => $this->activa,
 
-            'created_at'      => $this->created_at,
-            'updated_at'      => $this->updated_at,
+            'created_at' => $this->created_at?->format('d-m-Y H:i:s A'),
+            'updated_at' => $this->updated_at?->format('d-m-Y H:i:s A'),
         ];
     }
     private function urlImagen(?string $ruta): ?string{
