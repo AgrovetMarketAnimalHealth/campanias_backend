@@ -63,6 +63,10 @@ class Cliente extends Authenticatable implements AuditableContract, MustVerifyEm
         ];
     }
 
+    public function clienteCampanias()
+    {
+        return $this->hasMany(ClienteCampania::class);
+    }
     public function boletas()
     {
         return $this->hasMany(Boleta::class);

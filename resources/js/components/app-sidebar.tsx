@@ -16,6 +16,7 @@ import notificaciones from '@/routes/notificaciones';
 import roles from '@/routes/roles';
 import usuarios from '@/routes/usuarios';
 import reportes from '@/routes/reportes';
+import campanias from '@/routes/campanias';
 
 const mainNavItems: NavItem[] = [
     {
@@ -26,6 +27,11 @@ const mainNavItems: NavItem[] = [
 ]
 
 const panelNavItems: NavItem[] = [
+    {
+        title: 'Campanias',
+        href: campanias.index(),
+        icon: BarChart2,
+    },
     {
         title: 'Boletas',
         href: boletas.index(),

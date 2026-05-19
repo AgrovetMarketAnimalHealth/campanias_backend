@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Portal\Registro\StoreClienteRequest;
 use App\Jobs\EnviarEmailRegistro;
 use App\Models\Boleta;
+use App\Models\Campania;
 use App\Models\Cliente;
+use App\Models\ClienteCampania;
 use App\Models\Notificacion;
 use App\Services\DeviceTrustService;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +21,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ClienteAuthController extends Controller{
-    private const COOKIE_MINUTOS = 60 * 24 * 30 * 4;
+    private const COOKIE_MINUTOS = 60 * 24 * 30 * 12;
     private function makeCookie(string $token): \Symfony\Component\HttpFoundation\Cookie{
         return cookie(
             'auth_token',
@@ -33,10 +35,22 @@ class ClienteAuthController extends Controller{
             'Strict'
         );
     }
-    public function register(StoreClienteRequest $request): JsonResponse{
+    public function register(StoreClienteRequest $request, string $slug): JsonResponse{
+        $campania = Campania::where('url', $slug)
+                            ->where('activa', true)
+                            ->first();
+
+        if (!$campania) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La campaña no existe o no está activa.',
+            ], 404);
+        }
+
         DB::beginTransaction();
         try {
             $cliente = Cliente::create([
+                'campania_id'                   => $campania->id,
                 'tipo_persona'                  => $request->tipo_persona,
                 'nombre'                        => $request->nombre,
                 'apellidos'                     => $request->apellidos,
@@ -52,6 +66,11 @@ class ClienteAuthController extends Controller{
                 'email_verification_expires_at' => now()->addHours(24),
             ]);
 
+            ClienteCampania::create([
+                'cliente_id'  => $cliente->id,
+                'campania_id' => $campania->id,
+            ]);
+
             $archivo       = $request->file('archivo_comprobante');
             $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
 
@@ -62,9 +81,10 @@ class ClienteAuthController extends Controller{
             );
 
             $boleta = Boleta::create([
-                'cliente_id' => $cliente->id,
-                'archivo'    => $rutaComprobante,
-                'estado'     => 'pendiente',
+                'cliente_id'  => $cliente->id,
+                'campania_id' => $campania->id,
+                'archivo'     => $rutaComprobante,
+                'estado'      => 'pendiente',
             ]);
 
             DB::commit();

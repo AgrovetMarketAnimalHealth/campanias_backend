@@ -55,7 +55,7 @@
 
         <!-- HEADER: imagen de portada -->
         <div class="header-img">
-            <img src="{{ config('app.url') }}/emails/Header Mailing_Recibimos.webp"
+            <img src="{{ config('app.url') }}/emails/Mailing_Recibimos.webp"
                  alt="Recibimos tu comprobante – Destino Chayanne">
         </div>
 
@@ -93,7 +93,7 @@
                 </tr>
             </table>
 
-            <!-- PUNTOS - CORREGIDO SEGÚN TDR -->
+            <!-- PUNTOS -->
             <div class="points-section">
                 <h3>¿Cómo acumulas opciones?</h3>
                 <table class="points-table">
@@ -133,20 +133,21 @@
                 <p class="note-text">* Asignación exacta por cada S/ 1,000. No aplica redondeo ni acumulación entre comprobantes.</p>
             </div>
 
-            <!-- FECHAS DE SORTEO (CENTRADAS) -->
+            <!-- FECHAS DE SORTEO -->
             <div class="dates-section">
                 <h3>Fechas de sorteo</h3>
                 <div class="dates-list">
                     <div class="date-chip">
-                        1er Sorteo: 20 de marzo 2026
-                        <span>2 premios</span>
+                        1er Sorteo: 03 de setiembre 2026
+                        <span>1 premio</span>
                     </div>
                     <div class="date-chip">
-                        2do Sorteo: 07 de mayo 2026
-                        <span>3 premios</span>
+                        2do Sorteo: 12 de noviembre 2026
+                        <span>2 premios</span>
                     </div>
                 </div>
             </div>
+
             <p>
                 Guarda tu código de seguimiento por si necesitas hacer algún reclamo.
                 Te notificaremos cuando tu comprobante sea aprobado. ¡Mucha suerte!
@@ -165,7 +166,7 @@
         <div class="footer">
             <p>
                 Este correo fue enviado a <a href="mailto:{{ $cliente->email }}">{{ $cliente->email }}</a><br>
-                <strong>Concierto:</strong> 22 de mayo 2026 · San José, Costa Rica<br>
+                <strong>Concierto:</strong> 2 de diciembre 2026 · Lima, Perú<br>
                 <strong>Contacto:</strong> WhatsApp <a href="https://wa.me/51903069021">903 069 021</a> · <a href="https://atrevia.vet/promo-concierto/">atrevia.vet/promo-concierto</a><br><br>
                 &copy; {{ date('Y') }} Atrevia - Agrovet Market. Todos los derechos reservados.
             </p>

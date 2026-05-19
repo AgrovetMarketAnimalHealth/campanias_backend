@@ -61,4 +61,10 @@ class User extends Authenticatable implements AuditableContract
     {
         return $this->hasMany(Notificacion::class);
     }
+    public function campanias(){
+        return $this->belongsToMany(Campania::class, 'campania_user')
+            ->using(CampaniaUser::class)
+            ->withPivot('activo')
+            ->withTimestamps();
+    }
 }

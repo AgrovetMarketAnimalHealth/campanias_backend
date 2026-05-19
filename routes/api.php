@@ -9,16 +9,16 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth/portal')->group(function () {
 
-    Route::post('/register',              [ClienteAuthController::class, 'register']);
+    Route::post('/register/{slug}',       [ClienteAuthController::class, 'register']);
     Route::post('/login',                 [ClienteAuthController::class, 'login']);
     Route::get('/verify-email/{token}',   [ClienteAuthController::class, 'verificarEmail']);
     Route::post('/reenviar-verificacion', [ClienteAuthController::class, 'reenviarVerificacion']);
 
     Route::middleware([
         'auth:sanctum',
-        EnsureIsCliente::class,
-        DetectarSesionSospechosa::class,
-    ])->group(function () {
+            EnsureIsCliente::class,
+            DetectarSesionSospechosa::class,
+        ])->group(function () {
 
         Route::get('/me',       [ClienteAuthController::class, 'me']);
         Route::post('/logout',  [ClienteAuthController::class, 'logout']);

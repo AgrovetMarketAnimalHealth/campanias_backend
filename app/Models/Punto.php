@@ -17,6 +17,7 @@ class Punto extends Model implements AuditableContract{
     protected $fillable = [
         'cliente_id',
         'boleta_id',
+        'campania_id',
         'puntos',
         'descripcion',
     ];
@@ -30,5 +31,8 @@ class Punto extends Model implements AuditableContract{
     }
     public function boleta(){
         return $this->belongsTo(Boleta::class);
+    }
+    public function campania(){
+        return $this->belongsTo(Campania::class);
     }
 }

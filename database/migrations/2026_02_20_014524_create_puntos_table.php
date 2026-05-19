@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,6 +11,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('cliente_id')->constrained('clientes')->cascadeOnDelete();
             $table->foreignUuid('boleta_id')->constrained('boletas')->cascadeOnDelete();
+            $table->foreignUuid('campania_id')->constrained('campanias')->cascadeOnDelete(); # Agregado el campo campania_id con relación a campanias
             $table->integer('puntos');
             $table->text('descripcion')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
@@ -22,6 +22,7 @@ return new class extends Migration
 
             $table->index('cliente_id');
             $table->index('boleta_id');
+            $table->index('campania_id');
         });
     }
 

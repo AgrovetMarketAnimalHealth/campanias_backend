@@ -11,6 +11,12 @@ class PermissionSeeder extends Seeder{
      * Run the database seeds.
      */
     public function run(): void{
+        #Campañas
+        Permission::create(['name' => 'ver Campañias']);
+        Permission::create(['name' => 'crear Campañias']);
+        Permission::create(['name' => 'editar Campañias']);
+        Permission::create(['name' => 'eliminar Campañias']);
+
         #Puntos
         Permission::create(['name' => 'ver puntos']);
         Permission::create(['name' => 'crear puntos']);

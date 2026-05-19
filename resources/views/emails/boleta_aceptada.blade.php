@@ -55,7 +55,7 @@
 
         {{-- HEADER: imagen de portada --}}
         <div class="header-img">
-            <img src="{{ config('app.url') }}/emails/Header Mailing_Registro aceptado.webp"
+            <img src="{{ config('app.url') }}/emails/Mailing_Registro aceptado (1).webp"
                  alt="Registro aceptado – Destino Chayanne">
         </div>
 
@@ -121,12 +121,12 @@
                 </div>
                 <div class="dates-list">
                     <div class="date-chip">
-                        1er Sorteo: 20 de marzo 2026
-                        <span>2 premios</span>
+                        1er Sorteo: 03 de setiembre 2026
+                        <span>1 premio</span>
                     </div>
                     <div class="date-chip">
-                        2do Sorteo: 07 de mayo 2026
-                        <span>3 premios</span>
+                        2do Sorteo: 12 de noviembre 2026
+                        <span>2 premios</span>
                     </div>
                 </div>
             </div>
@@ -149,7 +149,7 @@
         <div class="footer">
             <p>
                 Este correo fue enviado a <a href="mailto:{{ $boleta->cliente->email }}">{{ $boleta->cliente->email }}</a><br>
-                <strong>Concierto:</strong> 22 de mayo 2026 · San José, Costa Rica<br>
+                <strong>Concierto:</strong> 2 de diciembre 2026 · Lima, Perú<br>
                 <strong>Contacto:</strong> WhatsApp <a href="https://wa.me/51903069021">903 069 021</a> · <a href="https://atrevia.vet/promo-concierto/">atrevia.vet/promo-concierto</a><br><br>
                 &copy; {{ date('Y') }} Atrevia - Agrovet Market. Todos los derechos reservados.
             </p>

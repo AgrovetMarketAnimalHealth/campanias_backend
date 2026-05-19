@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Panel\BoletaController;
+use App\Http\Controllers\Api\Panel\CampaniasController;
 use App\Http\Controllers\Api\Panel\ClienteAdminController;
 use App\Http\Controllers\Api\Panel\ClientePuntoController;
 use App\Http\Controllers\Api\Panel\NotificacionesController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Web\Panel\NotificacionWebController;
 use App\Http\Controllers\Web\Panel\RolesWebController;
 use App\Http\Controllers\Web\Panel\UsuarioWebController;
 use App\Http\Controllers\Web\Panel\BoletaWebController;
+use App\Http\Controllers\Web\Panel\CampaniasWebController;
 use App\Http\Controllers\Web\Panel\ReportesWebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -40,6 +42,7 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
 
         Route::prefix('panel')->group(function () {
             Route::get('/boletas',        [BoletaWebController::class,       'index'])->name('boletas.index');
+            Route::get('/campanias',      [CampaniasWebController::class,   'index'])->name('campanias.index');
             Route::get('/clientes',       [ClienteWebController::class,      'index'])->name('clientes.index');
             Route::get('/clientes/{id}',  [ClienteWebController::class,      'show'])->name('clientes.show');
             Route::get('/notificaciones', [NotificacionWebController::class, 'index'])->name('notificaciones.index');
@@ -52,6 +55,14 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
                 Route::get('/boletas',      'indexBoletas')->name('reportes.boletas.index');
                 Route::get('/puntos',   'indexpuntos')->name('reportes.puntos.index');
             });
+        });
+
+        Route::prefix('campania')->controller(CampaniasController::class)->group(function () {
+            Route::get('/',         'index')->name('panel.campanias.index');
+            Route::get('{campania}',  'show')->name('panel.campanias.show');
+            Route::post('/',        'store')->name('panel.campanias.store');
+            Route::put('{campania}', 'update')->name('panel.campanias.update');
+            Route::delete('{campania}', 'destroy')->name('panel.campanias.destroy');
         });
 
         Route::prefix('boleta')->controller(BoletaController::class)->group(function () {

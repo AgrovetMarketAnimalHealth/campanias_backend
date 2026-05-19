@@ -38,7 +38,7 @@
 
         <!-- HEADER -->
         <div class="header-img">
-            <img src="{{ config('app.url') }}/emails/registrarte.webp"
+            <img src="{{ config('app.url') }}/emails/Mailing_Gracias por registrarte.webp"
                  alt="Destino Chayanne – Seguridad de cuenta">
         </div>
 
@@ -106,7 +106,7 @@
         <div class="footer">
             <p>
                 Este correo fue enviado a <a href="mailto:{{ $cliente->email }}">{{ $cliente->email }}</a><br>
-                <strong>Concierto:</strong> 22 de mayo 2026 · San José, Costa Rica<br>
+                <strong>Concierto:</strong> 2 de diciembre 2026 · Lima, Perú<br>
                 <strong>Contacto:</strong> WhatsApp <a href="https://wa.me/51903069021">903 069 021</a> · <a href="https://atrevia.vet/promo-concierto/">atrevia.vet/promo-concierto</a><br><br>
                 &copy; {{ date('Y') }} Atrevia - Agrovet Market. Todos los derechos reservados.
             </p>
