@@ -18,17 +18,14 @@ class BoletaController extends Controller
     public function __construct(
         private readonly BoletaService $boletaService
     ) {}
-    public function index(Request $request)
-    {
+    public function index(Request $request){
         Gate::authorize('viewAny', Boleta::class);
-
         $perPage    = $request->input('per_page', 15);
         $search     = $request->input('search');
         $estado     = $request->input('estado');
         $fechaDesde = $request->input('fecha_desde');
         $fechaHasta = $request->input('fecha_hasta');
         $campaniaId = $request->input('campania_id', 'todos');
-
         $query = Pipeline::send(Boleta::query())
                     ->through([
                         new SearchBoletaFilter($search),
@@ -44,7 +41,6 @@ class BoletaController extends Controller
                     })
                     ->with('cliente')
                     ->latest('created_at');
-
         return BoletaResourceBackend::collection($query->paginate($perPage));
     }
     public function show(Boleta $boleta)

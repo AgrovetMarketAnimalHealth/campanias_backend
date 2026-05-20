@@ -25,16 +25,12 @@ class BoletaService
             if ($boleta->estado !== 'pendiente') {
                 throw new \Exception('La boleta ya fue procesada.');
             }
-
-            // Verificar si ya existe una boleta aceptada con el mismo número + RUC
             $duplicada = Boleta::where('numero_boleta', $numeroBoleta)
                 ->where('ruc_veterinaria', $rucVeterinaria)
                 ->where('estado', 'aceptada')
                 ->where('id', '!=', $boleta->id)
                 ->exists();
-
             if ($duplicada) {
-                // Auto-rechazo por duplicado
                 $boleta->updateQuietly([
                     'estado'          => 'rechazada',
                     'monto'           => $monto,
@@ -42,13 +38,9 @@ class BoletaService
                     'ruc_veterinaria' => $rucVeterinaria,
                     'observacion'     => 'Comprobante rechazado automáticamente: el número de boleta ya fue aceptado previamente para esta veterinaria.',
                 ]);
-
                 dispatch(new EnviarEmailBoletaRechazada($boleta))->onQueue('emails');
-
                 return $boleta;
             }
-
-            // Aceptar normal
             $boleta->updateQuietly([
                 'estado'           => 'aceptada',
                 'puntos_otorgados' => $puntos,

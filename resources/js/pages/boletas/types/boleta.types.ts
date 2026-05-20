@@ -44,6 +44,7 @@ export interface BoletaFiltros {
     fecha_hasta: string;
     per_page: number;
     page: number;
+    campania_id: string;
 }
 
 export interface UpdateBoletaPayload {

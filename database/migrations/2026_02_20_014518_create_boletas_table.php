@@ -12,7 +12,7 @@ return new class extends Migration
             $table->foreignUuid('cliente_id')->constrained('clientes')->cascadeOnDelete();
             $table->foreignUuid('compania_id')
                 ->nullable()
-                ->constrained('companias')
+                ->constrained('campanias')
                 ->nullOnDelete(); # debe ser null si la compañía es eliminada
             $table->string('codigo')->unique();
             $table->string('archivo');

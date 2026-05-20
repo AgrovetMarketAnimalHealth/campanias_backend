@@ -58,7 +58,9 @@ import {
 import { EstadoBadge } from './EstadoBadge';
 import { BoletaDrawer } from './BoletaDrawer';
 import { boletaService } from '../services/boleta.service';
+import { campaniaService } from '../services/campania.service';
 import type { Boleta, BoletaFiltros, BoletaPaginado, EstadoBoleta } from '../types/boleta.types';
+import type { Campania } from '../types/campania.types';
 
 // ─── Drag Handle ─────────────────────────────────────────────────────────────
 
@@ -112,6 +114,18 @@ export function BoletasDataTable() {
     const [loading, setLoading] = React.useState(true);
     const [rowSelection, setRowSelection] = React.useState({});
 
+    // ── Campañas ──────────────────────────────────────────────────────────────
+    const [campanias, setCampanias] = React.useState<Campania[]>([]);
+    const [loadingCampanias, setLoadingCampanias] = React.useState(true);
+
+    React.useEffect(() => {
+        campaniaService.index()
+            .then(res => setCampanias(res.data))
+            .catch(() => toast.error('Error al cargar las campañas'))
+            .finally(() => setLoadingCampanias(false));
+    }, []);
+    // ─────────────────────────────────────────────────────────────────────────
+
     const [filtros, setFiltros] = React.useState<BoletaFiltros>({
         search: '',
         estado: 'pendiente',
@@ -119,6 +133,7 @@ export function BoletasDataTable() {
         fecha_hasta: '',
         per_page: 15,
         page: 1,
+        campania_id: 'todos', // ← default: todas las campañas
     });
 
     const [searchInput, setSearchInput] = React.useState('');
@@ -144,6 +159,7 @@ export function BoletasDataTable() {
             if (!sendParams.estado || (sendParams.estado as string) === 'todos') {
                 delete sendParams.estado;
             }
+            // El backend maneja 'todos' como "sin filtro", lo dejamos pasar tal cual
 
             const data = await boletaService.index(sendParams);
             setPaginado(data);
@@ -169,6 +185,10 @@ export function BoletasDataTable() {
 
     const handleEstado = (value: string) => {
         setFiltros(f => ({ ...f, estado: value as EstadoBoleta | '', page: 1 }));
+    };
+
+    const handleCampania = (value: string) => {
+        setFiltros(f => ({ ...f, campania_id: value, page: 1 }));
     };
 
     const handleFecha = (key: 'fecha_desde' | 'fecha_hasta', value: string) => {
@@ -383,6 +403,28 @@ export function BoletasDataTable() {
                         value={searchInput}
                         onChange={e => handleSearch(e.target.value)}
                     />
+                </div>
+
+                {/* ── Campaña ── */}
+                <div className="flex flex-col gap-1">
+                    <Label className="text-xs text-muted-foreground">Campaña</Label>
+                    <Select
+                        value={filtros.campania_id}
+                        onValueChange={handleCampania}
+                        disabled={loadingCampanias}
+                    >
+                        <SelectTrigger size="sm" className="w-44">
+                            <SelectValue placeholder={loadingCampanias ? 'Cargando...' : 'Campaña'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="todos">Todas las campañas</SelectItem>
+                            {campanias.map(c => (
+                                <SelectItem key={c.id} value={c.id}>
+                                    {c.nombre}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div className="flex flex-col gap-1">

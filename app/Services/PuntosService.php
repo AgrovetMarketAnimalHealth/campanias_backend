@@ -10,6 +10,7 @@ class PuntosService{
         return Punto::create([
             'cliente_id'  => $boleta->cliente_id,
             'boleta_id'   => $boleta->id,
+            'campania_id' => $boleta->compania_id,
             'puntos'      => round($puntos, 2),
             'descripcion' => "Puntos acreditados por boleta #{$boleta->codigo}",
         ]);
