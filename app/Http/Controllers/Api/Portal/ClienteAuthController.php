@@ -82,7 +82,7 @@ class ClienteAuthController extends Controller{
 
             $boleta = Boleta::create([
                 'cliente_id'  => $cliente->id,
-                'campania_id' => $campania->id,
+                'compania_id' => $campania->id,  // ← viene del slug, no del request
                 'archivo'     => $rutaComprobante,
                 'estado'      => 'pendiente',
             ]);

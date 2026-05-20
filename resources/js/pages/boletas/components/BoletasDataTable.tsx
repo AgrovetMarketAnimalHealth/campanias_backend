@@ -26,10 +26,8 @@ import {
     useReactTable,
     type ColumnDef,
     type Row,
-    type VisibilityState,
 } from '@tanstack/react-table';
 import {
-    IconLayoutColumns,
     IconChevronLeft,
     IconChevronRight,
     IconChevronsLeft,
@@ -51,7 +49,7 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-    DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent,
+    DropdownMenu, DropdownMenuContent,
     DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -112,7 +110,6 @@ function DraggableRow({ row }: { row: Row<Boleta> }) {
 export function BoletasDataTable() {
     const [paginado, setPaginado] = React.useState<BoletaPaginado | null>(null);
     const [loading, setLoading] = React.useState(true);
-    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
     const [rowSelection, setRowSelection] = React.useState({});
 
     const [filtros, setFiltros] = React.useState<BoletaFiltros>({
@@ -209,7 +206,6 @@ export function BoletasDataTable() {
         }
     }
 
-    // ── Paginación: fuente de verdad = meta del servidor ──────────────────────
     const currentPage = paginado?.meta.current_page ?? 1;
     const lastPage    = paginado?.meta.last_page    ?? 1;
     const totalItems  = paginado?.meta.total        ?? 0;
@@ -223,13 +219,11 @@ export function BoletasDataTable() {
     const boletas = paginado?.data ?? [];
 
     const columns: ColumnDef<Boleta>[] = [
-        // ── Drag ──────────────────────────────────────────────
         {
             id: 'drag',
             header: () => null,
             cell: ({ row }) => <DragHandle id={row.original.id} />,
         },
-        // ── Código ────────────────────────────────────────────
         {
             accessorKey: 'codigo',
             header: 'Código',
@@ -241,7 +235,6 @@ export function BoletasDataTable() {
                 </BoletaDrawer>
             ),
         },
-        // ── Cliente ───────────────────────────────────────────
         {
             id: 'cliente',
             header: 'Cliente',
@@ -259,7 +252,6 @@ export function BoletasDataTable() {
                 );
             },
         },
-        // ── N° Comprobante ────────────────────────────────────
         {
             accessorKey: 'numero_boleta',
             header: 'N° Comprobante',
@@ -271,7 +263,6 @@ export function BoletasDataTable() {
                 </span>
             ),
         },
-        // ── Monto ─────────────────────────────────────────────
         {
             accessorKey: 'monto',
             header: () => <div className="text-right">Monto</div>,
@@ -283,13 +274,11 @@ export function BoletasDataTable() {
                 </div>
             ),
         },
-        // ── Estado ────────────────────────────────────────────
         {
             accessorKey: 'estado',
             header: 'Estado',
             cell: ({ row }) => <EstadoBadge estado={row.original.estado} />,
         },
-        // ── Puntos ────────────────────────────────────────────
         {
             accessorKey: 'puntos_otorgados',
             header: () => <div className="text-right">Puntos</div>,
@@ -301,7 +290,6 @@ export function BoletasDataTable() {
                 </div>
             ),
         },
-        // ── Observación ───────────────────────────────────────
         {
             accessorKey: 'observacion',
             header: 'Observación',
@@ -311,7 +299,6 @@ export function BoletasDataTable() {
                 </span>
             ),
         },
-        // ── Fecha ─────────────────────────────────────────────
         {
             accessorKey: 'created_at',
             header: 'Fecha',
@@ -321,7 +308,6 @@ export function BoletasDataTable() {
                 </span>
             ),
         },
-        // ── Acciones ──────────────────────────────────────────
         {
             id: 'actions',
             cell: ({ row }) => {
@@ -375,11 +361,10 @@ export function BoletasDataTable() {
     const table = useReactTable({
         data: boletas,
         columns,
-        state: { columnVisibility, rowSelection },
+        state: { rowSelection },
         getRowId: row => String(row.id),
         enableRowSelection: true,
         onRowSelectionChange: setRowSelection,
-        onColumnVisibilityChange: setColumnVisibility,
         getCoreRowModel: getCoreRowModel(),
         manualPagination: true,
         manualFiltering: true,
@@ -432,31 +417,6 @@ export function BoletasDataTable() {
                         value={filtros.fecha_hasta}
                         onChange={e => handleFecha('fecha_hasta', e.target.value)}
                     />
-                </div>
-
-                <div className="ml-auto">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
-                                <IconLayoutColumns className="size-4" />
-                                <span className="hidden lg:inline">Columnas</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                            {table.getAllColumns()
-                                .filter(col => typeof col.accessorFn !== 'undefined' && col.getCanHide())
-                                .map(col => (
-                                    <DropdownMenuCheckboxItem
-                                        key={col.id}
-                                        className="capitalize"
-                                        checked={col.getIsVisible()}
-                                        onCheckedChange={val => col.toggleVisibility(!!val)}
-                                    >
-                                        {col.id}
-                                    </DropdownMenuCheckboxItem>
-                                ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
             </div>
 

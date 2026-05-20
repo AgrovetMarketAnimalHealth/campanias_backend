@@ -54,7 +54,6 @@ class CampaniasController extends Controller
         $campania = $this->campaniaService->crear(
             nombre: $request->nombre,
             url:    $request->url,
-            apiKey: $request->api_key,
             activa: $request->boolean('activa', true),
         );
 
@@ -71,7 +70,6 @@ class CampaniasController extends Controller
             campania: $campania,
             nombre:   $request->nombre,
             url:      $request->url,
-            apiKey:   $request->api_key,
             activa:   $request->boolean('activa'),
         );
 

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Requests\Admin\Campanias;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -17,22 +16,20 @@ class UpdateCampaniasRequests extends FormRequest
         $campaniaId = $this->route('campania')?->id;
 
         return [
-            'nombre'  => ['required', 'string', 'max:255', Rule::unique('campanias', 'nombre')->ignore($campaniaId)],
-            'url'     => ['required', 'url', 'max:500'],
-            'api_key' => ['required', 'string', 'max:255'],
-            'activa'  => ['required', 'boolean'],
+            'nombre' => ['required', 'string', 'max:255', Rule::unique('campanias', 'nombre')->ignore($campaniaId)],
+            'url'    => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'activa' => ['required', 'boolean'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'nombre.required'  => 'El nombre de la campaña es obligatorio.',
-            'nombre.unique'    => 'Ya existe otra campaña con ese nombre.',
-            'url.required'     => 'La URL es obligatoria.',
-            'url.url'          => 'La URL debe ser una dirección válida.',
-            'api_key.required' => 'La API key es obligatoria.',
-            'activa.required'  => 'El estado activa es obligatorio.',
+            'nombre.required' => 'El nombre de la campaña es obligatorio.',
+            'nombre.unique'   => 'Ya existe otra campaña con ese nombre.',
+            'url.required'    => 'El identificador es obligatorio.',
+            'url.regex'       => 'El identificador solo puede contener letras minúsculas, números y guiones (ej: suralan-sorteo).',
+            'activa.required' => 'El estado activa es obligatorio.',
         ];
     }
 }

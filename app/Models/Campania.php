@@ -32,4 +32,8 @@ class Campania extends Model
     {
         return $this->hasMany(ClienteCampania::class);
     }
+    public function boletas()
+    {
+        return $this->hasMany(Boleta::class, 'compania_id');
+    }
 }

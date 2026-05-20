@@ -26,6 +26,7 @@ class Boleta extends Model implements AuditableContract
         'estado',
         'observacion',
         'created_by',
+        'compania_id',
     ];
 
     protected $casts = [
@@ -40,6 +41,10 @@ class Boleta extends Model implements AuditableContract
         'deleted_at'       => 'datetime',
     ];
 
+    public function campania()
+    {
+        return $this->belongsTo(Campania::class);
+    }
     public function scopePendiente($query)
     {
         return $query->where('estado', 'pendiente');

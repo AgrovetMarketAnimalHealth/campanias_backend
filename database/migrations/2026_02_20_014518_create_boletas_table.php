@@ -10,6 +10,10 @@ return new class extends Migration
         Schema::create('boletas', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('cliente_id')->constrained('clientes')->cascadeOnDelete();
+            $table->foreignUuid('compania_id')
+                ->nullable()
+                ->constrained('companias')
+                ->nullOnDelete(); # debe ser null si la compañía es eliminada
             $table->string('codigo')->unique();
             $table->string('archivo');
             $table->integer('puntos_otorgados')->default(0);
