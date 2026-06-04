@@ -133,17 +133,17 @@
                 <p class="note-text">* Asignación exacta por cada S/ 1,000. No aplica redondeo ni acumulación entre comprobantes.</p>
             </div>
 
-            <!-- FECHAS DE SORTEO -->
+            <!-- FECHAS DE SORTEO CORREGIDAS -->
             <div class="dates-section">
                 <h3>Fechas de sorteo</h3>
                 <div class="dates-list">
                     <div class="date-chip">
-                        1er Sorteo: 03 de setiembre 2026
-                        <span>1 premio</span>
+                        1er Sorteo: 8 de setiembre 2026
+                        <span>2 premios</span>
                     </div>
                     <div class="date-chip">
                         2do Sorteo: 12 de noviembre 2026
-                        <span>2 premios</span>
+                        <span>3 premios</span>
                     </div>
                 </div>
             </div>

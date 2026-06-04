@@ -36,6 +36,8 @@
         .footer p { color: rgba(255,255,255,0.5); font-size: 12px; line-height: 1.8; }
         .footer a { color: #c084fc; text-decoration: none; }
         .premio-box { background-color: #f9f7ff; border: 1px solid #e0d0ff; border-radius: 8px; padding: 15px; margin: 20px 0; font-size: 14px; color: #333; }
+        .additional-link { text-align: center; margin: 5px 0 20px; }
+        .additional-link a { color: #9968d8; text-decoration: underline; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -102,17 +104,17 @@
                 <p class="note-text">* Asignación exacta por cada S/ 1,000. No aplica redondeo ni acumulación entre comprobantes.</p>
             </div>
 
-            <!-- FECHAS -->
+            <!-- FECHAS DE SORTEO CORREGIDAS -->
             <div class="dates-section">
                 <h3>Fechas de sorteo</h3>
                 <div class="dates-list">
                     <div class="date-chip">
-                        1er Sorteo: 03 de setiembre 2026
-                        <span>1 premio</span>
+                        1er Sorteo: 8 de setiembre 2026
+                        <span>2 premios</span>
                     </div>
                     <div class="date-chip">
                         2do Sorteo: 12 de noviembre 2026
-                        <span>2 premios</span>
+                        <span>3 premios</span>
                     </div>
                 </div>
             </div>
@@ -122,14 +124,21 @@
                 y tus opciones sean acreditadas. ¡Mucha suerte!
             </p>
 
-            <!-- CTA -->
+            <!-- CTA BOTÓN -->
             <div class="cta">
                 <a href="{{ config('app.frontend_url') }}/email/verify/{{ $cliente->email_verification_token }}">
                     Verificar mi correo
                 </a>
             </div>
 
-            <!-- LINKS -->
+            <!-- ENLACE ADICIONAL APARTE DEL BOTÓN -->
+            <div class="additional-link">
+                <a href="{{ config('app.frontend_url') }}/email/verify/{{ $cliente->email_verification_token }}">
+                    🔗 Si el botón no funciona, haz clic aquí para verificar tu correo
+                </a>
+            </div>
+
+            <!-- LINKS DE TÉRMINOS -->
             <div class="links">
                 <a href="{{ config('app.frontend_url') }}/portal/terminos-condiciones">Términos y condiciones</a>
                 &bull;

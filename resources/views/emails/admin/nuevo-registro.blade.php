@@ -9,8 +9,8 @@
         body { font-family: Arial, sans-serif; background-color: #f3f0ff; }
         .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .header { background: linear-gradient(135deg, #9968d8 0%, #7f22fe 100%); padding: 30px; text-align: center; }
-        .header h1 { color: #ffffff; font-size: 22px; font-weight: 700; }
-        .header p { color: rgba(255,255,255,0.85); font-size: 14px; margin-top: 6px; }
+        .header h1 { color: #ffffff; font-size: 22px; font-weight: 700; margin: 0; }
+        .header p { color: rgba(255,255,255,0.85); font-size: 14px; margin-top: 8px; }
         .body { padding: 36px 30px; color: #333333; }
         .body p { line-height: 1.7; font-size: 15px; margin-bottom: 16px; }
         .alert-box { background-color: #f3f0ff; border-left: 4px solid #9968d8; border-radius: 6px; padding: 14px 18px; margin-bottom: 24px; }
@@ -18,11 +18,14 @@
         .info-table { width: 100%; border-collapse: collapse; font-size: 14px; border-radius: 8px; overflow: hidden; margin-bottom: 24px; }
         .info-table th { background-color: #9968d8; color: #ffffff; padding: 12px 14px; text-align: left; font-weight: 600; }
         .info-table td { padding: 10px 14px; border-bottom: 1px solid #ede9fe; color: #333; }
-        .info-table td:first-child { font-weight: 600; color: #1a0033; width: 40%; }
+        .info-table td:first-child { font-weight: 600; color: #1a0033; width: 40%; background-color: #faf9ff; }
         .info-table tr:last-child td { border-bottom: none; }
         .badge { display: inline-block; background-color: #fff3cd; color: #856404; border: 1px solid #ffc107; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700; }
+        .cta { text-align: center; margin: 24px 0 10px; }
+        .cta a { background: linear-gradient(135deg, #9968d8 0%, #7f22fe 100%); color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; display: inline-block; }
         .footer { background-color: #1a0033; text-align: center; padding: 24px 30px; }
-        .footer p { color: rgba(255,255,255,0.5); font-size: 12px; line-height: 1.8; }
+        .footer p { color: rgba(255,255,255,0.5); font-size: 12px; line-height: 1.8; margin: 0; }
+        .footer a { color: #c084fc; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -36,7 +39,7 @@
         <div class="body">
 
             <div class="alert-box">
-                <p>Se ha registrado un nuevo cliente y está pendiente de revisión.</p>
+                <p>📋 Se ha registrado un nuevo cliente y está pendiente de revisión.</p>
             </div>
 
             <table class="info-table">
@@ -47,7 +50,7 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Nombre</td>
+                        <td>Nombre completo</td>
                         <td>{{ $cliente->nombre }} {{ $cliente->apellidos }}</td>
                     </tr>
                     <tr>
@@ -80,7 +83,7 @@
                     </tr>
                     <tr>
                         <td>Estado</td>
-                        <td><span class="badge">⏳ Pendiente</span></td>
+                        <td><span class="badge">⏳ Pendiente de revisión</span></td>
                     </tr>
                     <tr>
                         <td>Boleta ID</td>
@@ -91,11 +94,20 @@
 
             <p>Ingresa al panel de administración para revisar el comprobante y aprobar o rechazar el registro.</p>
 
+            <!-- CTA para el admin -->
+            <div class="cta">
+                <a href="{{ config('app.frontend_url') }}/admin/registros-pendientes">
+                    📋 Ir al panel de administración
+                </a>
+            </div>
+
         </div>
 
         <div class="footer">
             <p>
                 Notificación automática del sistema Atrevia<br>
+                <strong>Concierto:</strong> 2 de diciembre 2026 · Lima, Perú<br>
+                <strong>Contacto:</strong> WhatsApp <a href="https://wa.me/51903069021">903 069 021</a><br><br>
                 &copy; {{ date('Y') }} Atrevia - Agrovet Market. Todos los derechos reservados.
             </p>
         </div>

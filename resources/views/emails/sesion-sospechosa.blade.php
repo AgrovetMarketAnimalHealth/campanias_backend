@@ -26,6 +26,8 @@
         .actions .danger { color: #e53e3e; font-weight: 600; }
         .cta { text-align: center; margin: 30px 0 10px; }
         .cta a { background: linear-gradient(135deg, #9968d8 0%, #7f22fe 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 15px; font-weight: 700; display: inline-block; }
+        .additional-link { text-align: center; margin: 10px 0 20px; }
+        .additional-link a { color: #9968d8; text-decoration: underline; font-size: 13px; }
         .links { text-align: center; margin-top: 25px; font-size: 13px; }
         .links a { color: #9968d8; text-decoration: none; margin: 0 8px; }
         .footer { background-color: #1a0033; text-align: center; padding: 24px 30px; }
@@ -70,11 +72,11 @@
                         <td>{{ $metadata['ip'] }}</td>
                     </tr>
                     <tr>
-                        <td class="label">Dispositivo</td>
+                        <td class="label">Dispositivo / Navegador</td>
                         <td>{{ $metadata['user_agent'] }}</td>
                     </tr>
                     <tr>
-                        <td class="label">Fecha</td>
+                        <td class="label">Fecha y hora</td>
                         <td>{{ $metadata['fecha'] }}</td>
                     </tr>
                 </tbody>
@@ -86,14 +88,21 @@
                 <p class="danger">🚨 Si NO fuiste tú — contacta a soporte inmediatamente por WhatsApp.</p>
             </div>
 
-            <!-- CTA -->
+            <!-- CTA BOTÓN -->
             <div class="cta">
                 <a href="{{ config('app.frontend_url') }}/promo-concierto/iniciar-sesion">
                     Iniciar sesión
                 </a>
             </div>
 
-            <!-- LINKS -->
+            <!-- ENLACE ADICIONAL (aparte del botón) -->
+            <div class="additional-link">
+                <a href="{{ config('app.frontend_url') }}/promo-concierto/iniciar-sesion">
+                    🔗 Si el botón no funciona, haz clic aquí para iniciar sesión
+                </a>
+            </div>
+
+            <!-- LINKS LEGALES -->
             <div class="links">
                 <a href="{{ config('app.frontend_url') }}/portal/terminos-condiciones">Términos y condiciones</a>
                 &bull;

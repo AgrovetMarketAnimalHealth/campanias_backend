@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comprobante rechazado</title>
+    <title>Comprobante rechazado - Campaña Atrevia</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background-color: #f3f0ff; }
-        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .header-img { width: 100%; display: block; line-height: 0; }
         .header-img img { width: 100%; display: block; }
         .body { padding: 36px 30px; color: #333333; }
@@ -18,8 +18,8 @@
         .codigo-box p { font-size: 13px; color: #9968d8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
         .codigo-box span { font-size: 26px; font-weight: 800; color: #9968d8; letter-spacing: 3px; }
 
-        .status-box { background-color: #f5f0ff; border-left: 4px solid #9968d8; border-radius: 6px; padding: 14px 18px; margin: 20px 0; }
-        .status-box p { margin: 0; font-size: 14px; color: #9968d8; font-weight: 600; }
+        .status-box { background-color: #fee2e2; border-left: 4px solid #dc2626; border-radius: 6px; padding: 14px 18px; margin: 20px 0; }
+        .status-box p { margin: 0; font-size: 14px; color: #991b1b; font-weight: 600; }
 
         .motivo-box { background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 20px; margin: 24px 0; }
         .motivo-box h3 { font-size: 14px; color: #9a3412; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 700; }
@@ -44,13 +44,13 @@
 <body>
     <div class="container">
 
-        {{-- HEADER: imagen de portada --}}
+        <!-- HEADER: imagen de portada -->
         <div class="header-img">
             <img src="{{ config('app.url') }}/emails/Mailing_Registro rechazado.webp"
                  alt="Registro rechazado – Destino Chayanne">
         </div>
 
-        {{-- BODY --}}
+        <!-- BODY -->
         <div class="body">
 
             <p class="greeting">Hola, {{ $boleta->cliente->nombre }} {{ $boleta->cliente->apellidos }}</p>
@@ -61,24 +61,24 @@
                 a continuación para que puedas corregirlo y volver a participar.
             </p>
 
-            {{-- CODIGO --}}
+            <!-- CÓDIGO DE SEGUIMIENTO -->
             <div class="codigo-box">
                 <p>Código de seguimiento</p>
                 <span>{{ $boleta->codigo }}</span>
             </div>
 
-            {{-- ESTADO --}}
+            <!-- ESTADO -->
             <div class="status-box">
-                <p>Estado: Comprobante rechazado</p>
+                <p>⚠️ Estado: Comprobante rechazado</p>
             </div>
 
-            {{-- MOTIVO --}}
+            <!-- MOTIVO -->
             <div class="motivo-box">
                 <h3>Motivo del rechazo</h3>
                 <p>{{ $boleta->observacion }}</p>
             </div>
 
-            {{-- DETALLE --}}
+            <!-- DETALLE -->
             <table class="info-table">
                 <tr>
                     <td>N° de comprobante</td>
@@ -98,17 +98,17 @@
                 </tr>
             </table>
 
-            {{-- CTA --}}
+            <!-- CTA -->
             <div class="cta-box">
                 <p>¿Crees que hubo un error? Puedes enviar un nuevo comprobante corregido desde tu portal.</p>
-                <a href="{{ config('app.frontend_url') }}/portal/dashboard">Enviar nuevo comprobante</a>
+                <a href="{{ config('app.frontend_url') }}/portal/dashboard">📎 Enviar nuevo comprobante</a>
             </div>
 
             <p>
                 Recuerda que aún estás a tiempo de participar. ¡No te rindas!
             </p>
 
-            {{-- LINKS --}}
+            <!-- LINKS LEGALES -->
             <div class="links">
                 <a href="{{ config('app.frontend_url') }}/portal/terminos-condiciones">Términos y condiciones</a>
                 &bull;
@@ -117,7 +117,7 @@
 
         </div>
 
-        {{-- FOOTER --}}
+        <!-- FOOTER -->
         <div class="footer">
             <p>
                 Este correo fue enviado a <a href="mailto:{{ $boleta->cliente->email }}">{{ $boleta->cliente->email }}</a><br>
