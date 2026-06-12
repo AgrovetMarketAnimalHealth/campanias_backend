@@ -90,14 +90,14 @@
 
             <!-- CTA BOTÓN -->
             <div class="cta">
-                <a href="{{ config('app.frontend_url') }}/promo-concierto/iniciar-sesion">
+                <a href="{{ config('app.frontend_url') }}/promo-chayanne/veterinarios/iniciar-sesion">
                     Iniciar sesión
                 </a>
             </div>
 
             <!-- ENLACE ADICIONAL (aparte del botón) -->
             <div class="additional-link">
-                <a href="{{ config('app.frontend_url') }}/promo-concierto/iniciar-sesion">
+                <a href="{{ config('app.frontend_url') }}/promo-chayanne/veterinarios/iniciar-sesion">
                     🔗 Si el botón no funciona, haz clic aquí para iniciar sesión
                 </a>
             </div>
@@ -116,7 +116,7 @@
             <p>
                 Este correo fue enviado a <a href="mailto:{{ $cliente->email }}">{{ $cliente->email }}</a><br>
                 <strong>Concierto:</strong> 2 de diciembre 2026 · Lima, Perú<br>
-                <strong>Contacto:</strong> WhatsApp <a href="https://wa.me/51903069021">903 069 021</a> · <a href="https://atrevia.vet/promo-concierto/">atrevia.vet/promo-concierto</a><br><br>
+                <strong>Contacto:</strong> WhatsApp <a href="https://wa.me/51903069021">903 069 021</a> · <a href="https://atrevia.vet/promo-chayanne/veterinarios/">atrevia.vet/promo-chayanne/veterinarios</a><br><br>
                 &copy; {{ date('Y') }} Atrevia - Agrovet Market. Todos los derechos reservados.
             </p>
         </div>

@@ -35,15 +35,25 @@ class ClienteAuthController extends Controller{
             'Strict'
         );
     }
-    public function register(StoreClienteRequest $request, string $slug): JsonResponse{
-        $campania = Campania::where('url', $slug)
-                            ->where('activa', true)
-                            ->first();
+    public function register(StoreClienteRequest $request, string $campana, string $tipo): JsonResponse
+    {
+        \Log::info('Register hit', [
+            'campana' => $campana,
+            'tipo'    => $tipo,
+        ]);
+        
+        $campania = Campania::where('url', $campana)
+                        ->where('activa', true)
+                        ->first();
 
         if (!$campania) {
             return response()->json([
-                'success' => false,
-                'message' => 'La campaña no existe o no está activa.',
+                'success'      => false,
+                'message'      => 'La campaña no existe o no está activa.',
+                'debug_campana' => $campana,
+                'debug_tipo'    => $tipo,
+                'debug_existe'  => Campania::where('url', $campana)->exists(),
+                'debug_activa'  => Campania::where('url', $campana)->value('activa'),
             ], 404);
         }
 
@@ -62,6 +72,7 @@ class ClienteAuthController extends Controller{
                 'acepta_politicas'              => true,
                 'acepta_terminos'               => true,
                 'estado'                        => 'pendiente',
+                'tipo_registro'                 => $tipo, // "veterinarios" | "clientes"
                 'email_verification_token'      => Str::random(64),
                 'email_verification_expires_at' => now()->addHours(24),
             ]);
@@ -82,12 +93,13 @@ class ClienteAuthController extends Controller{
 
             $boleta = Boleta::create([
                 'cliente_id'  => $cliente->id,
-                'compania_id' => $campania->id,  // ← viene del slug, no del request
+                'compania_id' => $campania->id,
                 'archivo'     => $rutaComprobante,
                 'estado'      => 'pendiente',
             ]);
 
             DB::commit();
+
             EnviarEmailRegistro::dispatch($cliente, (string) $boleta->id)->onQueue('emails');
 
             return response()->json([
@@ -109,6 +121,7 @@ class ClienteAuthController extends Controller{
             ], 500);
         }
     }
+
     public function login(Request $request): JsonResponse{
         $request->validate([
             'identificador' => 'required|string',

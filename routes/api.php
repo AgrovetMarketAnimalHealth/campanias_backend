@@ -8,8 +8,8 @@ use App\Http\Middleware\EnsureIsCliente;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth/portal')->group(function () {
-
-    Route::post('/register/{slug}',       [ClienteAuthController::class, 'register']);
+    
+    Route::post('/register/{campana}/{tipo}', [ClienteAuthController::class, 'register']);
     Route::post('/login',                 [ClienteAuthController::class, 'login']);
     Route::get('/verify-email/{token}',   [ClienteAuthController::class, 'verificarEmail']);
     Route::post('/reenviar-verificacion', [ClienteAuthController::class, 'reenviarVerificacion']);
