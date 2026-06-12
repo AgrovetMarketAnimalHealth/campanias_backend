@@ -35,25 +35,29 @@ class ClienteAuthController extends Controller{
             'Strict'
         );
     }
+    
     public function register(StoreClienteRequest $request, string $campana, string $tipo): JsonResponse
     {
         \Log::info('Register hit', [
             'campana' => $campana,
             'tipo'    => $tipo,
         ]);
-        
-        $campania = Campania::where('url', $campana)
+
+        $urlBuscada = $campana . '/' . $tipo . '/';
+
+        $campania = Campania::where('url', $urlBuscada)
                         ->where('activa', true)
                         ->first();
 
         if (!$campania) {
             return response()->json([
-                'success'      => false,
-                'message'      => 'La campaña no existe o no está activa.',
-                'debug_campana' => $campana,
-                'debug_tipo'    => $tipo,
-                'debug_existe'  => Campania::where('url', $campana)->exists(),
-                'debug_activa'  => Campania::where('url', $campana)->value('activa'),
+                'success'           => false,
+                'message'           => 'La campaña no existe o no está activa.',
+                'debug_campana'     => $campana,
+                'debug_tipo'        => $tipo,
+                'debug_url_buscada' => $urlBuscada,
+                'debug_existe'      => Campania::where('url', $urlBuscada)->exists(),
+                'debug_activa'      => Campania::where('url', $urlBuscada)->value('activa'),
             ], 404);
         }
 
@@ -72,7 +76,7 @@ class ClienteAuthController extends Controller{
                 'acepta_politicas'              => true,
                 'acepta_terminos'               => true,
                 'estado'                        => 'pendiente',
-                'tipo_registro'                 => $tipo, // "veterinarios" | "clientes"
+                'tipo_registro'                 => $tipo,
                 'email_verification_token'      => Str::random(64),
                 'email_verification_expires_at' => now()->addHours(24),
             ]);
@@ -82,8 +86,8 @@ class ClienteAuthController extends Controller{
                 'campania_id' => $campania->id,
             ]);
 
-            $archivo       = $request->file('archivo_comprobante');
-            $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
+            $archivo         = $request->file('archivo_comprobante');
+            $nombreArchivo   = time() . '_' . $archivo->getClientOriginalName();
 
             $rutaComprobante = $archivo->storeAs(
                 "clientes/{$cliente->id}/comprobantes",
