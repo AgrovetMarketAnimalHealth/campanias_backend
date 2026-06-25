@@ -17,7 +17,7 @@ class UpdateCampaniasRequests extends FormRequest
 
         return [
             'nombre' => ['required', 'string', 'max:255', Rule::unique('campanias', 'nombre')->ignore($campaniaId)],
-            'url'    => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'url' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:[-\/][a-z0-9]+)*$/'],
             'activa' => ['required', 'boolean'],
         ];
     }
@@ -28,7 +28,7 @@ class UpdateCampaniasRequests extends FormRequest
             'nombre.required' => 'El nombre de la campaña es obligatorio.',
             'nombre.unique'   => 'Ya existe otra campaña con ese nombre.',
             'url.required'    => 'El identificador es obligatorio.',
-            'url.regex'       => 'El identificador solo puede contener letras minúsculas, números y guiones (ej: suralan-sorteo).',
+            'url.regex' => 'El identificador solo puede contener letras minúsculas, números, guiones y barras (ej: promo-chayanne/veterinarios).',
             'activa.required' => 'El estado activa es obligatorio.',
         ];
     }

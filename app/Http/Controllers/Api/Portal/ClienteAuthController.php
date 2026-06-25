@@ -38,11 +38,6 @@ class ClienteAuthController extends Controller{
     
     public function register(StoreClienteRequest $request, string $campana, string $tipo): JsonResponse
     {
-        \Log::info('Register hit', [
-            'campana' => $campana,
-            'tipo'    => $tipo,
-        ]);
-
         $urlBuscada = $campana . '/' . $tipo . '/';
 
         $campania = Campania::where('url', $urlBuscada)
@@ -51,13 +46,8 @@ class ClienteAuthController extends Controller{
 
         if (!$campania) {
             return response()->json([
-                'success'           => false,
-                'message'           => 'La campaña no existe o no está activa.',
-                'debug_campana'     => $campana,
-                'debug_tipo'        => $tipo,
-                'debug_url_buscada' => $urlBuscada,
-                'debug_existe'      => Campania::where('url', $urlBuscada)->exists(),
-                'debug_activa'      => Campania::where('url', $urlBuscada)->value('activa'),
+                'success' => false,
+                'message' => 'La campaña no existe o no está activa.',
             ], 404);
         }
 
@@ -86,25 +76,9 @@ class ClienteAuthController extends Controller{
                 'campania_id' => $campania->id,
             ]);
 
-            $archivo         = $request->file('archivo_comprobante');
-            $nombreArchivo   = time() . '_' . $archivo->getClientOriginalName();
-
-            $rutaComprobante = $archivo->storeAs(
-                "clientes/{$cliente->id}/comprobantes",
-                $nombreArchivo,
-                'public'
-            );
-
-            $boleta = Boleta::create([
-                'cliente_id'  => $cliente->id,
-                'compania_id' => $campania->id,
-                'archivo'     => $rutaComprobante,
-                'estado'      => 'pendiente',
-            ]);
-
             DB::commit();
 
-            EnviarEmailRegistro::dispatch($cliente, (string) $boleta->id)->onQueue('emails');
+            EnviarEmailRegistro::dispatch($cliente)->onQueue('emails');
 
             return response()->json([
                 'success' => true,
@@ -114,14 +88,9 @@ class ClienteAuthController extends Controller{
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            if (isset($cliente)) {
-                Storage::disk('public')->deleteDirectory("clientes/{$cliente->id}");
-            }
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-                'line'    => $e->getLine(),
-                'file'    => $e->getFile(),
             ], 500);
         }
     }

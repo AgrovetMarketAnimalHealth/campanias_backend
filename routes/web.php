@@ -25,6 +25,18 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
         return Inertia::render('welcome');
     })->name('home');
 
+    Route::get('/preview-email', function () {
+
+        $cliente = (object) [
+            'nombre' => 'Jefferson',
+            'apellidos' => 'Coveñas',
+            'email' => 'jefferson@correo.com',
+            'email_verification_token' => 'token-prueba'
+        ];
+
+        return view('emails.registro', compact('cliente'));
+    });
+
     #Ruta para cambiar password (sin password.reset para evitar loop)
     Route::middleware(['auth'])->group(function () {
         Route::get('change-password', [PasswordController::class, 'edit'])

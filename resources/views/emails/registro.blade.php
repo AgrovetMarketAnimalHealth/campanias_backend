@@ -13,8 +13,6 @@
         .body { padding: 36px 30px; color: #333333; }
         .body p { line-height: 1.7; font-size: 15px; margin-bottom: 16px; }
         .greeting { font-size: 17px; font-weight: 600; color: #1a0033; }
-        .status-box { background-color: #f3f0ff; border-left: 4px solid #9968d8; border-radius: 6px; padding: 14px 18px; margin: 20px 0; }
-        .status-box p { margin: 0; font-size: 14px; color: #9968d8; font-weight: 600; }
         .points-section { margin: 24px 0; }
         .points-section h3 { font-size: 15px; color: #1a0033; margin-bottom: 12px; font-weight: 700; }
         .points-table { width: 100%; border-collapse: collapse; font-size: 14px; border-radius: 8px; overflow: hidden; }
@@ -59,9 +57,18 @@
                 para acreditar tus opciones y que puedas participar en el sorteo.
             </p>
 
-            <!-- ESTADO -->
-            <div class="status-box">
-                <p>Estado actual: Comprobante pendiente de revisión</p>
+            <!-- CTA BOTÓN -->
+            <div class="cta">
+                <a href="{{ config('app.frontend_url') }}/email/verify/{{ $cliente->email_verification_token }}">
+                    Verificar mi correo
+                </a>
+            </div>
+
+            <!-- ENLACE ADICIONAL APARTE DEL BOTÓN -->
+            <div class="additional-link">
+                <a href="{{ config('app.frontend_url') }}/email/verify/{{ $cliente->email_verification_token }}">
+                    Si el botón no funciona, haz clic aquí para verificar tu correo
+                </a>
             </div>
 
             <!-- PUNTOS -->
@@ -123,20 +130,6 @@
                 Te notificaremos por este correo cuando tu comprobante sea aprobado
                 y tus opciones sean acreditadas. ¡Mucha suerte!
             </p>
-
-            <!-- CTA BOTÓN -->
-            <div class="cta">
-                <a href="{{ config('app.frontend_url') }}/email/verify/{{ $cliente->email_verification_token }}">
-                    Verificar mi correo
-                </a>
-            </div>
-
-            <!-- ENLACE ADICIONAL APARTE DEL BOTÓN -->
-            <div class="additional-link">
-                <a href="{{ config('app.frontend_url') }}/email/verify/{{ $cliente->email_verification_token }}">
-                    🔗 Si el botón no funciona, haz clic aquí para verificar tu correo
-                </a>
-            </div>
 
             <!-- LINKS DE TÉRMINOS -->
             <div class="links">

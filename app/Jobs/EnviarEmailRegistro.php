@@ -16,15 +16,11 @@ class EnviarEmailRegistro implements ShouldQueue
 
     public function __construct(
         public readonly Cliente $cliente,
-        public readonly ?string $boletaId = null,
     ) {}
 
     public function handle(BrevoService $brevo): void
     {
-        Log::info('EnviarEmailRegistro job', [
-            'cliente_id' => $this->cliente->id,
-            'boleta_id'  => $this->boletaId,
-        ]);
+        Log::info('EnviarEmailRegistro job', ['cliente_id' => $this->cliente->id]);
 
         $brevo->enviar(
             destinatario: $this->cliente->email,
@@ -32,19 +28,14 @@ class EnviarEmailRegistro implements ShouldQueue
             cuerpo:       view('emails.registro', ['cliente' => $this->cliente])->render(),
             tipo:         'registro_cliente',
             clienteId:    $this->cliente->id,
-            boletaId:     $this->boletaId,
         );
 
         $brevo->enviar(
             destinatario: config('services.brevo.from_email'),
-            asunto:       '🔔 Nuevo registro pendiente – ' . $this->cliente->nombre . ' ' . $this->cliente->apellidos,
-            cuerpo:       view('emails.admin.nuevo-registro', [
-                            'cliente'  => $this->cliente,
-                            'boletaId' => $this->boletaId,
-                        ])->render(),
+            asunto:       'Nuevo registro – ' . $this->cliente->nombre . ' ' . $this->cliente->apellidos,
+            cuerpo:       view('emails.admin.nuevo-registro', ['cliente' => $this->cliente])->render(),
             tipo:         'registro_admin',
             clienteId:    $this->cliente->id,
-            boletaId:     $this->boletaId,
         );
     }
 }
