@@ -22,7 +22,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { clienteService } from '../services/clienteService'
-import type { Cliente } from '../tyoes/index'
+import type { Cliente } from '../types/index'
 import { toast } from 'sonner'
 
 interface ClienteEditDrawerProps {

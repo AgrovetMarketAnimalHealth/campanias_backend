@@ -22,9 +22,9 @@ class ReportesClientesController extends Controller{
         $request->validate([
             'fecha_inicio' => 'nullable|date',
             'fecha_fin'    => 'nullable|date|after_or_equal:fecha_inicio',
+            'campania_id'  => 'nullable|string|exists:campanias,id',
         ]);
 
-        // Por defecto: HOY (diario)
         $fechaInicio = $request->filled('fecha_inicio')
             ? $request->date('fecha_inicio')->startOfDay()
             : now()->startOfDay();
@@ -33,10 +33,18 @@ class ReportesClientesController extends Controller{
             ? $request->date('fecha_fin')->endOfDay()
             : now()->endOfDay();
 
-        // Inscritos por día en el rango — query liviana, no carga colección
-        $inscritosPorDia = Cliente::query()
-            ->selectRaw('DATE(created_at) as fecha, COUNT(*) as total')
+        $campaniaId = $request->campania_id;
+
+        // Helper: query base de clientes en el rango, opcionalmente scoped a una campaña.
+        // Se llama fresco cada vez para no reutilizar un builder ya consumido.
+        $base = fn() => Cliente::query()
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
+            ->when($campaniaId, fn($q) =>
+                $q->whereHas('clienteCampanias', fn($q2) => $q2->where('campania_id', $campaniaId))
+            );
+
+        $inscritosPorDia = $base()
+            ->selectRaw('DATE(created_at) as fecha, COUNT(*) as total')
             ->groupByRaw('DATE(created_at)')
             ->orderBy('fecha')
             ->get()
@@ -45,26 +53,20 @@ class ReportesClientesController extends Controller{
                 'total' => (int) $row->total,
             ]);
 
-        // Por estado — una sola query agrupada
-        $porEstado = Cliente::query()
+        $porEstado = $base()
             ->selectRaw('estado, COUNT(*) as total')
-            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->groupBy('estado')
             ->get()
             ->mapWithKeys(fn($row) => [$row->estado => (int) $row->total]);
 
-        // Por tipo persona — una sola query agrupada
-        $porTipoPersona = Cliente::query()
+        $porTipoPersona = $base()
             ->selectRaw('tipo_persona, COUNT(*) as total')
-            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->groupBy('tipo_persona')
             ->get()
             ->mapWithKeys(fn($row) => [$row->tipo_persona => (int) $row->total]);
 
-        // Solo los últimos 10 recientes — limit estricto, sin cargar más
-        $recientes = Cliente::query()
+        $recientes = $base()
             ->select(['id', 'nombre', 'apellidos', 'tipo_persona', 'email', 'estado', 'created_at'])
-            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->orderByDesc('created_at')
             ->limit(10)
             ->get()
@@ -78,15 +80,28 @@ class ReportesClientesController extends Controller{
                 'hora'         => $c->created_at->format('h:i:s A'),
             ]);
 
+        // Desglose: cuántos clientes (distintos) tiene cada campaña en el rango,
+        // sin necesidad de filtrar — útil para comparar campañas entre sí.
+        $porCampania = Cliente::query()
+            ->join('cliente_campania', 'cliente_campania.cliente_id', '=', 'clientes.id')
+            ->join('campanias', 'campanias.id', '=', 'cliente_campania.campania_id')
+            ->whereBetween('clientes.created_at', [$fechaInicio, $fechaFin])
+            ->selectRaw('campanias.id as campania_id, campanias.nombre as campania_nombre, COUNT(DISTINCT clientes.id) as total')
+            ->groupBy('campanias.id', 'campanias.nombre')
+            ->orderByDesc('total')
+            ->get();
+
         return response()->json([
             'rango' => [
                 'inicio' => $fechaInicio->toDateString(),
                 'fin'    => $fechaFin->toDateString(),
             ],
+            'campania_id'       => $campaniaId,
             'total_periodo'     => $inscritosPorDia->sum('total'),
             'inscritos_por_dia' => $inscritosPorDia,
             'por_estado'        => $porEstado,
             'por_tipo_persona'  => $porTipoPersona,
+            'por_campania'      => $porCampania,
             'recientes'         => $recientes,
         ]);
     }
@@ -98,10 +113,10 @@ class ReportesClientesController extends Controller{
             'fecha_fin'    => 'nullable|date|after_or_equal:fecha_inicio',
             'estado'       => 'nullable|in:pendiente,activo,rechazado',
             'tipo_persona' => 'nullable|in:natural,juridica',
+            'campania_id'  => 'nullable|string|exists:campanias,id',
             'per_page'     => 'nullable|integer|min:10|max:100',
         ]);
 
-        // Por defecto filtra HOY si no mandan rango
         $fechaInicio = $request->filled('fecha_inicio')
             ? $request->date('fecha_inicio')->startOfDay()
             : now()->startOfDay();
@@ -126,9 +141,15 @@ class ReportesClientesController extends Controller{
             $query->where('tipo_persona', $request->tipo_persona);
         }
 
+        if ($request->filled('campania_id')) {
+            $query->whereHas('clienteCampanias', fn($q) =>
+                $q->where('campania_id', $request->campania_id)
+            );
+        }
+
         return response()->json(
             $query->orderByDesc('created_at')
-                  ->paginate($request->integer('per_page', 25))
+                ->paginate($request->integer('per_page', 25))
         );
     }
     public function exportarExcel(Request $request): StreamedResponse{

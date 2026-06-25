@@ -14,18 +14,34 @@ use Illuminate\Support\Facades\Gate;
 class ClienteAdminController extends Controller{
     public function index(Request $request): AnonymousResourceCollection{
         Gate::authorize('viewAny', Cliente::class);
+        $campaniaIds = array_filter((array) $request->campania_id);
+
         $clientes = Cliente::query()
             ->withCount([
-                'boletas as boletas_aceptadas'  => fn($q) => $q->where('estado', 'aceptada'),
-                'boletas as boletas_pendientes' => fn($q) => $q->where('estado', 'pendiente'),
-                'boletas as boletas_rechazadas' => fn($q) => $q->where('estado', 'rechazada'),
+                'boletas as boletas_aceptadas' => fn($q) => $q->where('estado', 'aceptada')
+                    ->when($campaniaIds, fn($q2) => $q2->whereIn('compania_id', $campaniaIds)),
+                'boletas as boletas_pendientes' => fn($q) => $q->where('estado', 'pendiente')
+                    ->when($campaniaIds, fn($q2) => $q2->whereIn('compania_id', $campaniaIds)),
+                'boletas as boletas_rechazadas' => fn($q) => $q->where('estado', 'rechazada')
+                    ->when($campaniaIds, fn($q2) => $q2->whereIn('compania_id', $campaniaIds)),
             ])
+            ->withSum([
+                'puntos as total_puntos' => fn($q) => $q->when(
+                    $campaniaIds,
+                    fn($q2) => $q2->whereIn('campania_id', $campaniaIds)
+                ),
+            ], 'puntos')
+            ->when($campaniaIds, fn($q) =>
+                $q->whereHas('clienteCampanias', fn($q2) =>
+                    $q2->whereIn('campania_id', $campaniaIds)
+                )
+            )
             ->when($request->search, fn($q, $search) =>
                 $q->where(fn($q) =>
                     $q->where('nombre',    'like', "%$search%")
-                      ->orWhere('apellidos', 'like', "%$search%")
-                      ->orWhere('dni',       'like', "%$search%")
-                      ->orWhere('email',     'like', "%$search%")
+                    ->orWhere('apellidos', 'like', "%$search%")
+                    ->orWhere('dni',       'like', "%$search%")
+                    ->orWhere('email',     'like', "%$search%")
                 )
             )
             ->when($request->tipo_persona, fn($q, $tipo)   => $q->where('tipo_persona', $tipo))

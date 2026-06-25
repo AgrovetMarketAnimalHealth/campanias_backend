@@ -16,6 +16,9 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
+import {
     Table, TableBody, TableCell,
     TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -24,10 +27,13 @@ import {
     DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { clienteService } from '../services/clienteService'
+import { campaniaService } from '../services/campaniaService'
 import { ClienteEditDrawer } from './ClienteEditDrawer'
 import { tipoPersonaLabel } from '../utils'
-import type { Cliente, PaginatedResponse, TipoPersona } from '../tyoes'
+import type { Cliente, Campania, PaginatedResponse, TipoPersona } from '../types'
 import clientes from '@/routes/clientes'
+
+const TODAS_CAMPANIAS = 'todas'
 
 export function ClientesTable() {
     const [data, setData]        = React.useState<PaginatedResponse<Cliente> | null>(null)
@@ -36,19 +42,36 @@ export function ClientesTable() {
     const [tipoPersona, setTipo] = React.useState<TipoPersona>('todas')
     const [page, setPage]        = React.useState(1)
 
+    const [campanias, setCampanias]           = React.useState<Campania[]>([])
+    const [campaniaId, setCampaniaId]         = React.useState<string>('')
+    const [campaniasReady, setCampaniasReady] = React.useState(false)
+
     const [editCliente, setEditCliente] = React.useState<Cliente | null>(null)
     const [editOpen, setEditOpen]       = React.useState(false)
 
+    // Carga las campañas una sola vez y selecciona la activa por defecto
     React.useEffect(() => {
+        campaniaService.getCampanias().then((res) => {
+            setCampanias(res.data)
+            const activa = res.data.find((c) => Boolean(c.activa))
+            setCampaniaId(activa?.id ?? TODAS_CAMPANIAS)
+            setCampaniasReady(true)
+        })
+    }, [])
+
+    // Espera a que la campaña por defecto esté lista antes de pedir clientes,
+    // así evitamos un primer fetch sin filtro seguido de otro con filtro
+    React.useEffect(() => {
+        if (!campaniasReady) return
         const t = setTimeout(() => {
             setLoading(true)
             clienteService
-                .getClientes({ search, tipo_persona: tipoPersona, page })
+                .getClientes({ search, tipo_persona: tipoPersona, campania_id: campaniaId, page })
                 .then(setData)
                 .finally(() => setLoading(false))
         }, 300)
         return () => clearTimeout(t)
-    }, [search, tipoPersona, page])
+    }, [search, tipoPersona, campaniaId, page, campaniasReady])
 
     function goToDetalle(id: string) {
         router.visit(clientes.show(id).url)
@@ -226,21 +249,41 @@ export function ClientesTable() {
             <div className="flex flex-col gap-4 px-4 lg:px-6">
                 {/* Filtros */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-1 rounded-lg border bg-muted p-1 w-fit">
-                        {(['todas', 'natural', 'juridica'] as TipoPersona[]).map((tipo) => (
-                            <button
-                                key={tipo}
-                                onClick={() => { setTipo(tipo); setPage(1) }}
-                                className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-all ${
-                                    tipoPersona === tipo
-                                        ? 'bg-background shadow-sm text-foreground'
-                                        : 'text-muted-foreground hover:text-foreground'
-                                }`}
-                            >
-                                {tipo === 'todas' ? 'Todas' : tipo === 'natural' ? 'Natural' : 'Jurídica'}
-                            </button>
-                        ))}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <Select
+                            value={campaniaId}
+                            onValueChange={(value) => { setCampaniaId(value); setPage(1) }}
+                        >
+                            <SelectTrigger className="w-full sm:w-64">
+                                <SelectValue placeholder="Selecciona campaña" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={TODAS_CAMPANIAS}>Todas las campañas</SelectItem>
+                                {campanias.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>
+                                        {c.nombre}{!c.activa && ' (inactiva)'}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <div className="flex items-center gap-1 rounded-lg border bg-muted p-1 w-fit">
+                            {(['todas', 'natural', 'juridica'] as TipoPersona[]).map((tipo) => (
+                                <button
+                                    key={tipo}
+                                    onClick={() => { setTipo(tipo); setPage(1) }}
+                                    className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-all ${
+                                        tipoPersona === tipo
+                                            ? 'bg-background shadow-sm text-foreground'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                >
+                                    {tipo === 'todas' ? 'Todas' : tipo === 'natural' ? 'Natural' : 'Jurídica'}
+                                </button>
+                            ))}
+                        </div>
                     </div>
+
                     <div className="relative w-full sm:w-72">
                         <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                         <Input
