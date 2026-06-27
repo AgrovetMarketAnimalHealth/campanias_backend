@@ -43,7 +43,7 @@ class Boleta extends Model implements AuditableContract
 
     public function campania()
     {
-        return $this->belongsTo(Campania::class);
+        return $this->belongsTo(Campania::class, 'compania_id');
     }
     public function scopePendiente($query)
     {

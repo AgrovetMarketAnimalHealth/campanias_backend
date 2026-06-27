@@ -7,6 +7,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+
 class EnviarEmailRegistro implements ShouldQueue
 {
     use InteractsWithQueue, Queueable, SerializesModels;
@@ -33,7 +34,10 @@ class EnviarEmailRegistro implements ShouldQueue
         $brevo->enviar(
             destinatario: config('services.brevo.from_email'),
             asunto:       'Nuevo registro – ' . $this->cliente->nombre . ' ' . $this->cliente->apellidos,
-            cuerpo:       view('emails.admin.nuevo-registro', ['cliente' => $this->cliente])->render(),
+            cuerpo:       view('emails.admin.nuevo-registro', [
+                'cliente'  => $this->cliente,
+                'boletaId' => null, // ← fix: aún no hay boleta en el registro
+            ])->render(),
             tipo:         'registro_admin',
             clienteId:    $this->cliente->id,
         );

@@ -7,6 +7,7 @@ export const clienteService = {
         tipo_persona?: string
         departamento?: string
         estado?: string
+        campania_id?: string
         page?: number
         per_page?: number
     }): Promise<PaginatedResponse<Cliente>> {
