@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('campanias', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('nombre')->index();
-            $table->decimal('valor_minimo', 10, 2)->nullable()->default(0)->after('nombre');
+            $table->decimal('valor_minimo', 10, 2)->nullable()->default(0);
             $table->string('url', 2048);
             $table->string('api_key', 255);
             $table->boolean('activa')->default(true);

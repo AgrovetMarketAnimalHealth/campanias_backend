@@ -49,31 +49,27 @@ class CampaniasController extends Controller
 
     public function store(StoreCampaniasRequests $request)
     {
-        Gate::authorize('create', Campania::class);
-
         $campania = $this->campaniaService->crear(
-            nombre: $request->nombre,
-            url:    $request->url,
-            activa: $request->boolean('activa', true),
+            $request->validated('nombre'),
+            $request->validated('url'),
+            (float) $request->validated('valor_minimo'),
+            (bool) $request->validated('activa'),
         );
 
-        return (new CampaniasResource($campania))
-            ->response()
-            ->setStatusCode(Response::HTTP_CREATED);
+        return new CampaniasResource($campania);
     }
 
     public function update(UpdateCampaniasRequests $request, Campania $campania)
     {
-        Gate::authorize('update', $campania);
-
         $campania = $this->campaniaService->actualizar(
-            campania: $campania,
-            nombre:   $request->nombre,
-            url:      $request->url,
-            activa:   $request->boolean('activa'),
+            $campania,
+            $request->validated('nombre'),
+            $request->validated('url'),
+            (float) $request->validated('valor_minimo'),
+            (bool) $request->validated('activa'),
         );
 
-        return new CampaniasResource($campania->fresh());
+        return new CampaniasResource($campania);
     }
 
     public function destroy(Campania $campania)

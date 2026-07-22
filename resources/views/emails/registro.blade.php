@@ -113,7 +113,7 @@
 
             <!-- FECHAS DE SORTEO CORREGIDAS -->
             <div class="dates-section">
-                <h3>Fechas de sorteo</h3>
+                <h3>Fecha del concierto</h3>
                 <div class="dates-list">
                     <div class="date-chip">
                         1er Sorteo: 8 de setiembre 2026

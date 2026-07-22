@@ -17,7 +17,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import {
     IconBroadcast, IconLink, IconCalendar, IconClock,
     IconAlertCircle, IconCircleCheck, IconPencil, IconPlus,
-    IconTrash,
+    IconTrash, IconCoin,
 } from '@tabler/icons-react';
 import { ActivaBadge } from './ActivaBadge';
 import { CampaniaDeleteDialog } from './CampaniaDeleteDialog';
@@ -39,6 +39,10 @@ interface FeedbackState {
 
 function buildErrorDetails(errors: Record<string, string[]>): string[] {
     return Object.values(errors).flat();
+}
+
+function formatCurrency(value: number) {
+    return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value);
 }
 
 function FeedbackAlert({ feedback }: { feedback: FeedbackState }) {
@@ -121,6 +125,13 @@ export function CampaniaDrawer({ campania, onUpdated, onDeleted, children }: Vie
                                 <p className="font-mono text-sm font-medium">/{campania.url}</p>
                             </div>
 
+                            <div className="rounded-lg border p-3">
+                                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                                    <IconCoin className="size-3" /> Valor mínimo
+                                </p>
+                                <p className="text-sm font-medium">{formatCurrency(campania.valor_minimo)}</p>
+                            </div>
+
                             <Separator />
 
                             <div className="grid grid-cols-1 gap-3">
@@ -200,37 +211,38 @@ function EditarForm({
         defaultValues: {
             nombre: campania.nombre,
             url: campania.url,
+            valor_minimo: campania.valor_minimo,
             activa: campania.activa,
         },
     });
 
     const handleSubmit = form.handleSubmit(
-    async (values) => {
-        setFeedback(null);
-        try {
-            const updated = await campaniaService.update(campania.id, values);
-            setFeedback({ type: 'success', message: `Campaña "${updated.nombre}" actualizada.` });
-            onUpdated(updated);
-        } catch (error) {
-            const err = error as ServerValidationError;
+        async (values) => {
+            setFeedback(null);
+            try {
+                const updated = await campaniaService.update(campania.id, values);
+                setFeedback({ type: 'success', message: `Campaña "${updated.nombre}" actualizada.` });
+                onUpdated(updated);
+            } catch (error) {
+                const err = error as ServerValidationError;
+                setFeedback({
+                    type: 'error',
+                    message: err?.message ?? 'Error al actualizar la campaña.',
+                    details: err?.errors ? buildErrorDetails(err.errors) : undefined,
+                });
+            }
+        },
+        (validationErrors) => {
+            // Se dispara cuando el formulario NO pasa la validación de Zod.
             setFeedback({
                 type: 'error',
-                message: err?.message ?? 'Error al actualizar la campaña.',
-                details: err?.errors ? buildErrorDetails(err.errors) : undefined,
+                message: 'Revisa los campos marcados en rojo.',
+                details: Object.values(validationErrors)
+                    .map((e) => e?.message)
+                    .filter((m): m is string => !!m),
             });
         }
-    },
-    (validationErrors) => {
-        // Se dispara cuando el formulario NO pasa la validación de Zod.
-        setFeedback({
-            type: 'error',
-            message: 'Revisa los campos marcados en rojo.',
-            details: Object.values(validationErrors)
-                .map((e) => e?.message)
-                .filter((m): m is string => !!m),
-        });
-    }
-);
+    );
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -262,7 +274,7 @@ export function CampaniaCreateDrawer({ onCreated, children }: CreateProps) {
 
     const form = useForm<CrearCampaniaForm>({
         resolver: zodResolver(crearCampaniaSchema),
-        defaultValues: { nombre: '', url: '', activa: true },
+        defaultValues: { nombre: '', url: '', valor_minimo: 0, activa: true },
     });
 
     React.useEffect(() => {
@@ -273,32 +285,32 @@ export function CampaniaCreateDrawer({ onCreated, children }: CreateProps) {
     }, [open, form]);
 
     const handleSubmit = form.handleSubmit(
-    async (values) => {
-        setFeedback(null);
-        try {
-            const created = await campaniaService.store(values);
-            setFeedback({ type: 'success', message: `Campaña "${created.nombre}" creada correctamente.` });
-            onCreated(created);
-            setTimeout(() => setOpen(false), 1200);
-        } catch (error) {
-            const err = error as ServerValidationError;
+        async (values) => {
+            setFeedback(null);
+            try {
+                const created = await campaniaService.store(values);
+                setFeedback({ type: 'success', message: `Campaña "${created.nombre}" creada correctamente.` });
+                onCreated(created);
+                setTimeout(() => setOpen(false), 1200);
+            } catch (error) {
+                const err = error as ServerValidationError;
+                setFeedback({
+                    type: 'error',
+                    message: err?.message ?? 'Error al crear la campaña.',
+                    details: err?.errors ? buildErrorDetails(err.errors) : undefined,
+                });
+            }
+        },
+        (validationErrors) => {
             setFeedback({
                 type: 'error',
-                message: err?.message ?? 'Error al crear la campaña.',
-                details: err?.errors ? buildErrorDetails(err.errors) : undefined,
+                message: 'Revisa los campos marcados en rojo.',
+                details: Object.values(validationErrors)
+                    .map((e) => e?.message)
+                    .filter((m): m is string => !!m),
             });
         }
-    },
-    (validationErrors) => {
-        setFeedback({
-            type: 'error',
-            message: 'Revisa los campos marcados en rojo.',
-            details: Object.values(validationErrors)
-                .map((e) => e?.message)
-                .filter((m): m is string => !!m),
-        });
-    }
-);
+    );
 
     return (
         <Drawer open={open} onOpenChange={setOpen} direction={isMobile ? 'bottom' : 'right'}>
@@ -381,6 +393,28 @@ function CampaniaFormFields({ form }: { form: AnyForm }) {
                 </p>
                 {errors.url && (
                     <p className="text-xs text-destructive">{errors.url.message}</p>
+                )}
+            </div>
+
+            {/* Valor mínimo */}
+            <div className="flex flex-col gap-1.5">
+                <Label htmlFor="valor_minimo">Valor mínimo *</Label>
+                <div className="flex items-center rounded-md border focus-within:ring-2 focus-within:ring-ring overflow-hidden">
+                    <span className="px-3 py-2 text-sm text-muted-foreground bg-muted border-r select-none">
+                        S/
+                    </span>
+                    <input
+                        id="valor_minimo"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+                        {...f.register('valor_minimo')}
+                    />
+                </div>
+                {errors.valor_minimo && (
+                    <p className="text-xs text-destructive">{errors.valor_minimo.message}</p>
                 )}
             </div>
 

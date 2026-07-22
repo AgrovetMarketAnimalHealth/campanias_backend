@@ -158,6 +158,16 @@ export function CampaniasDataTable() {
                 </span>
             ),
         },
+        // ── Valor mínimo ──────────────────────────────────────
+        {
+            accessorKey: 'valor_minimo',
+            header: 'Valor mínimo',
+            cell: ({ row }) => (
+                <span className="text-sm font-mono">
+                    {new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(row.original.valor_minimo)}
+                </span>
+            ),
+        },
         // ── Estado ────────────────────────────────────────────
         {
             accessorKey: 'activa',

@@ -14,6 +14,7 @@ class CampaniasResource extends JsonResource
             'nombre'     => $this->nombre,
             'url'        => $this->url,
             'activa'     => $this->activa,
+            'valor_minimo' => $this->valor_minimo,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

@@ -16,6 +16,7 @@ class StoreCampaniasRequests extends FormRequest
         return [
             'nombre' => ['required', 'string', 'max:255', Rule::unique('campanias', 'nombre')],
             'url' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:[-\/][a-z0-9]+)*\/?$/'],
+            'valor_minimo' => ['required', 'numeric', 'min:0'],
             'activa' => ['sometimes', 'boolean'],
         ];
     }
@@ -26,7 +27,10 @@ class StoreCampaniasRequests extends FormRequest
             'nombre.required' => 'El nombre de la campaña es obligatorio.',
             'nombre.unique'   => 'Ya existe una campaña con ese nombre.',
             'url.required'    => 'El identificador es obligatorio.',
-            'url.regex' => 'El identificador solo puede contener letras minúsculas, números, guiones y barras (ej: promo-chayanne/veterinarios).',
+            'url.regex'       => 'El identificador solo puede contener letras minúsculas, números, guiones y barras (ej: promo-chayanne/veterinarios).',
+            'valor_minimo.required' => 'El valor mínimo es obligatorio.',
+            'valor_minimo.numeric'  => 'El valor mínimo debe ser un número.',
+            'valor_minimo.min'      => 'El valor mínimo no puede ser negativo.',
         ];
     }
 }

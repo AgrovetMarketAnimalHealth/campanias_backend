@@ -49,6 +49,7 @@ export const campaniaService = {
     async store(payload: {
         nombre: string;
         url: string;
+        valor_minimo: number;
         activa: boolean;
     }): Promise<Campania> {
         try {
@@ -64,6 +65,7 @@ export const campaniaService = {
         payload: {
             nombre: string;
             url: string;
+            valor_minimo: number;
             activa: boolean;
         },
     ): Promise<Campania> {
