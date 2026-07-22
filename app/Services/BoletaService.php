@@ -25,11 +25,23 @@ class BoletaService
             if ($boleta->estado !== 'pendiente') {
                 throw new \Exception('La boleta ya fue procesada.');
             }
+
+            // Defensa adicional: valida el mínimo dinámico de la campaña
+            // aunque ya haya pasado por el FormRequest (protege llamadas
+            // desde jobs, comandos artisan, etc.)
+            if ($monto < $boleta->montoMinimoParaAceptar()) {
+                throw new \Exception(sprintf(
+                    'El monto no cumple el mínimo requerido para esta campaña (S/ %s).',
+                    number_format($boleta->montoMinimoParaAceptar(), 2)
+                ));
+            }
+
             $duplicada = Boleta::where('numero_boleta', $numeroBoleta)
                 ->where('ruc_veterinaria', $rucVeterinaria)
                 ->where('estado', 'aceptada')
                 ->where('id', '!=', $boleta->id)
                 ->exists();
+
             if ($duplicada) {
                 $boleta->updateQuietly([
                     'estado'          => 'rechazada',
@@ -41,6 +53,7 @@ class BoletaService
                 dispatch(new EnviarEmailBoletaRechazada($boleta))->onQueue('emails');
                 return $boleta;
             }
+
             $boleta->updateQuietly([
                 'estado'           => 'aceptada',
                 'puntos_otorgados' => $puntos,

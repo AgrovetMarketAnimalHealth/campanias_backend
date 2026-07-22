@@ -49,8 +49,10 @@ class BoletaController extends Controller
         return new BoletaResourceBackend($boleta);
     }
 
-    public function update(UpdateBoletaRequest $request, Boleta $boleta){
+    public function update(UpdateBoletaRequest $request, Boleta $boleta)
+    {
         Gate::authorize('update', $boleta);
+
         if ($request->estado === 'aceptada') {
             $this->boletaService->aceptar(
                 boleta:         $boleta,
@@ -61,6 +63,7 @@ class BoletaController extends Controller
                 observacion:    $request->observacion,
             );
         }
+
         if ($request->estado === 'rechazada') {
             $this->boletaService->rechazar(
                 boleta:         $boleta,
@@ -70,6 +73,7 @@ class BoletaController extends Controller
                 rucVeterinaria: $request->ruc_veterinaria,
             );
         }
+
         return new BoletaResourceBackend($boleta->fresh());
     }
 }

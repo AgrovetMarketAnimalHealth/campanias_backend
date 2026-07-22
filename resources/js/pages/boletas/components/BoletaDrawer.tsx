@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { EstadoBadge } from './EstadoBadge';
 import { boletaService } from '../services/boleta.service';
-import { aceptarBoletaSchema, rechazarBoletaSchema } from '../schemas/boleta.schemas';
+import { getAceptarBoletaSchema, rechazarBoletaSchema } from '../schemas/boleta.schemas';
 import type { AceptarBoletaForm, RechazarBoletaForm } from '../schemas/boleta.schemas';
 import type { Boleta } from '../types/boleta.types';
 import {
@@ -62,7 +62,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
     }
 
     const aceptarForm = useForm<AceptarBoletaForm>({
-        resolver: zodResolver(getAceptarBoletaSchema(montoMinimo)), // <-- antes: aceptarBoletaSchema
+        resolver: zodResolver(getAceptarBoletaSchema(montoMinimo)),
         defaultValues: {
             numero_boleta: '',
             ruc_veterinaria: '',
@@ -95,6 +95,8 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
             });
             setFeedback({ type: 'success', message: `Boleta ${boleta.codigo} aceptada correctamente.` });
             onUpdated(updated);
+            // Cerrar el drawer después de un tiempo
+            setTimeout(() => setOpen(false), 2000);
         } catch (error) {
             const err = error as ServerValidationError;
             setFeedback({
@@ -117,6 +119,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
             });
             setFeedback({ type: 'success', message: `Boleta ${boleta.codigo} marcada como rechazada.` });
             onUpdated(updated);
+            setTimeout(() => setOpen(false), 2000);
         } catch (error) {
             const err = error as ServerValidationError;
             setFeedback({
@@ -148,7 +151,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
     return (
         <Drawer open={open} onOpenChange={setOpen} direction={isMobile ? 'bottom' : 'right'}>
             <DrawerTrigger asChild>{children}</DrawerTrigger>
-            <DrawerContent>
+            <DrawerContent className={!isMobile ? 'w-[500px] max-w-[90vw] right-0 h-full' : ''}>
                 <DrawerHeader className="gap-1">
                     <DrawerTitle className="flex items-center gap-2">
                         <IconFileText className="size-4" />
@@ -160,7 +163,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                     </DrawerDescription>
                 </DrawerHeader>
 
-                <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+                <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm pb-4">
 
                     {/* Info cliente */}
                     <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
@@ -184,6 +187,19 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                             </Badge>
                         </div>
                     </div>
+
+                    {/* Aviso de mínimo requerido por campaña (solo si está pendiente) */}
+                    {esPendiente && boleta.campania_valor_minimo > 0 && (
+                        <Alert variant="default">
+                            <IconAlertCircle className="size-4" />
+                            <AlertTitle>Monto mínimo requerido</AlertTitle>
+                            <AlertDescription>
+                                Esta campaña exige un monto mínimo de S/{' '}
+                                {boleta.campania_valor_minimo.toLocaleString('es-PE', { minimumFractionDigits: 2 })}{' '}
+                                para poder aceptar la boleta.
+                            </AlertDescription>
+                        </Alert>
+                    )}
 
                     {/* Info boleta procesada */}
                     {!esPendiente && (
@@ -266,7 +282,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                                     </>
                                 )}
                             </div>
-                            
+
                             <a
                                 href={boleta.archivo}
                                 target="_blank"
@@ -350,20 +366,24 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="flex flex-col gap-1.5">
                                             <Label htmlFor="monto_a">Monto (S/) *</Label>
-                                            <Label htmlFor="monto_a">Monto (S/) *</Label>
-                                                <Input
-                                                    id="monto_a"
-                                                    type="number"
-                                                    step="0.01"
-                                                    min={montoMinimo}
-                                                    placeholder={`Mín: S/ ${montoMinimo.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`}
-                                                    {...aceptarForm.register('monto', { valueAsNumber: true })}
-                                                />
-                                                {montoMinimo > 0.01 && (
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Monto mínimo para esta campaña: S/ {montoMinimo.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                                                    </p>
-                                                )}
+                                            <Input
+                                                id="monto_a"
+                                                type="number"
+                                                step="0.01"
+                                                min={montoMinimo}
+                                                placeholder={`Mín: S/ ${montoMinimo.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`}
+                                                {...aceptarForm.register('monto', { valueAsNumber: true })}
+                                            />
+                                            {aceptarForm.formState.errors.monto && (
+                                                <p className="text-xs text-destructive">
+                                                    {aceptarForm.formState.errors.monto.message}
+                                                </p>
+                                            )}
+                                            {montoMinimo > 0.01 && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    Monto mínimo para esta campaña: S/ {montoMinimo.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="flex flex-col gap-1.5">
                                             <Label htmlFor="puntos_a">Puntos a otorgar *</Label>
