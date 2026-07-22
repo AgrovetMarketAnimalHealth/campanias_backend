@@ -30,13 +30,18 @@ class EnviarEmailSesionSospechosa implements ShouldQueue
             'motivo'     => $this->metadata['motivo'],
         ]);
 
+        $tipo = $this->cliente->tipo_registro;
+
+        $config = config("services.registro_tipos.{$tipo}")
+            ?? config('services.registro_tipos.clientes'); // fallback
+
         $brevo->enviar(
             destinatario: $this->cliente->email,
             asunto:       '⚠️ Acceso inusual detectado en tu cuenta',
-            cuerpo:       view('emails.sesion-sospechosa', [
-                            'cliente'  => $this->cliente,
-                            'metadata' => $this->metadata,
-                        ])->render(),
+            cuerpo:       view($config['vista_prefix'] . '.sesion-sospechosa', [
+                'cliente'  => $this->cliente,
+                'metadata' => $this->metadata,
+            ])->render(),
             tipo:         'sesion_sospechosa',
             clienteId:    $this->cliente->id,
         );

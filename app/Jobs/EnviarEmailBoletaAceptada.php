@@ -24,13 +24,20 @@ class EnviarEmailBoletaAceptada implements ShouldQueue
     {
         $this->boleta->load('cliente');
 
+        $tipo = $this->boleta->cliente->tipo_registro;
+
+        $config = config("services.registro_tipos.{$tipo}")
+            ?? config('services.registro_tipos.clientes'); // fallback
+
         $brevo->enviar(
             destinatario: $this->boleta->cliente->email,
-            asunto: '¡Tu boleta fue aceptada!',
-            cuerpo: view('emails.boleta_aceptada', ['boleta' => $this->boleta])->render(),
-            tipo: 'boleta_aceptada',
-            clienteId: $this->boleta->cliente_id,
-            boletaId: $this->boleta->id,
+            asunto:       '¡Tu boleta fue aceptada!',
+            cuerpo:       view($config['vista_prefix'] . '.boleta_aceptada', [
+                'boleta' => $this->boleta,
+            ])->render(),
+            tipo:         'boleta_aceptada',
+            clienteId:    $this->boleta->cliente_id,
+            boletaId:     $this->boleta->id,
         );
     }
 }
