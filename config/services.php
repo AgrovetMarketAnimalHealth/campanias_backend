@@ -40,4 +40,21 @@ return [
         'from_email' => env('BREVO_FROM_EMAIL'),
         'from_name'  => env('BREVO_FROM_NAME'),
     ],
+
+    // config/services.php
+    'frontends' => [
+        'veterinarios' => env('FRONTEND_URL_VETERINARIOS', 'http://localhost:5174'),
+        'cliente'      => env('FRONTEND_URL_CLIENTE', 'http://localhost:5175'),
+    ],
+
+    'registro_tipos' => [
+        'veterinarios' => [
+            'frontend_url' => env('FRONTEND_URL_VETERINARIOS', 'http://localhost:5174'),
+            'vista_prefix' => 'emails', // views/emails/registro.blade.php
+        ],
+        'clientes' => [
+            'frontend_url' => env('FRONTEND_URL_CLIENTE', 'http://localhost:5175'),
+            'vista_prefix' => 'emails.Clientes', // views/emails/Clientes/registro.blade.php
+        ],
+    ],
 ];

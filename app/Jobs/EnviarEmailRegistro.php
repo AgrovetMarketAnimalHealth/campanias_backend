@@ -1,5 +1,6 @@
 <?php
 namespace App\Jobs;
+
 use App\Models\Cliente;
 use App\Services\BrevoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,16 +18,26 @@ class EnviarEmailRegistro implements ShouldQueue
 
     public function __construct(
         public readonly Cliente $cliente,
+        public readonly string $tipo, // 'veterinarios' o 'clientes' — viene directo de la ruta
     ) {}
 
     public function handle(BrevoService $brevo): void
     {
-        Log::info('EnviarEmailRegistro job', ['cliente_id' => $this->cliente->id]);
+        Log::info('EnviarEmailRegistro job', [
+            'cliente_id' => $this->cliente->id,
+            'tipo'       => $this->tipo,
+        ]);
+
+        $config = config("services.registro_tipos.{$this->tipo}")
+            ?? config('services.registro_tipos.clientes'); // fallback por si acaso
 
         $brevo->enviar(
             destinatario: $this->cliente->email,
             asunto:       '¡Registro exitoso! Bienvenido',
-            cuerpo:       view('emails.registro', ['cliente' => $this->cliente])->render(),
+            cuerpo:       view($config['vista_prefix'] . '.registro', [
+                'cliente'     => $this->cliente,
+                'frontendUrl' => $config['frontend_url'],
+            ])->render(),
             tipo:         'registro_cliente',
             clienteId:    $this->cliente->id,
         );
@@ -36,7 +47,7 @@ class EnviarEmailRegistro implements ShouldQueue
             asunto:       'Nuevo registro – ' . $this->cliente->nombre . ' ' . $this->cliente->apellidos,
             cuerpo:       view('emails.admin.nuevo-registro', [
                 'cliente'  => $this->cliente,
-                'boletaId' => null, // ← fix: aún no hay boleta en el registro
+                'boletaId' => null,
             ])->render(),
             tipo:         'registro_admin',
             clienteId:    $this->cliente->id,

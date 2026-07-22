@@ -35,22 +35,22 @@ class ClienteAuthController extends Controller{
             'Strict'
         );
     }
-    
+
     public function register(StoreClienteRequest $request, string $campana, string $tipo): JsonResponse
     {
         $urlBuscada = $campana . '/' . $tipo . '/';
-
+    
         $campania = Campania::where('url', $urlBuscada)
-                        ->where('activa', true)
-                        ->first();
-
+                            ->where('activa', true)
+                            ->first();
+    
         if (!$campania) {
             return response()->json([
                 'success' => false,
                 'message' => 'La campaña no existe o no está activa.',
             ], 404);
         }
-
+    
         DB::beginTransaction();
         try {
             $cliente = Cliente::create([
@@ -70,22 +70,24 @@ class ClienteAuthController extends Controller{
                 'email_verification_token'      => Str::random(64),
                 'email_verification_expires_at' => now()->addHours(24),
             ]);
-
+    
             ClienteCampania::create([
                 'cliente_id'  => $cliente->id,
                 'campania_id' => $campania->id,
             ]);
-
+    
             DB::commit();
-
-            EnviarEmailRegistro::dispatch($cliente)->onQueue('emails');
-
+    
+            // 👇 FIX: se agrega $tipo como segundo argumento, que es lo que
+            // esperaba el constructor del Job (Cliente $cliente, string $tipo)
+            EnviarEmailRegistro::dispatch($cliente, $tipo)->onQueue('emails');
+    
             return response()->json([
                 'success' => true,
                 'accion'  => 'verificar_email',
                 'message' => 'Registro exitoso. Revisa tu correo para verificar tu cuenta.',
             ], 201);
-
+    
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json([
@@ -94,6 +96,8 @@ class ClienteAuthController extends Controller{
             ], 500);
         }
     }
+    
+
 
     public function login(Request $request): JsonResponse{
         $request->validate([
