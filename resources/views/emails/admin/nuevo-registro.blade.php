@@ -96,7 +96,7 @@
 
             <!-- CTA para el admin -->
             <div class="cta">
-                <a href="{{ config('app.frontend_url') }}/admin/registros-pendientes">
+                <a href="{{ config('app.frontend_url_veterinarios') }}/admin/registros-pendientes">
                     📋 Ir al panel de administración
                 </a>
             </div>

@@ -90,23 +90,23 @@
 
             <!-- CTA BOTÓN -->
             <div class="cta">
-                <a href="{{ config('app.frontend_url') }}/promo-chayanne/veterinarios/iniciar-sesion">
+                <a href="{{ config('app.frontend_url_veterinarios') }}/promo-chayanne/veterinarios/iniciar-sesion">
                     Iniciar sesión
                 </a>
             </div>
 
             <!-- ENLACE ADICIONAL (aparte del botón) -->
             <div class="additional-link">
-                <a href="{{ config('app.frontend_url') }}/promo-chayanne/veterinarios/iniciar-sesion">
+                <a href="{{ config('app.frontend_url_veterinarios') }}/promo-chayanne/veterinarios/iniciar-sesion">
                     🔗 Si el botón no funciona, haz clic aquí para iniciar sesión
                 </a>
             </div>
 
             <!-- LINKS LEGALES -->
             <div class="links">
-                <a href="{{ config('app.frontend_url') }}/portal/terminos-condiciones">Términos y condiciones</a>
+                <a href="{{ config('app.frontend_url_veterinarios') }}/portal/terminos-condiciones">Términos y condiciones</a>
                 &bull;
-                <a href="{{ config('app.frontend_url') }}/portal/politicas-de-privacidad">Políticas de privacidad</a>
+                <a href="{{ config('app.frontend_url_veterinarios') }}/portal/politicas-de-privacidad">Políticas de privacidad</a>
             </div>
 
         </div>

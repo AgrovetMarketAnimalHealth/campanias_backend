@@ -204,7 +204,8 @@ function EditarForm({
         },
     });
 
-    const handleSubmit = form.handleSubmit(async (values) => {
+    const handleSubmit = form.handleSubmit(
+    async (values) => {
         setFeedback(null);
         try {
             const updated = await campaniaService.update(campania.id, values);
@@ -218,7 +219,18 @@ function EditarForm({
                 details: err?.errors ? buildErrorDetails(err.errors) : undefined,
             });
         }
-    });
+    },
+    (validationErrors) => {
+        // Se dispara cuando el formulario NO pasa la validación de Zod.
+        setFeedback({
+            type: 'error',
+            message: 'Revisa los campos marcados en rojo.',
+            details: Object.values(validationErrors)
+                .map((e) => e?.message)
+                .filter((m): m is string => !!m),
+        });
+    }
+);
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -260,7 +272,8 @@ export function CampaniaCreateDrawer({ onCreated, children }: CreateProps) {
         }
     }, [open, form]);
 
-    const handleSubmit = form.handleSubmit(async (values) => {
+    const handleSubmit = form.handleSubmit(
+    async (values) => {
         setFeedback(null);
         try {
             const created = await campaniaService.store(values);
@@ -275,7 +288,17 @@ export function CampaniaCreateDrawer({ onCreated, children }: CreateProps) {
                 details: err?.errors ? buildErrorDetails(err.errors) : undefined,
             });
         }
-    });
+    },
+    (validationErrors) => {
+        setFeedback({
+            type: 'error',
+            message: 'Revisa los campos marcados en rojo.',
+            details: Object.values(validationErrors)
+                .map((e) => e?.message)
+                .filter((m): m is string => !!m),
+        });
+    }
+);
 
     return (
         <Drawer open={open} onOpenChange={setOpen} direction={isMobile ? 'bottom' : 'right'}>

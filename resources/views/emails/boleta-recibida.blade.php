@@ -155,9 +155,9 @@
 
             <!-- LINKS LEGALES -->
             <div class="links">
-                <a href="{{ config('app.frontend_url') }}/portal/terminos-condiciones">Términos y condiciones</a>
+                <a href="{{ config('app.frontend_url_veterinarios') }}/portal/terminos-condiciones">Términos y condiciones</a>
                 &bull;
-                <a href="{{ config('app.frontend_url') }}/portal/politicas-de-privacidad">Políticas de privacidad</a>
+                <a href="{{ config('app.frontend_url_veterinarios') }}/portal/politicas-de-privacidad">Políticas de privacidad</a>
             </div>
 
         </div>

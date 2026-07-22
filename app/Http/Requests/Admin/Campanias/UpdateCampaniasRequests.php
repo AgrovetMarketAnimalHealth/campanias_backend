@@ -17,7 +17,7 @@ class UpdateCampaniasRequests extends FormRequest
 
         return [
             'nombre' => ['required', 'string', 'max:255', Rule::unique('campanias', 'nombre')->ignore($campaniaId)],
-            'url' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:[-\/][a-z0-9]+)*$/'],
+            'url' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:[-\/][a-z0-9]+)*\/?$/'],
             'activa' => ['required', 'boolean'],
         ];
     }

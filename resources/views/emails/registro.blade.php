@@ -59,14 +59,14 @@
 
             <!-- CTA BOTÓN -->
             <div class="cta">
-                <a href="{{ config('app.frontend_url') }}/email/verify/{{ $cliente->email_verification_token }}">
+                <a href="{{ config('app.frontend_url_veterinarios') }}/email/verify/{{ $cliente->email_verification_token }}">
                     Verificar mi correo
                 </a>
             </div>
 
             <!-- ENLACE ADICIONAL APARTE DEL BOTÓN -->
             <div class="additional-link">
-                <a href="{{ config('app.frontend_url') }}/email/verify/{{ $cliente->email_verification_token }}">
+                <a href="{{ config('app.frontend_url_veterinarios') }}/email/verify/{{ $cliente->email_verification_token }}">
                     Si el botón no funciona, haz clic aquí para verificar tu correo
                 </a>
             </div>
@@ -133,9 +133,9 @@
 
             <!-- LINKS DE TÉRMINOS -->
             <div class="links">
-                <a href="{{ config('app.frontend_url') }}/portal/terminos-condiciones">Términos y condiciones</a>
+                <a href="{{ config('app.frontend_url_veterinarios') }}/portal/terminos-condiciones">Términos y condiciones</a>
                 &bull;
-                <a href="{{ config('app.frontend_url') }}/portal/politicas-de-privacidad">Políticas de privacidad</a>
+                <a href="{{ config('app.frontend_url_veterinarios') }}/portal/politicas-de-privacidad">Políticas de privacidad</a>
             </div>
 
         </div>

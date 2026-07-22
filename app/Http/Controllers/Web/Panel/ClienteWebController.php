@@ -16,12 +16,35 @@ class ClienteWebController extends Controller{
     public function show(string $id): Response{
         $cliente = Cliente::findOrFail($id);
         Gate::authorize('view', $cliente);
+
         $verificationUrl = null;
+
         if (! $cliente->email_verified_at && $cliente->email_verification_token) {
-            $verificationUrl = rtrim(config('app.frontend_url'), '/')
-                . '/promo-concierto/email/verify/'
-                . $cliente->email_verification_token;
+            $clienteCampania = $cliente->clienteCampanias()
+                ->with('campania')
+                ->latest()
+                ->first();
+
+            $campania = $clienteCampania?->campania;
+
+            if ($campania && $campania->url) {
+                // Detecta si el path de la campaña es para veterinarios o clientes
+                $esVeterinario = str_contains($campania->url, 'veterinarios');
+
+                $baseUrl = $esVeterinario
+                    ? config('app.frontend_url_veterinarios')
+                    : config('app.frontend_url_cliente');
+
+                // El path guardado en BD, sin dominio (ej: "promo-chayanne/veterinarios")
+                $path = ltrim($campania->url, '/');
+
+                $verificationUrl = rtrim($baseUrl, '/')
+                    . '/' . $path
+                    . '/email/verify/'
+                    . $cliente->email_verification_token;
+            }
         }
+
         return Inertia::render('clientes/detallecliente', [
             'clienteId'       => $cliente->id,
             'verificationUrl' => $verificationUrl,

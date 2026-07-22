@@ -53,8 +53,8 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
-    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5174'),
-
+    'frontend_url_veterinarios' => env('FRONTEND_URL_VETERINARIOS', 'http://localhost:5174'),
+    'frontend_url_cliente'      => env('FRONTEND_URL_CLIENTE', 'http://localhost:5175'),
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

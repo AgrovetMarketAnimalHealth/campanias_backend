@@ -99,7 +99,7 @@
 
             <!-- CTA PARA EL ADMIN -->
             <div class="cta">
-                <a href="{{ config('app.frontend_url') }}/admin/comprobantes-pendientes">
+                <a href="{{ config('app.frontend_url_veterinarios') }}/admin/comprobantes-pendientes">
                     📋 Revisar comprobante
                 </a>
             </div>
