@@ -22,11 +22,11 @@
         .points-table .pts { font-weight: 700; color: #9968d8; }
         .dates-section { margin: 30px 0; text-align: center; }
         .dates-section h3 { font-size: 15px; color: #1a0033; margin-bottom: 15px; font-weight: 700; text-align: left; }
-        .dates-list { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
-        .date-chip { background: linear-gradient(135deg, #9968d8, #7f22fe); color: #ffffff; border-radius: 30px; padding: 12px 24px; font-size: 14px; font-weight: 600; min-width: 180px; text-align: center; }
-        .date-chip span { display: block; font-size: 12px; font-weight: 400; opacity: 0.9; margin-top: 4px; }
+        .dates-list { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .date-chip { background: linear-gradient(135deg, #9968d8, #7f22fe); color: #ffffff; border-radius: 20px; padding: 8px 16px; font-size: 12px; font-weight: 600; min-width: 130px; text-align: center; }
+        .date-chip span { display: block; font-size: 10px; font-weight: 400; opacity: 0.9; margin-top: 3px; }
         .cta { text-align: center; margin: 30px 0 10px; }
-        .cta a { background: linear-gradient(135deg, #9968d8 0%, #7f22fe 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 15px; font-weight: 700; display: inline-block; border: none; }
+        .cta a { background: linear-gradient(135deg, #9968d8 0%, #7f22fe 100%); color: #ffffff; text-decoration: none; padding: 10px 22px; border-radius: 6px; font-size: 13px; font-weight: 700; display: inline-block; border: none; }
         .note-text { text-align: center; font-size: 12px; color: #777; margin-top: 12px; font-style: italic; background-color: #f9f9f9; padding: 8px; border-radius: 20px; }
         .warning-box { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 15px; margin: 20px 0; border-radius: 4px; font-size: 13px; color: #856404; }
         .links { text-align: center; margin-top: 25px; font-size: 13px; }
@@ -82,7 +82,7 @@
                 <h3>🎯 ¿Cómo acumulas puntos?</h3>
                 
                 <div class="success-box">
-                    <strong>¡Así de fácil!</strong> Por cada compra de <span class="highlight">cualquier producto Atrevia</span>, sin importar el monto, acumulas puntos. 
+                    <strong>¡Así de fácil!</strong> Por cada compra de <span class="highlight">cualquier producto Atrevia</span>
                     <br><br>
                     <span style="font-size: 14px; display: block;">
                         ✅ Acumulas puntos con <strong>cada producto</strong> que compres de la línea Atrevia.
@@ -102,29 +102,28 @@
                     <tbody>
                         <tr>
                             <td>Atrevia<sup>®</sup> 360</td>
-                            <td class="pts">✓ Acumula puntos</td>
+                            <td class="pts">1</td>
                         </tr>
                         <tr>
                             <td>Atrevia<sup>®</sup> 360 Spot On</td>
-                            <td class="pts">✓ Acumula puntos</td>
+                            <td class="pts">1</td>
                         </tr>
                         <tr>
                             <td>Atrevia<sup>®</sup> One</td>
-                            <td class="pts">✓ Acumula puntos</td>
+                            <td class="pts">1</td>
                         </tr>
                         <tr>
                             <td>Atrevia<sup>®</sup> XR</td>
-                            <td class="pts">✓ Acumula puntos</td>
+                            <td class="pts">1</td>
                         </tr>
                         <tr>
                             <td>Atrevia<sup>®</sup> Trio Cats</td>
-                            <td class="pts">✓ Acumula puntos</td>
+                            <td class="pts">1</td>
                         </tr>
                     </tbody>
                 </table>
                 <p class="note-text">
                     * Cada producto Atrevia que compres te da puntos para participar en el sorteo.<br>
-                    * No importa el monto, ¡cada compra cuenta!
                 </p>
             </div>
 

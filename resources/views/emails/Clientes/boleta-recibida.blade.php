@@ -100,7 +100,6 @@
                     <thead>
                         <tr>
                             <th>Producto</th>
-                            <th>Por cada S/ 1,000</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -126,7 +125,6 @@
                         </tr>
                     </tbody>
                 </table>
-                <p class="note-text">* Asignación exacta por cada S/ 1,000. No aplica redondeo ni acumulación entre comprobantes.</p>
             </div>
 
             <!-- FECHAS DE SORTEO CORREGIDAS -->
@@ -135,11 +133,11 @@
                 <div class="dates-list">
                     <div class="date-chip">
                         1er Sorteo: 8 de setiembre 2026
-                        <span>2 premios</span>
+                        <span>1 premios</span>
                     </div>
                     <div class="date-chip">
                         2do Sorteo: 12 de noviembre 2026
-                        <span>3 premios</span>
+                        <span>1 premios</span>
                     </div>
                 </div>
             </div>

@@ -33,7 +33,8 @@ class EnviarEmailBoletaAceptada implements ShouldQueue
             destinatario: $this->boleta->cliente->email,
             asunto:       '¡Tu boleta fue aceptada!',
             cuerpo:       view($config['vista_prefix'] . '.boleta_aceptada', [
-                'boleta' => $this->boleta,
+                'boleta'  => $this->boleta,
+                'cliente' => $this->boleta->cliente,
             ])->render(),
             tipo:         'boleta_aceptada',
             clienteId:    $this->boleta->cliente_id,

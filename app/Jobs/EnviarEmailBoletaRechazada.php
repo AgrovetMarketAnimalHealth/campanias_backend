@@ -24,16 +24,18 @@ class EnviarEmailBoletaRechazada implements ShouldQueue
     {
         $this->boleta->load('cliente');
 
-        $tipo = $this->boleta->cliente->tipo_registro;
+        $cliente = $this->boleta->cliente;
+        $tipo    = $cliente->tipo_registro;
 
         $config = config("services.registro_tipos.{$tipo}")
             ?? config('services.registro_tipos.clientes'); // fallback
 
         $brevo->enviar(
-            destinatario: $this->boleta->cliente->email,
+            destinatario: $cliente->email,
             asunto:       'Tu boleta fue rechazada',
             cuerpo:       view($config['vista_prefix'] . '.boleta_rechazada', [
-                'boleta' => $this->boleta,
+                'boleta'  => $this->boleta,
+                'cliente' => $cliente, // <-- ahora sí disponible en la vista
             ])->render(),
             tipo:         'boleta_rechazada',
             clienteId:    $this->boleta->cliente_id,
