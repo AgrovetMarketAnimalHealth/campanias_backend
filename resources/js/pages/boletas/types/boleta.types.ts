@@ -15,6 +15,7 @@ export interface Boleta {
     ruc_veterinaria: string | null;
     estado: EstadoBoleta;
     observacion: string;
+    campania_valor_minimo: number; // <-- nuevo, viene del backend
     created_at: string;
     updated_at: string | null;
 }

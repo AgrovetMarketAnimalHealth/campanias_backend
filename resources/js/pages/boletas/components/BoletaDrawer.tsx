@@ -50,6 +50,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
     const [loadingImg, setLoadingImg] = React.useState(true);
     const [feedback, setFeedback] = React.useState<FeedbackState | null>(null);
     const esPendiente = boleta.estado === 'pendiente';
+    const montoMinimo = boleta.campania_valor_minimo > 0 ? boleta.campania_valor_minimo : 0.01;
 
     const isPdf = (url: string) =>
         /\.pdf(\?.*)?$/i.test(url) || url.includes('/pdf');
@@ -61,7 +62,7 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
     }
 
     const aceptarForm = useForm<AceptarBoletaForm>({
-        resolver: zodResolver(aceptarBoletaSchema),
+        resolver: zodResolver(getAceptarBoletaSchema(montoMinimo)), // <-- antes: aceptarBoletaSchema
         defaultValues: {
             numero_boleta: '',
             ruc_veterinaria: '',
@@ -349,19 +350,20 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="flex flex-col gap-1.5">
                                             <Label htmlFor="monto_a">Monto (S/) *</Label>
-                                            <Input
-                                                id="monto_a"
-                                                type="number"
-                                                step="0.01"
-                                                min="1000"
-                                                placeholder="Mín: 1,000.00"
-                                                {...aceptarForm.register('monto', { valueAsNumber: true })}
-                                            />
-                                            {aceptarForm.formState.errors.monto && (
-                                                <p className="text-xs text-destructive">
-                                                    {aceptarForm.formState.errors.monto.message}
-                                                </p>
-                                            )}
+                                            <Label htmlFor="monto_a">Monto (S/) *</Label>
+                                                <Input
+                                                    id="monto_a"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min={montoMinimo}
+                                                    placeholder={`Mín: S/ ${montoMinimo.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`}
+                                                    {...aceptarForm.register('monto', { valueAsNumber: true })}
+                                                />
+                                                {montoMinimo > 0.01 && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Monto mínimo para esta campaña: S/ {montoMinimo.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                                                    </p>
+                                                )}
                                         </div>
                                         <div className="flex flex-col gap-1.5">
                                             <Label htmlFor="puntos_a">Puntos a otorgar *</Label>

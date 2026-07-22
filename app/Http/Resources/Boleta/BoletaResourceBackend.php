@@ -15,6 +15,7 @@ class BoletaResourceBackend extends JsonResource
             'cliente_tipo'     => $this->cliente->tipo_persona,
             'cliente_dni'      => $this->cliente->dni,
             'cliente_ruc'      => $this->cliente->ruc,
+            'campania_valor_minimo' => $this->campania?->valor_minimo ?? 0,
             'cliente_nom'      => $this->cliente->nombre . ' ' . $this->cliente->apellidos,
             'codigo'           => $this->codigo,
             'numero_boleta'    => $this->numero_boleta,  // ✅ agregado

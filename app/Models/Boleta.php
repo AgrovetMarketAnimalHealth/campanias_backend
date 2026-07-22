@@ -87,4 +87,16 @@ class Boleta extends Model implements AuditableContract
             $boleta->updated_by = null;
         });
     }
+    public function esDeCliente(): bool
+    {
+        return !is_null($this->cliente_id);
+    }
+
+    public function montoMinimoParaAceptar(): float
+    {
+        $minimo = $this->campania?->valor_minimo;
+
+        // Si no hay mínimo configurado (null o 0), solo exige que sea positivo
+        return $minimo && $minimo > 0 ? (float) $minimo : 0.01;
+    }
 }

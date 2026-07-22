@@ -12,41 +12,41 @@ class UpdateBoletaRequest extends FormRequest
     }
 
     public function rules(): array
-    {
-        $esAceptada = $this->input('estado') === 'aceptada';
+{
+    $boleta = $this->route('boleta');
+    $esAceptada = $this->input('estado') === 'aceptada';
 
-        return [
-            'estado' => ['required', 'in:aceptada,rechazada'],
+    // Mínimo dinámico según la campaña; al rechazar siempre basta con > 0
+    $montoMinimo = $esAceptada ? $boleta->montoMinimoParaAceptar() : 0.01;
 
-            'numero_boleta' => array_filter([
-                'required',
-                'string',
-                'max:100',
-                // Solo bloquea duplicados al ACEPTAR
-                // Al rechazar siempre se permite
-                $esAceptada
-                    ? Rule::unique('boletas', 'numero_boleta')
-                        ->ignore($this->route('boleta')->id)
-                        ->where(fn ($query) => $query->whereIn('estado', ['pendiente', 'aceptada']))
-                    : null,
-            ]),
+    return [
+        'estado' => ['required', 'in:aceptada,rechazada'],
 
-            'monto' => [
-                'required',
-                'numeric',
-                // Al aceptar exige mínimo 1000, al rechazar solo que sea positivo
-                $esAceptada ? 'min:1000' : 'min:0.01',
-            ],
+        'numero_boleta' => array_filter([
+            'required',
+            'string',
+            'max:100',
+            $esAceptada
+                ? Rule::unique('boletas', 'numero_boleta')
+                    ->ignore($boleta->id)
+                    ->where(fn ($query) => $query->whereIn('estado', ['pendiente', 'aceptada']))
+                : null,
+        ]),
 
-            'puntos' => ['required_if:estado,aceptada', 'integer', 'min:1'],
+        'monto' => [
+            'required',
+            'numeric',
+            "min:{$montoMinimo}",
+        ],
 
-            'observacion' => [
-                !$esAceptada ? 'required' : 'nullable',
-                'string',
-            ],
-        ];
-    }
+        'puntos' => ['required_if:estado,aceptada', 'integer', 'min:1'],
 
+        'observacion' => [
+            !$esAceptada ? 'required' : 'nullable',
+            'string',
+        ],
+    ];
+}
     public function messages(): array
     {
         return [
@@ -58,6 +58,7 @@ class UpdateBoletaRequest extends FormRequest
             'puntos.min'             => 'Los puntos deben ser mayor a 0.',
             'puntos.integer'         => 'Los puntos deben ser números enteros.',
             'observacion.required'   => 'La observación es obligatoria al rechazar.',
+             'monto.min' => 'El monto no cumple con el mínimo requerido para esta campaña.',
         ];
     }
 

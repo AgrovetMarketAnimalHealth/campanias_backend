@@ -12,6 +12,7 @@ class Campania extends Model
     protected $fillable = [
         'nombre',
         'url',
+        'valor_minimo',
         'api_key',
         'activa'
     ];
