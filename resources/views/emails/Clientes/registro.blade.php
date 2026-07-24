@@ -22,9 +22,25 @@
         .points-table .pts { font-weight: 700; color: #9968d8; }
         .dates-section { margin: 30px 0; text-align: center; }
         .dates-section h3 { font-size: 15px; color: #1a0033; margin-bottom: 15px; font-weight: 700; text-align: left; }
-        .dates-list { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        .date-chip { background: linear-gradient(135deg, #9968d8, #7f22fe); color: #ffffff; border-radius: 20px; padding: 8px 16px; font-size: 12px; font-weight: 600; min-width: 130px; text-align: center; }
-        .date-chip span { display: block; font-size: 10px; font-weight: 400; opacity: 0.9; margin-top: 3px; }
+        .dates-list { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+            .date-chip { 
+                background: linear-gradient(135deg, #9968d8, #7f22fe); 
+                color: #ffffff; 
+                border-radius: 14px; 
+                padding: 6px 12px; 
+                font-size: 11px; 
+                font-weight: 600; 
+                min-width: auto;
+                text-align: center; 
+                line-height: 1.3;
+            }
+            .date-chip span { 
+                display: inline; 
+                font-size: 10px; 
+                font-weight: 400; 
+                opacity: 0.85; 
+                margin-left: 4px; 
+            }
         .cta { text-align: center; margin: 30px 0 10px; }
         .cta a { background: linear-gradient(135deg, #9968d8 0%, #7f22fe 100%); color: #ffffff; text-decoration: none; padding: 10px 22px; border-radius: 6px; font-size: 13px; font-weight: 700; display: inline-block; border: none; }
         .note-text { text-align: center; font-size: 12px; color: #777; margin-top: 12px; font-style: italic; background-color: #f9f9f9; padding: 8px; border-radius: 20px; }
@@ -133,11 +149,11 @@
                 <div class="dates-list">
                     <div class="date-chip">
                         🎯 1er Sorteo: 8 de setiembre 2026
-                        <span>2 ganadores</span>
+                        <span>1 ganador</span>
                     </div>
                     <div class="date-chip">
                         🎯 2do Sorteo: 16 de octubre 2026
-                        <span>3 ganadores</span>
+                        <span>1 ganador</span>
                     </div>
                 </div>
                 <p style="font-size: 12px; color: #888; margin-top: 12px; text-align: left;">

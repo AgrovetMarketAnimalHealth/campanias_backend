@@ -37,10 +37,26 @@
 
         .dates-section { margin: 24px 0; text-align: center; }
         .dates-section h3 { font-size: 15px; color: #1a0033; margin-bottom: 12px; font-weight: 700; text-align: left; }
-        .dates-list { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        .date-chip { background: linear-gradient(135deg, #9968d8, #7f22fe); color: #ffffff; border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600; }
-        .date-chip span { display: block; font-size: 11px; font-weight: 400; opacity: 0.85; margin-top: 2px; }
-
+        .dates-list { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .date-chip { 
+            background: linear-gradient(135deg, #9968d8, #7f22fe); 
+            color: #ffffff; 
+            border-radius: 14px; 
+            padding: 6px 12px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            min-width: auto;
+            text-align: center; 
+            line-height: 1.3;
+        
+        .date-chip span { 
+            display: inline; 
+            font-size: 10px; 
+            font-weight: 400; 
+            opacity: 0.85; 
+            margin-left: 4px; 
+        }
+        }
         .premio-box { background-color: #f9f7ff; border: 1px solid #e0d0ff; border-radius: 8px; padding: 15px; margin: 20px 0; font-size: 14px; color: #333; }
 
         .links { text-align: center; margin-top: 20px; font-size: 13px; }
@@ -95,51 +111,62 @@
 
             <!-- PUNTOS -->
             <div class="points-section">
-                <h3>¿Cómo acumulas opciones?</h3>
+                <p style="font-size: 14px; font-weight: 600; color: #1a0033; margin: 15px 0 10px;">
+                    Productos participantes:
+                </p>
                 <table class="points-table">
                     <thead>
                         <tr>
                             <th>Producto</th>
+                            <th>Puntos</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>Atrevia<sup>®</sup> 360</td>
-                            <td class="pts">1 opción</td>
+                            <td class="pts">1</td>
                         </tr>
                         <tr>
                             <td>Atrevia<sup>®</sup> 360 Spot On</td>
-                            <td class="pts">1 opción</td>
+                            <td class="pts">1</td>
                         </tr>
                         <tr>
                             <td>Atrevia<sup>®</sup> One</td>
-                            <td class="pts">1 opción</td>
+                            <td class="pts">1</td>
                         </tr>
                         <tr>
                             <td>Atrevia<sup>®</sup> XR</td>
-                            <td class="pts">1 opción</td>
+                            <td class="pts">1</td>
                         </tr>
                         <tr>
                             <td>Atrevia<sup>®</sup> Trio Cats</td>
-                            <td class="pts">1 opción</td>
+                            <td class="pts">1</td>
                         </tr>
                     </tbody>
                 </table>
+                <p class="note-text">
+                    * Cada producto Atrevia que compres te da puntos para participar en el sorteo.<br>
+                </p>
             </div>
 
-            <!-- FECHAS DE SORTEO CORREGIDAS -->
+            <!-- FECHAS DE SORTEO -->
             <div class="dates-section">
-                <h3>Fechas de sorteo</h3>
+                <h3>📆 Fechas de sorteo</h3>
                 <div class="dates-list">
                     <div class="date-chip">
-                        1er Sorteo: 8 de setiembre 2026
-                        <span>1 premios</span>
+                        🎯 1er Sorteo: 8 de setiembre 2026
+                        <span>1 ganador</span>
                     </div>
                     <div class="date-chip">
-                        2do Sorteo: 12 de noviembre 2026
-                        <span>1 premios</span>
+                        🎯 2do Sorteo: 16 de octubre 2026
+                        <span>1 ganador</span>
                     </div>
                 </div>
+                <p style="font-size: 12px; color: #888; margin-top: 12px; text-align: left;">
+                    <strong>Fechas de corte:</strong>
+                    <br>• 1er sorteo: comprobantes registrados hasta el 7 de setiembre 2026
+                    <br>• 2do sorteo: comprobantes registrados hasta el 15 de octubre 2026
+                </p>
             </div>
 
             <p>

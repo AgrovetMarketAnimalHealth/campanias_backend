@@ -37,13 +37,6 @@
 </head>
 <body>
     <div class="container">
-
-        <!-- HEADER -->
-        <div class="header-img">
-            <img src="{{ config('app.url') }}/emails/Mailing_Gracias por registrarte.webp"
-                 alt="Destino Chayanne – Seguridad de cuenta">
-        </div>
-
         <!-- BODY -->
         <div class="body">
 

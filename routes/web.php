@@ -17,8 +17,97 @@ use App\Http\Controllers\Web\Panel\UsuarioWebController;
 use App\Http\Controllers\Web\Panel\BoletaWebController;
 use App\Http\Controllers\Web\Panel\CampaniasWebController;
 use App\Http\Controllers\Web\Panel\ReportesWebController;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+
+Route::get('/preview-email-cliente', function () {
+
+    $cliente = (object) [
+        'nombre' => 'Juan',
+        'apellidos' => 'Pérez',
+        'email' => 'juan@example.com',
+        'email_verification_token' => 'abc123456'
+    ];
+
+    return view('emails.Clientes.registro', compact('cliente'));
+});
+Route::get('/preview-comprobante', function () {
+
+    $cliente = (object) [
+        'nombre' => 'Juan',
+        'apellidos' => 'Pérez',
+        'email' => 'juan@example.com',
+    ];
+
+    $boleta = (object) [
+        'codigo' => 'ATR-2026-000123',
+        'created_at' => Carbon::now(),
+    ];
+
+    return view('emails.Clientes.boleta-recibida', compact('cliente', 'boleta'));
+});
+
+Route::get('/preview-boleta-aceptada', function () {
+
+    $cliente = (object) [
+        'nombre' => 'Juan',
+        'apellidos' => 'Pérez',
+        'email' => 'juan@example.com',
+    ];
+
+    $boleta = (object) [
+        'cliente' => $cliente,
+        'codigo' => 'ATR-2026-000123',
+        'puntos_otorgados' => 5,
+        'numero_boleta' => 'B001-00012345',
+        'monto' => 350.00,
+        'created_at' => Carbon::now(),
+        'observacion' => 'Comprobante validado correctamente.',
+    ];
+
+    return view('emails.Clientes.boleta_aceptada', compact('boleta', 'cliente'));
+});
+
+
+Route::get('/preview-boleta-rechazada', function () {
+
+    $cliente = (object) [
+        'nombre' => 'Juan',
+        'apellidos' => 'Pérez',
+        'email' => 'juan@example.com',
+    ];
+
+    $boleta = (object) [
+        'cliente' => $cliente,
+        'codigo' => 'ATR-2026-000123',
+        'numero_boleta' => 'B001-00012345',
+        'monto' => 350.00,
+        'created_at' => Carbon::now(),
+        'observacion' => 'La imagen del comprobante es ilegible. Por favor vuelve a subir una fotografía más nítida donde se aprecien claramente la fecha, el monto y el número del comprobante.',
+    ];
+
+    return view('emails.Clientes.boleta_rechazada', compact('boleta', 'cliente'));
+});
+
+Route::get('/preview-sesion-sospechosa', function () {
+
+    $cliente = (object) [
+        'nombre' => 'Juan',
+        'apellidos' => 'Pérez',
+        'email' => 'juan@example.com',
+    ];
+
+    $metadata = [
+        'motivo' => 'Se detectó un inicio de sesión desde un dispositivo no reconocido.',
+        'ip' => '190.123.45.67',
+        'user_agent' => 'Windows 11 · Google Chrome 138.0.7204.184',
+        'fecha' => now()->format('d/m/Y H:i:s'),
+    ];
+
+    return view('emails.Clientes.sesion-sospechosa', compact('cliente', 'metadata'));
+});
 
 Route::prefix('promo-concierto/backoffice')->group(function () {
     Route::get('/', function () {

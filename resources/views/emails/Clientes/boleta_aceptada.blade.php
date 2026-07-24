@@ -39,10 +39,27 @@
         .dates-section { margin: 24px 0; }
         .dates-header { text-align: left; margin-bottom: 16px; }
         .dates-header h3 { font-size: 15px; color: #1a0033; font-weight: 700; display: inline-block; }
-        .dates-list { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
-        .date-chip { background: linear-gradient(135deg, #9968d8, #7f22fe); color: #ffffff; border-radius: 25px; padding: 10px 20px; font-size: 14px; font-weight: 600; min-width: 180px; text-align: center; }
-        .date-chip span { display: block; font-size: 12px; font-weight: 400; opacity: 0.85; margin-top: 4px; }
-
+        .dates-section h3 { font-size: 15px; color: #1a0033; margin-bottom: 12px; font-weight: 700; text-align: left; }
+        .dates-list { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .date-chip { 
+            background: linear-gradient(135deg, #9968d8, #7f22fe); 
+            color: #ffffff; 
+            border-radius: 14px; 
+            padding: 6px 12px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            min-width: auto;
+            text-align: center; 
+            line-height: 1.3;
+        
+        .date-chip span { 
+            display: inline; 
+            font-size: 10px; 
+            font-weight: 400; 
+            opacity: 0.85; 
+            margin-left: 4px; 
+        }
+        }
         .links { text-align: center; margin-top: 20px; font-size: 13px; }
         .links a { color: #9968d8; text-decoration: none; margin: 0 8px; }
         .footer { background-color: #1a0033; text-align: center; padding: 24px 30px; }
@@ -116,19 +133,22 @@
 
             <!-- FECHAS DE SORTEO CORREGIDAS -->
             <div class="dates-section">
-                <div class="dates-header">
-                    <h3>Fechas de sorteo</h3>
-                </div>
+                <h3>📆 Fechas de sorteo</h3>
                 <div class="dates-list">
                     <div class="date-chip">
-                        1er Sorteo: 8 de setiembre 2026
-                        <span>2 premios</span>
+                        🎯 1er Sorteo: 8 de setiembre 2026
+                        <span>1 ganador</span>
                     </div>
                     <div class="date-chip">
-                        2do Sorteo: 12 de noviembre 2026
-                        <span>3 premios</span>
+                        🎯 2do Sorteo: 16 de octubre 2026
+                        <span>1 ganador</span>
                     </div>
                 </div>
+                <p style="font-size: 12px; color: #888; margin-top: 12px; text-align: left;">
+                    <strong>Fechas de corte:</strong>
+                    <br>• 1er sorteo: comprobantes registrados hasta el 7 de setiembre 2026
+                    <br>• 2do sorteo: comprobantes registrados hasta el 15 de octubre 2026
+                </p>
             </div>
 
             <p>
