@@ -52,12 +52,10 @@ interface Props {
     children: React.ReactNode
 }
 
-// Marca de campo requerido en rojo
 function Req() {
     return <span className="text-destructive">*</span>
 }
 
-// Sólo dígitos, recortado a maxLen
 function onlyDigits(value: string, maxLen: number) {
     return value.replace(/\D/g, '').slice(0, maxLen)
 }
@@ -66,6 +64,9 @@ export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
     const isMobile = useIsMobile()
     const [open, setOpen] = React.useState(false)
     const [feedback, setFeedback] = React.useState<FeedbackState | null>(null)
+
+    // Normaliza: si llega undefined en algún render, lo tratamos como null
+    const campaniaSegura = campania ?? null
 
     const {
         control, register, handleSubmit, watch, reset, setError,
@@ -100,14 +101,14 @@ export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
     }
 
     const onSubmit = handleSubmit(async (values) => {
-        if (!campania) {
+        if (!campaniaSegura) {
             setFeedback({ type: 'error', message: 'Selecciona una campaña activa antes de registrar.' })
             return
         }
         setFeedback(null)
         try {
             const res = await clienteService.registrarCliente({
-                campania_id: campania.id,
+                campania_id: campaniaSegura.id,
                 tipo_persona: values.tipo_persona,
                 nombre: values.nombre,
                 apellidos: values.tipo_persona === 'natural' ? values.apellidos : undefined,
@@ -172,11 +173,16 @@ export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
                 <DrawerHeader className="gap-1">
                     <DrawerTitle className="flex items-center gap-2">
                         <IconUserPlus className="size-4" />
-                        {campania.nombre} - {tipoPersona === 'juridica' ? 'jurídico' : 'natural'}
+                        {campaniaSegura ? campaniaSegura.nombre : 'Nueva campaña'} - {tipoPersona === 'juridica' ? 'jurídico' : 'natural'}
                     </DrawerTitle>
                     <DrawerDescription>
-                        {campania ? (
-                            <>Se registrará en la campaña <strong className="font-semibold text-foreground">{campania.nombre}</strong>.</>
+                        {campaniaSegura ? (
+                            <>
+                                Se registrará en la campaña{' '}
+                                <strong className="font-semibold text-foreground">
+                                    {campaniaSegura.nombre}
+                                </strong>.
+                            </>
                         ) : (
                             'Selecciona una campaña activa en el listado antes de registrar.'
                         )}
@@ -371,7 +377,7 @@ export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
                         type="submit"
                         form={FORM_ID}
                         className="flex-1"
-                        disabled={isSubmitting || !campania}
+                        disabled={isSubmitting || !campaniaSegura}
                     >
                         {isSubmitting ? 'Registrando...' : 'Registrar cliente'}
                     </Button>

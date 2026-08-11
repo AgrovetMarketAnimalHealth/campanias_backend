@@ -1,4 +1,6 @@
 import { z } from 'zod'
+const MAX_FILE_SIZE = 5 * 1024 * 1024
+const ACCEPTED_FILE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']
 
 export const clienteSchema = z.object({
     id: z.string(),
@@ -32,9 +34,6 @@ export const boletaSchema = z.object({
     fecha: z.string(),
 })
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB (5120 KB en el backend)
-const ACCEPTED_FILE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']
-
 export const clienteRegistroSchema = z
     .object({
         tipo_persona: z.enum(['natural', 'juridica'], {
@@ -57,6 +56,7 @@ export const clienteRegistroSchema = z
                 'Formato no permitido (solo jpg, png o pdf)'
             ),
     })
+
     .superRefine((data, ctx) => {
         if (data.tipo_persona === 'natural') {
             if (!data.apellidos) {
@@ -98,6 +98,17 @@ export const clienteRegistroSchema = z
         }
     })
 
+    export const subirBoletaSchema = z.object({
+        archivo: z
+            .instanceof(File, { message: 'Debes seleccionar un archivo.' })
+            .refine((f) => f.size <= MAX_FILE_SIZE, 'El archivo no debe superar 5MB')
+            .refine(
+                (f) => ACCEPTED_FILE_TYPES.includes(f.type),
+                'Formato no permitido (solo jpg, png o pdf)'
+            ),
+    })
+
+export type SubirBoletaForm = z.infer<typeof subirBoletaSchema>
 export type ClienteRegistroFormValues = z.infer<typeof clienteRegistroSchema>
 export type ClienteSchema = z.infer<typeof clienteSchema>
 export type BoletaSchema = z.infer<typeof boletaSchema>
