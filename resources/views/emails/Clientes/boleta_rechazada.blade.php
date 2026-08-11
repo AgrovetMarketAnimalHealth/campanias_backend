@@ -100,8 +100,8 @@
 
             <!-- CTA -->
             <div class="cta-box">
-                <p>¿Crees que hubo un error? Puedes enviar un nuevo comprobante corregido desde tu portal.</p>
-                <a href="{{ config('app.frontend_url_cliente') }}/portal/dashboard">📎 Enviar nuevo comprobante</a>
+                <p>¿Crees que hubo un error? Escríbenos por WhatsApp y te ayudamos a corregirlo.</p>
+                <a href="https://wa.me/51998162159" target="_blank" rel="noopener">📎 Enviar nuevo comprobante por WhatsApp</a>
             </div>
 
             <p>

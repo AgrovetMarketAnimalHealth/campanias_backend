@@ -75,19 +75,6 @@
                 para acreditar tus puntos y que puedas participar en el sorteo.
             </p>
 
-            <!-- CTA BOTÓN -->
-            <div class="cta">
-                <a href="{{ config('app.frontend_url_cliente') }}/email/verify/{{ $cliente->email_verification_token }}">
-                    Verificar mi correo
-                </a>
-            </div>
-
-            <div class="additional-link">
-                <a href="{{ config('app.frontend_url_cliente') }}/email/verify/{{ $cliente->email_verification_token }}">
-                    Si el botón no funciona, haz clic aquí para verificar tu correo
-                </a>
-            </div>
-
             <!-- CONDICIÓN: FECHA DE COMPROBANTES -->
             <div class="warning-box">
                 <strong>📅 Importante:</strong> Solo se considerarán <span class="highlight">comprobantes de pago emitidos a partir del 1 de julio de 2026</span>. Las facturas o boletas con fechas anteriores no serán válidas.
