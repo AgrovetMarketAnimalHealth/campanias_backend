@@ -1,19 +1,31 @@
+"use client";
+
 import * as React from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import axios from 'axios'
+import { toast } from 'sonner'
 import {
-    Sheet, SheetContent, SheetHeader, SheetTitle,
-    SheetDescription, SheetFooter, SheetClose,
-} from '@/components/ui/sheet'
+    Drawer, DrawerClose, DrawerContent, DrawerDescription,
+    DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger,
+} from '@/components/ui/drawer'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { IconLoader2, IconUpload, IconUser, IconBuilding } from '@tabler/icons-react'
+import { Separator } from '@/components/ui/separator'
+import { useIsMobile } from '@/hooks/use-mobile'
+import {
+    IconUpload, IconX, IconAlertCircle, IconUserPlus,
+} from '@tabler/icons-react'
+import { clienteSchema, clienteRegistroSchema, type ClienteRegistroFormValues } from '../schemas'
 import { clienteService } from '../services/clienteService'
-import type { Cliente, Campania, ClienteFormData } from '../types'
+import type { Cliente, Campania } from '../types'
 
-const DEPARTAMENTOS = [
+const PERU_DEPARTAMENTOS = [
     'Amazonas', 'Áncash', 'Apurímac', 'Arequipa', 'Ayacucho', 'Cajamarca',
     'Callao', 'Cusco', 'Huancavelica', 'Huánuco', 'Ica', 'Junín',
     'La Libertad', 'Lambayeque', 'Lima', 'Loreto', 'Madre de Dios',
@@ -21,335 +33,353 @@ const DEPARTAMENTOS = [
     'Tumbes', 'Ucayali',
 ]
 
-const FORM_INICIAL: ClienteFormData = {
-    campania_id: '',
-    tipo_persona: 'natural',
-    tipo_registro: '',
-    nombre: '',
-    apellidos: '',
-    dni: '',
-    ruc: '',
-    departamento: '',
-    email: '',
-    telefono: '',
-    archivo_comprobante: null,
+const FORM_ID = 'cliente-create-form'
+
+interface ServerValidationError {
+    errors?: Record<string, string[]>
+    message?: string
+}
+
+interface FeedbackState {
+    type: 'error'
+    message: string
+    details?: string[]
 }
 
 interface Props {
-    open: boolean
-    campanias: Campania[]
-    onClose: () => void
+    campania: Campania | null
     onCreated: (cliente: Cliente) => void
+    children: React.ReactNode
 }
 
-export function ClienteCreateDrawer({ open, campanias, onClose, onCreated }: Props) {
-    const [form, setForm]       = React.useState<ClienteFormData>(FORM_INICIAL)
-    const [errors, setErrors]   = React.useState<Record<string, string>>({})
-    const [saving, setSaving]   = React.useState(false)
-    const [errorMsg, setErrorMsg] = React.useState<string | null>(null)
+// Marca de campo requerido en rojo
+function Req() {
+    return <span className="text-destructive">*</span>
+}
 
-    // Resetea el form cada vez que se abre el drawer
+// Sólo dígitos, recortado a maxLen
+function onlyDigits(value: string, maxLen: number) {
+    return value.replace(/\D/g, '').slice(0, maxLen)
+}
+
+export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
+    const isMobile = useIsMobile()
+    const [open, setOpen] = React.useState(false)
+    const [feedback, setFeedback] = React.useState<FeedbackState | null>(null)
+
+    const {
+        control, register, handleSubmit, watch, reset, setError,
+        formState: { errors, isSubmitting },
+    } = useForm<ClienteRegistroFormValues>({
+        resolver: zodResolver(clienteRegistroSchema),
+        defaultValues: {
+            tipo_persona: 'natural',
+            nombre: '',
+            apellidos: '',
+            dni: '',
+            ruc: '',
+            departamento: '',
+            email: '',
+            telefono: '',
+            archivo_comprobante: null,
+        },
+    })
+
+    const tipoPersona = watch('tipo_persona')
+    const archivo = watch('archivo_comprobante')
+
     React.useEffect(() => {
         if (open) {
-            setForm(FORM_INICIAL)
-            setErrors({})
-            setErrorMsg(null)
+            reset()
+            setFeedback(null)
         }
-    }, [open])
+    }, [open, reset])
 
-    function setField<K extends keyof ClienteFormData>(key: K, value: ClienteFormData[K]) {
-        setForm((prev) => ({ ...prev, [key]: value }))
-        if (errors[key]) {
-            setErrors((prev) => {
-                const next = { ...prev }
-                delete next[key]
-                return next
-            })
-        }
+    function buildErrorDetails(errs: Record<string, string[]>): string[] {
+        return Object.values(errs).flat()
     }
 
-    function validar(): boolean {
-        const nuevosErrores: Record<string, string> = {}
-
-        if (!form.campania_id) nuevosErrores.campania_id = 'Selecciona una campaña.'
-        if (!form.tipo_registro.trim()) nuevosErrores.tipo_registro = 'Indica el tipo de registro.'
-        if (!form.nombre.trim()) nuevosErrores.nombre = 'El nombre es obligatorio.'
-        if (!form.departamento) nuevosErrores.departamento = 'Selecciona un departamento.'
-        if (!form.email.trim()) nuevosErrores.email = 'El email es obligatorio.'
-        if (!form.telefono.trim()) nuevosErrores.telefono = 'El teléfono es obligatorio.'
-
-        if (form.tipo_persona === 'natural') {
-            if (!form.apellidos.trim()) nuevosErrores.apellidos = 'Los apellidos son obligatorios.'
-            if (!/^\d{8}$/.test(form.dni)) nuevosErrores.dni = 'El DNI debe tener 8 dígitos.'
-        } else {
-            if (!/^\d{11}$/.test(form.ruc)) nuevosErrores.ruc = 'El RUC debe tener 11 dígitos.'
+    const onSubmit = handleSubmit(async (values) => {
+        if (!campania) {
+            setFeedback({ type: 'error', message: 'Selecciona una campaña activa antes de registrar.' })
+            return
         }
-
-        setErrors(nuevosErrores)
-        return Object.keys(nuevosErrores).length === 0
-    }
-
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault()
-        setErrorMsg(null)
-
-        if (!validar()) return
-
-        setSaving(true)
-
-        const payload = new FormData()
-        payload.append('campania_id', form.campania_id)
-        payload.append('tipo_persona', form.tipo_persona)
-        payload.append('tipo_registro', form.tipo_registro)
-        payload.append('nombre', form.nombre)
-        payload.append('departamento', form.departamento)
-        payload.append('email', form.email)
-        payload.append('telefono', form.telefono)
-
-        if (form.tipo_persona === 'natural') {
-            payload.append('apellidos', form.apellidos)
-            payload.append('dni', form.dni)
-        } else {
-            payload.append('ruc', form.ruc)
-        }
-
-        if (form.archivo_comprobante) {
-            payload.append('archivo_comprobante', form.archivo_comprobante)
-        }
-
+        setFeedback(null)
         try {
-            const res = await clienteService.createCliente(payload)
-            onCreated(res.data.cliente)
-            onClose()
-        } catch (err: any) {
-            if (err?.response?.status === 422 && err.response.data?.errors) {
-                const backendErrors: Record<string, string> = {}
-                Object.entries(err.response.data.errors as Record<string, string[]>).forEach(
-                    ([campo, mensajes]) => { backendErrors[campo] = mensajes[0] }
-                )
-                setErrors(backendErrors)
-            } else {
-                setErrorMsg(err?.response?.data?.message ?? 'Ocurrió un error al registrar el cliente.')
+            const res = await clienteService.registrarCliente({
+                campania_id: campania.id,
+                tipo_persona: values.tipo_persona,
+                nombre: values.nombre,
+                apellidos: values.tipo_persona === 'natural' ? values.apellidos : undefined,
+                dni: values.tipo_persona === 'natural' ? values.dni : undefined,
+                ruc: values.tipo_persona === 'juridica' ? values.ruc : undefined,
+                departamento: values.departamento,
+                email: values.email,
+                telefono: values.telefono,
+                archivo_comprobante: values.archivo_comprobante,
+            })
+
+            const cliente = clienteSchema.parse(res.data.cliente)
+            onCreated(cliente)
+            toast.success(res.message ?? 'Cliente registrado correctamente.')
+            setOpen(false)
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const status = error.response?.status
+                const data = error.response?.data as ServerValidationError | undefined
+
+                if (status === 422 && data?.errors) {
+                    Object.entries(data.errors).forEach(([field, messages]) => {
+                        setError(field as keyof ClienteRegistroFormValues, { message: messages[0] })
+                    })
+                    setFeedback({
+                        type: 'error',
+                        message: 'Revisa los campos marcados en rojo.',
+                        details: buildErrorDetails(data.errors),
+                    })
+                    return
+                }
+
+                const msg = data?.message ?? 'No se pudo registrar el cliente.'
+                setFeedback({ type: 'error', message: msg })
+                toast.error(msg)
+                return
             }
-        } finally {
-            setSaving(false)
+            setFeedback({ type: 'error', message: 'Ocurrió un error inesperado.' })
+            toast.error('Ocurrió un error inesperado.')
         }
-    }
+    })
+
+    const FeedbackAlert = feedback ? (
+        <Alert variant="destructive">
+            <IconAlertCircle className="size-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+                <p>{feedback.message}</p>
+                {feedback.details && feedback.details.length > 0 && (
+                    <ul className="mt-1 list-disc pl-4 space-y-0.5">
+                        {feedback.details.map((d, i) => <li key={i}>{d}</li>)}
+                    </ul>
+                )}
+            </AlertDescription>
+        </Alert>
+    ) : null
 
     return (
-        <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-            <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-                <form onSubmit={handleSubmit} className="flex h-full flex-col">
-                    <SheetHeader>
-                        <SheetTitle>Agregar cliente</SheetTitle>
-                        <SheetDescription>
-                            Registra un cliente manualmente y vincúlalo a una campaña activa.
-                        </SheetDescription>
-                    </SheetHeader>
-
-                    <div className="flex flex-col gap-4 px-4 pb-4">
-                        {errorMsg && (
-                            <div className="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 px-3 py-2 text-sm text-red-700 dark:text-red-400">
-                                {errorMsg}
-                            </div>
+        <Drawer open={open} onOpenChange={setOpen} direction={isMobile ? 'bottom' : 'right'}>
+            <DrawerTrigger asChild>{children}</DrawerTrigger>
+            <DrawerContent className={!isMobile ? 'w-[500px] max-w-[90vw] right-0 h-full' : ''}>
+                <DrawerHeader className="gap-1">
+                    <DrawerTitle className="flex items-center gap-2">
+                        <IconUserPlus className="size-4" />
+                        {campania.nombre} - {tipoPersona === 'juridica' ? 'jurídico' : 'natural'}
+                    </DrawerTitle>
+                    <DrawerDescription>
+                        {campania ? (
+                            <>Se registrará en la campaña <strong className="font-semibold text-foreground">{campania.nombre}</strong>.</>
+                        ) : (
+                            'Selecciona una campaña activa en el listado antes de registrar.'
                         )}
+                    </DrawerDescription>
+                </DrawerHeader>
 
-                        {/* Campaña */}
-                        <div className="grid gap-1.5">
-                            <Label htmlFor="campania_id">Campaña *</Label>
-                            <Select
-                                value={form.campania_id}
-                                onValueChange={(v) => setField('campania_id', v)}
-                            >
-                                <SelectTrigger id="campania_id" className={errors.campania_id ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Selecciona una campaña" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {campanias.filter((c) => c.activa).map((c) => (
-                                        <SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>
+                <form id={FORM_ID} onSubmit={onSubmit} className="flex flex-col gap-4 overflow-y-auto px-4 text-sm pb-4">
+                    {/* Tipo de persona */}
+                    <div className="flex flex-col gap-1.5">
+                        <Label>Tipo de cliente</Label>
+                        <Controller
+                            control={control}
+                            name="tipo_persona"
+                            render={({ field }) => (
+                                <div className="flex items-center gap-1 rounded-lg border bg-muted p-1 w-fit">
+                                    {(['natural', 'juridica'] as const).map((tipo) => (
+                                        <button
+                                            key={tipo}
+                                            type="button"
+                                            onClick={() => field.onChange(tipo)}
+                                            className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-all ${
+                                                field.value === tipo
+                                                    ? 'bg-background shadow-sm text-foreground'
+                                                    : 'text-muted-foreground hover:text-foreground'
+                                            }`}
+                                        >
+                                            {tipo === 'natural' ? 'Natural' : 'Jurídica'}
+                                        </button>
                                     ))}
-                                </SelectContent>
-                            </Select>
-                            {errors.campania_id && <span className="text-xs text-red-500">{errors.campania_id}</span>}
-                        </div>
-
-                        {/* Tipo de registro */}
-                        <div className="grid gap-1.5">
-                            <Label htmlFor="tipo_registro">Tipo de registro *</Label>
-                            <Input
-                                id="tipo_registro"
-                                placeholder="ej. web, panel, evento"
-                                value={form.tipo_registro}
-                                onChange={(e) => setField('tipo_registro', e.target.value)}
-                                className={errors.tipo_registro ? 'border-red-500' : ''}
-                            />
-                            {errors.tipo_registro && <span className="text-xs text-red-500">{errors.tipo_registro}</span>}
-                        </div>
-
-                        {/* Tipo de persona */}
-                        <div className="grid gap-1.5">
-                            <Label>Tipo de persona *</Label>
-                            <div className="flex items-center gap-1 rounded-lg border bg-muted p-1 w-fit">
-                                <button
-                                    type="button"
-                                    onClick={() => setField('tipo_persona', 'natural')}
-                                    className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
-                                        form.tipo_persona === 'natural'
-                                            ? 'bg-background shadow-sm text-foreground'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                >
-                                    <IconUser className="size-3.5" /> Natural
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setField('tipo_persona', 'juridica')}
-                                    className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
-                                        form.tipo_persona === 'juridica'
-                                            ? 'bg-background shadow-sm text-foreground'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                >
-                                    <IconBuilding className="size-3.5" /> Jurídica
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Nombre / Apellidos */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="grid gap-1.5">
-                                <Label htmlFor="nombre">
-                                    {form.tipo_persona === 'natural' ? 'Nombre *' : 'Razón social *'}
-                                </Label>
-                                <Input
-                                    id="nombre"
-                                    value={form.nombre}
-                                    onChange={(e) => setField('nombre', e.target.value)}
-                                    className={errors.nombre ? 'border-red-500' : ''}
-                                />
-                                {errors.nombre && <span className="text-xs text-red-500">{errors.nombre}</span>}
-                            </div>
-
-                            {form.tipo_persona === 'natural' && (
-                                <div className="grid gap-1.5">
-                                    <Label htmlFor="apellidos">Apellidos *</Label>
-                                    <Input
-                                        id="apellidos"
-                                        value={form.apellidos}
-                                        onChange={(e) => setField('apellidos', e.target.value)}
-                                        className={errors.apellidos ? 'border-red-500' : ''}
-                                    />
-                                    {errors.apellidos && <span className="text-xs text-red-500">{errors.apellidos}</span>}
                                 </div>
                             )}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1.5 col-span-2">
+                            <Label htmlFor="nombre">
+                                {tipoPersona === 'juridica' ? 'Razón social' : 'Nombres'} <Req />
+                            </Label>
+                            <Input id="nombre" {...register('nombre')} />
+                            {errors.nombre && <p className="text-xs text-destructive">{errors.nombre.message}</p>}
                         </div>
 
-                        {/* DNI o RUC */}
-                        {form.tipo_persona === 'natural' ? (
-                            <div className="grid gap-1.5">
-                                <Label htmlFor="dni">DNI *</Label>
-                                <Input
-                                    id="dni"
-                                    inputMode="numeric"
-                                    maxLength={8}
-                                    value={form.dni}
-                                    onChange={(e) => setField('dni', e.target.value.replace(/\D/g, ''))}
-                                    className={errors.dni ? 'border-red-500' : ''}
+                        {tipoPersona === 'natural' && (
+                            <>
+                                <div className="flex flex-col gap-1.5 col-span-2">
+                                    <Label htmlFor="apellidos">Apellidos <Req /></Label>
+                                    <Input id="apellidos" {...register('apellidos')} />
+                                    {errors.apellidos && (
+                                        <p className="text-xs text-destructive">{errors.apellidos.message}</p>
+                                    )}
+                                </div>
+                                <div className="flex flex-col gap-1.5 col-span-2">
+                                    <Label htmlFor="dni">DNI <Req /></Label>
+                                    <Controller
+                                        control={control}
+                                        name="dni"
+                                        render={({ field }) => (
+                                            <Input
+                                                id="dni"
+                                                inputMode="numeric"
+                                                maxLength={8}
+                                                placeholder="8 dígitos"
+                                                value={field.value ?? ''}
+                                                onChange={(e) => field.onChange(onlyDigits(e.target.value, 8))}
+                                            />
+                                        )}
+                                    />
+                                    {errors.dni && <p className="text-xs text-destructive">{errors.dni.message}</p>}
+                                </div>
+                            </>
+                        )}
+
+                        {tipoPersona === 'juridica' && (
+                            <div className="flex flex-col gap-1.5 col-span-2">
+                                <Label htmlFor="ruc">RUC <Req /></Label>
+                                <Controller
+                                    control={control}
+                                    name="ruc"
+                                    render={({ field }) => (
+                                        <Input
+                                            id="ruc"
+                                            inputMode="numeric"
+                                            maxLength={11}
+                                            placeholder="11 dígitos"
+                                            value={field.value ?? ''}
+                                            onChange={(e) => field.onChange(onlyDigits(e.target.value, 11))}
+                                        />
+                                    )}
                                 />
-                                {errors.dni && <span className="text-xs text-red-500">{errors.dni}</span>}
-                            </div>
-                        ) : (
-                            <div className="grid gap-1.5">
-                                <Label htmlFor="ruc">RUC *</Label>
-                                <Input
-                                    id="ruc"
-                                    inputMode="numeric"
-                                    maxLength={11}
-                                    value={form.ruc}
-                                    onChange={(e) => setField('ruc', e.target.value.replace(/\D/g, ''))}
-                                    className={errors.ruc ? 'border-red-500' : ''}
-                                />
-                                {errors.ruc && <span className="text-xs text-red-500">{errors.ruc}</span>}
+                                {errors.ruc && <p className="text-xs text-destructive">{errors.ruc.message}</p>}
                             </div>
                         )}
 
-                        {/* Departamento */}
-                        <div className="grid gap-1.5">
-                            <Label htmlFor="departamento">Departamento *</Label>
-                            <Select
-                                value={form.departamento}
-                                onValueChange={(v) => setField('departamento', v)}
-                            >
-                                <SelectTrigger id="departamento" className={errors.departamento ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Selecciona un departamento" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {DEPARTAMENTOS.map((d) => (
-                                        <SelectItem key={d} value={d}>{d}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {errors.departamento && <span className="text-xs text-red-500">{errors.departamento}</span>}
-                        </div>
-
-                        {/* Email / Teléfono */}
-                        <div className="grid gap-1.5">
-                            <Label htmlFor="email">Email *</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={form.email}
-                                onChange={(e) => setField('email', e.target.value)}
-                                className={errors.email ? 'border-red-500' : ''}
+                        <div className="flex flex-col gap-1.5 col-span-2">
+                            <Label>Departamento <Req /></Label>
+                            <Controller
+                                control={control}
+                                name="departamento"
+                                render={({ field }) => (
+                                    <Select value={field.value} onValueChange={field.onChange}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona departamento" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {PERU_DEPARTAMENTOS.map((d) => (
+                                                <SelectItem key={d} value={d}>{d}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             />
-                            {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
-                        </div>
-
-                        <div className="grid gap-1.5">
-                            <Label htmlFor="telefono">Teléfono *</Label>
-                            <Input
-                                id="telefono"
-                                value={form.telefono}
-                                onChange={(e) => setField('telefono', e.target.value)}
-                                className={errors.telefono ? 'border-red-500' : ''}
-                            />
-                            {errors.telefono && <span className="text-xs text-red-500">{errors.telefono}</span>}
-                        </div>
-
-                        {/* Boleta opcional */}
-                        <div className="grid gap-1.5">
-                            <Label htmlFor="archivo_comprobante">Boleta / comprobante (opcional)</Label>
-                            <label
-                                htmlFor="archivo_comprobante"
-                                className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2.5 text-sm text-muted-foreground cursor-pointer hover:bg-muted/50"
-                            >
-                                <IconUpload className="size-4 shrink-0" />
-                                {form.archivo_comprobante ? form.archivo_comprobante.name : 'Subir archivo (jpg, png o pdf)'}
-                            </label>
-                            <input
-                                id="archivo_comprobante"
-                                type="file"
-                                accept=".jpg,.jpeg,.png,.pdf"
-                                className="hidden"
-                                onChange={(e) => setField('archivo_comprobante', e.target.files?.[0] ?? null)}
-                            />
-                            {errors.archivo_comprobante && (
-                                <span className="text-xs text-red-500">{errors.archivo_comprobante}</span>
+                            {errors.departamento && (
+                                <p className="text-xs text-destructive">{errors.departamento.message}</p>
                             )}
+                        </div>
+
+                        <div className="flex flex-col gap-1.5 col-span-2">
+                            <Label htmlFor="email">Email <Req /></Label>
+                            <Input id="email" type="email" {...register('email')} />
+                            {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+                        </div>
+
+                        <div className="flex flex-col gap-1.5 col-span-2">
+                            <Label htmlFor="telefono">Teléfono <Req /></Label>
+                            <Controller
+                                control={control}
+                                name="telefono"
+                                render={({ field }) => (
+                                    <Input
+                                        id="telefono"
+                                        inputMode="numeric"
+                                        maxLength={9}
+                                        placeholder="9 dígitos"
+                                        value={field.value ?? ''}
+                                        onChange={(e) => field.onChange(onlyDigits(e.target.value, 9))}
+                                    />
+                                )}
+                            />
+                            {errors.telefono && <p className="text-xs text-destructive">{errors.telefono.message}</p>}
                         </div>
                     </div>
 
-                    <SheetFooter className="mt-auto">
-                        <SheetClose asChild>
-                            <Button type="button" variant="outline" disabled={saving}>Cancelar</Button>
-                        </SheetClose>
-                        <Button type="submit" disabled={saving}>
-                            {saving && <IconLoader2 className="size-4 mr-1.5 animate-spin" />}
-                            Registrar cliente
-                        </Button>
-                    </SheetFooter>
+                    <Separator />
+
+                    {/* Comprobante */}
+                    <div className="flex flex-col gap-1.5">
+                        <Label htmlFor="archivo_comprobante">Comprobante (opcional)</Label>
+                        <Controller
+                            control={control}
+                            name="archivo_comprobante"
+                            render={({ field }) => (
+                                <div className="flex items-center gap-2">
+                                    <label
+                                        htmlFor="archivo_comprobante"
+                                        className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground cursor-pointer hover:bg-muted/50 w-full"
+                                    >
+                                        <IconUpload className="size-4 shrink-0" />
+                                        {archivo ? archivo.name : 'Subir jpg, png o pdf (máx. 5MB)'}
+                                    </label>
+                                    <input
+                                        id="archivo_comprobante"
+                                        type="file"
+                                        accept=".jpg,.jpeg,.png,.pdf"
+                                        className="hidden"
+                                        onChange={(e) => field.onChange(e.target.files?.[0] ?? null)}
+                                    />
+                                    {archivo && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="size-8 shrink-0"
+                                            onClick={() => field.onChange(null)}
+                                        >
+                                            <IconX className="size-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
+                        />
+                        {errors.archivo_comprobante && (
+                            <p className="text-xs text-destructive">{errors.archivo_comprobante.message as string}</p>
+                        )}
+                    </div>
+
+                    {FeedbackAlert}
                 </form>
-            </SheetContent>
-        </Sheet>
+
+                <DrawerFooter className="flex-row gap-2">
+                    <Button
+                        type="submit"
+                        form={FORM_ID}
+                        className="flex-1"
+                        disabled={isSubmitting || !campania}
+                    >
+                        {isSubmitting ? 'Registrando...' : 'Registrar cliente'}
+                    </Button>
+                    <DrawerClose asChild>
+                        <Button variant="outline" className="flex-1">Cancelar</Button>
+                    </DrawerClose>
+                </DrawerFooter>
+            </DrawerContent>
+        </Drawer>
     )
 }

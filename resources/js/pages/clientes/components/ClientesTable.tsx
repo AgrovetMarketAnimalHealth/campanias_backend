@@ -11,7 +11,7 @@ import {
     IconChevronsLeft, IconChevronsRight,
     IconDotsVertical, IconLoader2, IconSearch,
     IconUser, IconBuilding, IconMailCheck, IconCoins,
-    IconTrophy,
+    IconTrophy,IconPlus,
 } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,14 +26,13 @@ import {
     DropdownMenu, DropdownMenuContent,
     DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { IconPlus } from '@tabler/icons-react'
-import { ClienteCreateDrawer } from './ClienteCreateDrawer'
 import { clienteService } from '../services/clienteService'
 import { campaniaService } from '../services/campaniaService'
 import { ClienteEditDrawer } from './ClienteEditDrawer'
 import { tipoPersonaLabel } from '../utils'
 import type { Cliente, Campania, PaginatedResponse, TipoPersona } from '../types'
 import clientes from '@/routes/clientes'
+import { ClienteCreateDrawer } from './ClienteCreateDrawer'
 
 const TODAS_CAMPANIAS = 'todas'
 
@@ -50,8 +49,10 @@ export function ClientesTable() {
 
     const [editCliente, setEditCliente] = React.useState<Cliente | null>(null)
     const [editOpen, setEditOpen]       = React.useState(false)
-
     const [createOpen, setCreateOpen] = React.useState(false)
+
+    const campaniaSeleccionada = campanias.find((c) => c.id === campaniaId) ?? null
+    const puedeCrear = campaniaId !== TODAS_CAMPANIAS && !!campaniaSeleccionada
     // Carga las campañas una sola vez y selecciona la activa por defecto
     React.useEffect(() => {
         campaniaService.getCampanias().then((res) => {
@@ -91,6 +92,17 @@ export function ClientesTable() {
             return {
                 ...prev,
                 data: prev.data.map(c => c.id === updated.id ? updated : c),
+            }
+        })
+    }
+    
+    function handleCreated(nuevo: Cliente) {
+        setData((prev) => {
+            if (!prev) return prev
+            return {
+                ...prev,
+                data: [nuevo, ...prev.data],
+                meta: { ...prev.meta, total: prev.meta.total + 1 },
             }
         })
     }
@@ -244,18 +256,6 @@ export function ClientesTable() {
         pageCount: data?.meta.last_page ?? 1,
     })
 
-    function reload() {
-        setLoading(true)
-        clienteService
-            .getClientes({ search, tipo_persona: tipoPersona, campania_id: campaniaId, page })
-            .then(setData)
-            .finally(() => setLoading(false))
-    }
-
-    function handleCreated() {
-        reload()
-    }
-
     const lastPage = data?.meta.last_page ?? 1
     const total    = data?.meta.total ?? 0
 
@@ -263,57 +263,64 @@ export function ClientesTable() {
         <>
             <div className="flex flex-col gap-4 px-4 lg:px-6">
                 {/* Filtros */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <Select
-                            value={campaniaId}
-                            onValueChange={(value) => { setCampaniaId(value); setPage(1) }}
-                        >
-                            <SelectTrigger className="w-full sm:w-64">
-                                <SelectValue placeholder="Selecciona campaña" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value={TODAS_CAMPANIAS}>Todas las campañas</SelectItem>
-                                {campanias.map((c) => (
-                                    <SelectItem key={c.id} value={c.id}>
-                                        {c.nombre}{!c.activa && ' (inactiva)'}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+<div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Select
+                value={campaniaId}
+                onValueChange={(value) => { setCampaniaId(value); setPage(1) }}
+            >
+                <SelectTrigger className="w-full sm:w-64">
+                    <SelectValue placeholder="Selecciona campaña" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value={TODAS_CAMPANIAS}>Todas las campañas</SelectItem>
+                    {campanias.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                            {c.nombre}{!c.activa && ' (inactiva)'}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
 
-                        <div className="flex items-center gap-1 rounded-lg border bg-muted p-1 w-fit">
-                            {(['todas', 'natural', 'juridica'] as TipoPersona[]).map((tipo) => (
-                                <button
-                                    key={tipo}
-                                    onClick={() => { setTipo(tipo); setPage(1) }}
-                                    className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-all ${
-                                        tipoPersona === tipo
-                                            ? 'bg-background shadow-sm text-foreground'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                >
-                                    {tipo === 'todas' ? 'Todas' : tipo === 'natural' ? 'Natural' : 'Jurídica'}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+            <div className="flex items-center gap-1 rounded-lg border bg-muted p-1 w-fit">
+                {(['todas', 'natural', 'juridica'] as TipoPersona[]).map((tipo) => (
+                    <button
+                        key={tipo}
+                        onClick={() => { setTipo(tipo); setPage(1) }}
+                        className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-all ${
+                            tipoPersona === tipo
+                                ? 'bg-background shadow-sm text-foreground'
+                                : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        {tipo === 'todas' ? 'Todas' : tipo === 'natural' ? 'Natural' : 'Jurídica'}
+                    </button>
+                ))}
+            </div>
+        </div>
 
-                    <div className="relative w-full sm:w-72">
-                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Buscar nombre, dni, email..."
-                            className="pl-9"
-                            value={search}
-                            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                        />
-                        <Button onClick={() => setCreateOpen(true)} className="gap-1.5">
-                            <IconPlus className="size-4" />
-                            Agregar cliente
-                        </Button>
-                    </div>
-                </div>
+        <ClienteCreateDrawer campania={campaniaSeleccionada} onCreated={handleCreated}>
+            <Button
+                disabled={!puedeCrear}
+                title={!puedeCrear ? 'Selecciona una campaña activa para registrar' : undefined}
+            >
+                <IconPlus className="size-4" />
+                Nuevo cliente
+            </Button>
+        </ClienteCreateDrawer>
+    </div>
 
+    <div className="relative w-full">
+        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <Input
+            placeholder="Buscar nombre, dni, email..."
+            className="pl-9 w-full"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+        />
+    </div>
+</div>
                 {/* Tabla */}
                 <div className="overflow-hidden rounded-lg border">
                     <Table>
@@ -397,8 +404,8 @@ export function ClientesTable() {
             />
             <ClienteCreateDrawer
                 open={createOpen}
-                campanias={campanias}
                 onClose={() => setCreateOpen(false)}
+                campania={campaniaSeleccionada}
                 onCreated={handleCreated}
             />
         </>

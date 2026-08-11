@@ -42,16 +42,28 @@ export const clienteService = {
         )
         return data.data
     },
-    async createCliente(payload: FormData): Promise<{
-        success: boolean
-        message: string
-        data: { cliente: Cliente; boleta: Boleta | null }
-    }> {
-        const { data } = await axios.post(
-            '/promo-concierto/backoffice/cliente',
-            payload,
-            { headers: { 'Content-Type': 'multipart/form-data' } }
-        )
+
+    async registrarCliente(payload: {
+        campania_id: string
+        tipo_persona: string
+        nombre: string
+        apellidos?: string
+        dni?: string
+        ruc?: string
+        departamento: string
+        email: string
+        telefono: string
+        archivo_comprobante?: File | null
+    }): Promise<{ success: boolean; message: string; data: { cliente: Cliente; boleta: Boleta | null } }> {
+        const formData = new FormData()
+        Object.entries(payload).forEach(([key, value]) => {
+            if (value === undefined || value === null || value === '') return
+            formData.append(key, value as string | Blob)
+        })
+
+        const { data } = await axios.post('/promo-concierto/backoffice/cliente', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
         return data
     },
 }
