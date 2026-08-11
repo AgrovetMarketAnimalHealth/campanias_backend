@@ -154,10 +154,11 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
             Route::delete('{campania}', 'destroy')->name('panel.campanias.destroy');
         });
 
-        Route::prefix('boleta')->controller(BoletaController::class)->group(function () {
-            Route::get('/',         'index')->name('panel.boleta.index');
-            Route::get('{boleta}',  'show')->name('panel.boleta.show');
-            Route::put('{boleta}',  'update')->name('panel.boleta.update');
+       Route::prefix('boleta')->controller(BoletaController::class)->group(function () {
+            Route::get('/',        'index')->name('panel.boleta.index');
+            Route::get('{boleta}', 'show')->name('panel.boleta.show');
+            Route::post('/',       'store')->name('panel.boleta.store');
+            Route::put('{boleta}', 'update')->name('panel.boleta.update');
         });
 
         Route::prefix('cliente')->controller(ClienteAdminController::class)->group(function () {

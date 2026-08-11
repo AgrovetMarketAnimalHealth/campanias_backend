@@ -16,13 +16,9 @@ class StoreClienteRequest extends FormRequest
     {
         return [
             'campania_id' => ['required', 'uuid', Rule::exists('campanias', 'id')->where('activa', true)],
-
             'tipo_persona'  => ['required', Rule::in(['natural', 'juridica'])],
-            'tipo_registro' => ['required', 'string'],
-
             'nombre'      => ['required', 'string', 'max:150'],
             'apellidos'   => ['nullable', 'required_if:tipo_persona,natural', 'string', 'max:150'],
-
             'dni' => [
                 'nullable',
                 'required_if:tipo_persona,natural',
@@ -35,12 +31,9 @@ class StoreClienteRequest extends FormRequest
                 'digits:11',
                 Rule::unique('clientes', 'ruc'),
             ],
-
             'departamento' => ['required', 'string', 'max:100'],
             'email'        => ['required', 'email', 'max:150', Rule::unique('clientes', 'email')],
             'telefono'     => ['required', 'string', 'max:20'],
-
-            // Opcional: si viene, se crea la boleta en el mismo registro
             'archivo_comprobante' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ];
     }

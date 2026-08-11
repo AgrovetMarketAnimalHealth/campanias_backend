@@ -83,31 +83,30 @@ class ClienteAdminController extends Controller{
     }
     public function register(StoreClienteRequest $request){
         $campania = Campania::where('id', $request->campania_id)
-                                ->where('activa', true)
-                                ->first();
+            ->where('activa', true)
+            ->first();
         if (!$campania) {
             return response()->json([
                 'success' => false,
                 'message' => 'La campaña no existe o no está activa.',
             ], 404);
         }
-        $tipo = $request->tipo_registro;
         DB::beginTransaction();
         try {
             $cliente = Cliente::create([
-                'campania_id'   => $campania->id,
-                'tipo_persona'  => $request->tipo_persona,
-                'nombre'        => $request->nombre,
-                'apellidos'     => $request->apellidos,
-                'dni'           => $request->dni,
-                'ruc'           => $request->ruc,
-                'departamento'  => $request->departamento,
-                'email'         => $request->email,
-                'telefono'      => $request->telefono,
-                'acepta_politicas' => true,
-                'acepta_terminos'  => true,
-                'estado'        => 'activo',
-                'tipo_registro' => $tipo,
+                'campania_id'       => $campania->id,
+                'tipo_persona'      => $request->tipo_persona,
+                'nombre'            => $request->nombre,
+                'apellidos'         => $request->apellidos,
+                'dni'               => $request->dni,
+                'ruc'               => $request->ruc,
+                'departamento'      => $request->departamento,
+                'email'             => $request->email,
+                'telefono'          => $request->telefono,
+                'acepta_politicas'  => true,
+                'acepta_terminos'   => true,
+                'estado'            => 'activo',
+                'tipo_registro'     => $campania->tipo_registro,
             ]);
             $clienteCampania = ClienteCampania::create([
                 'cliente_id'  => $cliente->id,
@@ -115,7 +114,7 @@ class ClienteAdminController extends Controller{
             ]);
             $boleta = null;
             if ($request->hasFile('archivo_comprobante')) {
-                $archivo       = $request->file('archivo_comprobante');
+                $archivo = $request->file('archivo_comprobante');
                 $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
                 $ruta = $archivo->storeAs(
                     "clientes/{$cliente->id}/comprobantes",
@@ -124,28 +123,36 @@ class ClienteAdminController extends Controller{
                 );
                 $boleta = Boleta::create([
                     'cliente_id'  => $cliente->id,
-                    'campania_id' => $clienteCampania->campania_id,
+                    'campania_id' => $campania->id,
                     'archivo'     => $ruta,
                     'estado'      => 'pendiente',
                     'created_by'  => $cliente->id,
                 ]);
             }
             DB::commit();
-            EnviarEmailRegistro::dispatch($cliente, $tipo)->onQueue('emails');
+            EnviarEmailRegistro::dispatch(
+                $cliente,
+                $campania
+            )->onQueue('emails');
             if ($boleta) {
-                EnviarEmailBoleta::dispatch($cliente, $boleta, $tipo)->onQueue('emails');
+                EnviarEmailBoleta::dispatch(
+                    $cliente,
+                    $boleta,
+                    $campania
+                )->onQueue('emails');
             }
             return response()->json([
                 'success' => true,
                 'message' => $boleta
-                    ? 'Registro exitoso. Tu comprobante fue recibido y está en revisión.'
+                    ? 'Registro exitoso. El comprobante fue recibido y está en revisión.'
                     : 'Registro exitoso.',
                 'data' => [
                     'cliente' => $cliente,
-                    'boleta'  => $boleta ? new BoletaResource($boleta) : null,
+                    'boleta' => $boleta
+                        ? new BoletaResource($boleta)
+                        : null,
                 ],
             ], 201);
-
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json([
