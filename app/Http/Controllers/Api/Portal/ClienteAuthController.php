@@ -181,19 +181,23 @@ class ClienteAuthController extends Controller{
             ],
         ])->withCookie($this->makeCookie($authToken));
     }
-    public function reenviarVerificacion(Request $request): JsonResponse{
+    public function reenviarVerificacion(Request $request): JsonResponse
+    {
         $request->validate([
             'email' => 'required|email',
         ]);
+
         $cliente = Cliente::where('email', $request->email)
             ->whereNull('email_verified_at')
             ->first();
+
         if (!$cliente) {
             return response()->json([
                 'success' => true,
                 'message' => 'Si el correo existe y no está verificado, recibirás un enlace.',
             ]);
         }
+
         $key = 'reenviar-verificacion:' . $cliente->id;
         if (RateLimiter::tooManyAttempts($key, 3)) {
             $segundos = RateLimiter::availableIn($key);
@@ -203,6 +207,7 @@ class ClienteAuthController extends Controller{
             ], 429);
         }
         RateLimiter::hit($key, 600);
+
         DB::table('clientes')
             ->where('id', $cliente->id)
             ->update([
@@ -211,7 +216,13 @@ class ClienteAuthController extends Controller{
             ]);
 
         $cliente->refresh();
-        EnviarEmailRegistro::dispatch($cliente)->onQueue('emails');
+
+        // Obtener el tipo desde la campaña asociada (url: "campana/tipo/")
+        $campania = $cliente->clienteCampanias()->with('campania')->latest()->first()?->campania;
+        $tipo = $campania ? explode('/', trim($campania->url, '/'))[1] ?? 'clientes' : 'clientes';
+
+        EnviarEmailRegistro::dispatch($cliente, $tipo)->onQueue('emails');
+
         Notificacion::create([
             'cliente_id'         => $cliente->id,
             'tipo'               => 'reenvio_verificacion',
