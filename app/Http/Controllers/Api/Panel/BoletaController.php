@@ -76,4 +76,7 @@ class BoletaController extends Controller
 
         return new BoletaResourceBackend($boleta->fresh());
     }
+    public function store(){
+
+    }
 }

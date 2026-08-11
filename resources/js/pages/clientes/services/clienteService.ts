@@ -42,4 +42,16 @@ export const clienteService = {
         )
         return data.data
     },
+    async createCliente(payload: FormData): Promise<{
+        success: boolean
+        message: string
+        data: { cliente: Cliente; boleta: Boleta | null }
+    }> {
+        const { data } = await axios.post(
+            '/promo-concierto/backoffice/cliente',
+            payload,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+        )
+        return data
+    },
 }

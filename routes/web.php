@@ -161,6 +161,7 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
         });
 
         Route::prefix('cliente')->controller(ClienteAdminController::class)->group(function () {
+            Route::post('/',                    'register')->name('panel.cliente.register');
             Route::get('/',                    'index')   ->name('panel.cliente.index');
             Route::get('{cliente}',            'show')    ->name('panel.cliente.show');
             Route::put('{cliente}',            'update')  ->name('panel.cliente.update');

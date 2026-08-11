@@ -26,6 +26,8 @@ import {
     DropdownMenu, DropdownMenuContent,
     DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { IconPlus } from '@tabler/icons-react'
+import { ClienteCreateDrawer } from './ClienteCreateDrawer'
 import { clienteService } from '../services/clienteService'
 import { campaniaService } from '../services/campaniaService'
 import { ClienteEditDrawer } from './ClienteEditDrawer'
@@ -49,6 +51,7 @@ export function ClientesTable() {
     const [editCliente, setEditCliente] = React.useState<Cliente | null>(null)
     const [editOpen, setEditOpen]       = React.useState(false)
 
+    const [createOpen, setCreateOpen] = React.useState(false)
     // Carga las campañas una sola vez y selecciona la activa por defecto
     React.useEffect(() => {
         campaniaService.getCampanias().then((res) => {
@@ -241,6 +244,18 @@ export function ClientesTable() {
         pageCount: data?.meta.last_page ?? 1,
     })
 
+    function reload() {
+        setLoading(true)
+        clienteService
+            .getClientes({ search, tipo_persona: tipoPersona, campania_id: campaniaId, page })
+            .then(setData)
+            .finally(() => setLoading(false))
+    }
+
+    function handleCreated() {
+        reload()
+    }
+
     const lastPage = data?.meta.last_page ?? 1
     const total    = data?.meta.total ?? 0
 
@@ -292,6 +307,10 @@ export function ClientesTable() {
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
                         />
+                        <Button onClick={() => setCreateOpen(true)} className="gap-1.5">
+                            <IconPlus className="size-4" />
+                            Agregar cliente
+                        </Button>
                     </div>
                 </div>
 
@@ -375,6 +394,12 @@ export function ClientesTable() {
                 open={editOpen}
                 onClose={() => setEditOpen(false)}
                 onUpdated={handleUpdated}
+            />
+            <ClienteCreateDrawer
+                open={createOpen}
+                campanias={campanias}
+                onClose={() => setCreateOpen(false)}
+                onCreated={handleCreated}
             />
         </>
     )
