@@ -123,7 +123,7 @@ class ClienteAdminController extends Controller{
                 );
                 $boleta = Boleta::create([
                     'cliente_id'  => $cliente->id,
-                    'campania_id' => $campania->id,
+                    'compania_id' => $campania->id,
                     'archivo'     => $ruta,
                     'estado'      => 'pendiente',
                     'created_by'  => $cliente->id,
