@@ -22,6 +22,26 @@ export const clienteSchema = z.object({
     ganador: z.boolean(),
 })
 
+// Schema del cliente tal como lo devuelve el endpoint de REGISTRO (POST /cliente).
+// Este endpoint NO incluye estadísticas acumuladas (puntos, boletas, etc.),
+// esos campos se calculan/consultan aparte en el listado (getClientes).
+export const clienteRegistroResponseSchema = z.object({
+    id: z.string(),
+    nombre: z.string(),
+    apellidos: z.string().nullable(),
+    departamento: z.string(),
+    dni: z.string().nullable(),
+    ruc: z.string().nullable(),
+    tipo_persona: z.enum(['natural', 'juridica']),
+    email: z.string().email(),
+    telefono: z.string().nullable(),
+    estado: z.string(),
+    acepta_politicas: z.boolean().optional(),
+    acepta_terminos: z.boolean().optional(),
+    created_at: z.string(),
+    updated_at: z.string(),
+})
+
 export const boletaSchema = z.object({
     id: z.string(),
     codigo: z.string(),
@@ -111,4 +131,5 @@ export const clienteRegistroSchema = z
 export type SubirBoletaForm = z.infer<typeof subirBoletaSchema>
 export type ClienteRegistroFormValues = z.infer<typeof clienteRegistroSchema>
 export type ClienteSchema = z.infer<typeof clienteSchema>
+export type ClienteRegistroResponse = z.infer<typeof clienteRegistroResponseSchema>
 export type BoletaSchema = z.infer<typeof boletaSchema>

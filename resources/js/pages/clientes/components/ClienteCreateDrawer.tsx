@@ -21,7 +21,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import {
     IconUpload, IconX, IconAlertCircle, IconUserPlus,
 } from '@tabler/icons-react'
-import { clienteSchema, clienteRegistroSchema, type ClienteRegistroFormValues } from '../schemas'
+import { clienteRegistroSchema, clienteRegistroResponseSchema, type ClienteRegistroFormValues } from '../schemas'
 import { clienteService } from '../services/clienteService'
 import type { Cliente, Campania } from '../types'
 
@@ -120,7 +120,32 @@ export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
                 archivo_comprobante: values.archivo_comprobante,
             })
 
-            const cliente = clienteSchema.parse(res.data.cliente)
+            // Este endpoint devuelve una forma distinta a la del listado
+            // (sin puntos/boletas acumuladas), así que validamos con el schema correcto.
+            const raw = clienteRegistroResponseSchema.parse(res.data.cliente)
+
+            // Normalizamos al tipo Cliente que espera el resto de la UI,
+            // rellenando con valores por defecto lo que este endpoint no trae.
+            const cliente: Cliente = {
+                id: raw.id,
+                nombre: raw.nombre,
+                apellidos: raw.apellidos ?? '',
+                departamento: raw.departamento,
+                dni: raw.dni,
+                ruc: raw.ruc,
+                tipo_persona: raw.tipo_persona,
+                email: raw.email,
+                telefono: raw.telefono,
+                estado: raw.estado,
+                email_verificado: false,
+                total_puntos: 0,
+                boletas_aceptadas: 0,
+                boletas_pendientes: res.data.boleta ? 1 : 0,
+                boletas_rechazadas: 0,
+                registrado_en: raw.created_at,
+                ganador: false,
+            }
+
             onCreated(cliente)
             toast.success(res.message ?? 'Cliente registrado correctamente.')
             setOpen(false)
@@ -146,6 +171,7 @@ export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
                 toast.error(msg)
                 return
             }
+            console.error('Error al procesar respuesta de registro:', error)
             setFeedback({ type: 'error', message: 'Ocurrió un error inesperado.' })
             toast.error('Ocurrió un error inesperado.')
         }
