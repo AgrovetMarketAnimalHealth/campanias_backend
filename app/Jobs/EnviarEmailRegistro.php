@@ -1,6 +1,8 @@
 <?php
+
 namespace App\Jobs;
 
+use App\Models\Campania;
 use App\Models\Cliente;
 use App\Services\BrevoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,39 +20,52 @@ class EnviarEmailRegistro implements ShouldQueue
 
     public function __construct(
         public readonly Cliente $cliente,
-        public readonly string $tipo, // 'veterinarios' o 'clientes' — viene directo de la ruta
+        public readonly Campania $campania,
     ) {}
 
     public function handle(BrevoService $brevo): void
     {
+        // La campaña seleccionada determina la URL y el tipo
+        $partes = explode('/', trim($this->campania->url, '/'));
+
+        $tipo = $partes[1] ?? 'clientes';
+
         Log::info('EnviarEmailRegistro job', [
-            'cliente_id' => $this->cliente->id,
-            'tipo'       => $this->tipo,
+            'cliente_id'  => $this->cliente->id,
+            'campania_id' => $this->campania->id,
+            'campania_url' => $this->campania->url,
+            'tipo'         => $tipo,
         ]);
 
-        $config = config("services.registro_tipos.{$this->tipo}")
-            ?? config('services.registro_tipos.clientes'); // fallback por si acaso
+        $config = config("services.registro_tipos.{$tipo}")
+            ?? config('services.registro_tipos.clientes');
 
+        // ── Email al cliente ─────────────────────────────────────
         $brevo->enviar(
             destinatario: $this->cliente->email,
-            asunto:       '¡Registro exitoso! Bienvenido',
-            cuerpo:       view($config['vista_prefix'] . '.registro', [
+            asunto: '¡Registro exitoso! Bienvenido',
+            cuerpo: view($config['vista_prefix'] . '.registro', [
                 'cliente'     => $this->cliente,
-                'frontendUrl' => $config['frontend_url'],
+                'campania'    => $this->campania,
+                'frontendUrl' => $this->campania->url,
             ])->render(),
-            tipo:         'registro_cliente',
-            clienteId:    $this->cliente->id,
+            tipo: 'registro_cliente',
+            clienteId: $this->cliente->id,
         );
 
+        // ── Notificación interna ─────────────────────────────────
         $brevo->enviar(
             destinatario: config('services.brevo.from_email'),
-            asunto:       'Nuevo registro – ' . $this->cliente->nombre . ' ' . $this->cliente->apellidos,
-            cuerpo:       view('emails.admin.nuevo-registro', [
+            asunto: 'Nuevo registro – ' .
+                $this->cliente->nombre . ' ' .
+                $this->cliente->apellidos,
+            cuerpo: view('emails.admin.nuevo-registro', [
                 'cliente'  => $this->cliente,
                 'boletaId' => null,
+                'campania' => $this->campania,
             ])->render(),
-            tipo:         'registro_admin',
-            clienteId:    $this->cliente->id,
+            tipo: 'registro_admin',
+            clienteId: $this->cliente->id,
         );
     }
 }

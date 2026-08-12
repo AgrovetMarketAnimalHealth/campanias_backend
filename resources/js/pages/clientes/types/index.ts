@@ -53,3 +53,16 @@ export interface PaginatedResponse<T> {
     meta: PaginatedMeta
     links: PaginatedLinks
 }
+
+export interface ClienteRegistroPayload {
+    campania_id: string
+    tipo_persona: 'natural' | 'juridica'
+    nombre: string
+    apellidos?: string
+    dni?: string
+    ruc?: string
+    departamento: string
+    email: string
+    telefono: string
+    archivo_comprobante?: File | null
+}

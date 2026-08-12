@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Jobs;
 
 use App\Models\Boleta;
+use App\Models\Campania;
 use App\Models\Cliente;
 use App\Services\BrevoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,49 +15,56 @@ class EnviarEmailBoleta implements ShouldQueue
 {
     use InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
     public int $backoff = 60;
 
     public function __construct(
         public readonly Cliente $cliente,
-        public readonly Boleta  $boleta,
-        public readonly ?int    $userId = null,
+        public readonly Boleta $boleta,
+        public readonly Campania $campania,
+        public readonly ?int $userId = null,
     ) {}
 
     public function handle(BrevoService $brevo): void
     {
-        $tipo = $this->cliente->tipo_registro;
+        // Obtener el tipo desde la campaña seleccionada
+        $partes = explode('/', trim($this->campania->url, '/'));
+
+        $tipo = $partes[1] ?? 'clientes';
 
         $config = config("services.registro_tipos.{$tipo}")
-            ?? config('services.registro_tipos.clientes'); // fallback
+            ?? config('services.registro_tipos.clientes');
 
-        // ── Email al cliente ──────────────────────────────────────────
+        // ── Email al cliente ──────────────────────────────────────
         $brevo->enviar(
             destinatario: $this->cliente->email,
-            asunto:       '¡Recibimos tu comprobante!',
-            cuerpo:       view($config['vista_prefix'] . '.boleta-recibida', [
-                'cliente' => $this->cliente,
-                'boleta'  => $this->boleta,
+            asunto: '¡Recibimos tu comprobante!',
+            cuerpo: view($config['vista_prefix'] . '.boleta-recibida', [
+                'cliente'  => $this->cliente,
+                'boleta'   => $this->boleta,
+                'campania' => $this->campania,
             ])->render(),
-            tipo:      'boleta_recibida',
+            tipo: 'boleta_recibida',
             clienteId: $this->cliente->id,
-            boletaId:  $this->boleta->id,
-            userId:    $this->userId,
+            boletaId: $this->boleta->id,
+            userId: $this->userId,
         );
 
-        // ── Notificación interna al admin ─────────────────────────────
-        // Esta vista queda fija, no depende del tipo (siempre va al equipo interno)
+        // ── Notificación interna al administrador ─────────────────
         $brevo->enviar(
             destinatario: config('services.brevo.from_email'),
-            asunto:       '📎 Nuevo comprobante recibido – ' . $this->cliente->nombre . ' ' . $this->cliente->apellidos,
-            cuerpo:       view('emails.admin.nuevo-comprobante', [
-                'cliente' => $this->cliente,
-                'boleta'  => $this->boleta,
+            asunto: '📎 Nuevo comprobante recibido – ' .
+                $this->cliente->nombre . ' ' .
+                $this->cliente->apellidos,
+            cuerpo: view('emails.admin.nuevo-comprobante', [
+                'cliente'  => $this->cliente,
+                'boleta'   => $this->boleta,
+                'campania' => $this->campania,
             ])->render(),
-            tipo:      'registro_admin',
+            tipo: 'registro_admin',
             clienteId: $this->cliente->id,
-            boletaId:  $this->boleta->id,
-            userId:    $this->userId,
+            boletaId: $this->boleta->id,
+            userId: $this->userId,
         );
     }
 }

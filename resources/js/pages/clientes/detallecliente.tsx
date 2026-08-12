@@ -47,8 +47,8 @@ export default function DetalleCliente({ clienteId, verificationUrl }: Props) {
             .finally(() => setLoadingC(false))
     }, [clienteId])
 
-    // Cargar boletas
-    React.useEffect(() => {
+    // Cargar boletas (función reutilizable para poder refrescar tras subir un comprobante)
+    const fetchBoletas = React.useCallback(() => {
         setLoadingB(true)
         clienteService
             .getBoletas(clienteId, {
@@ -58,6 +58,10 @@ export default function DetalleCliente({ clienteId, verificationUrl }: Props) {
             .then(setBoletas)
             .finally(() => setLoadingB(false))
     }, [clienteId, boletaPage, boletaEstado])
+
+    React.useEffect(() => {
+        fetchBoletas()
+    }, [fetchBoletas])
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Clientes', href: clientes.index().url },
@@ -172,6 +176,9 @@ export default function DetalleCliente({ clienteId, verificationUrl }: Props) {
                             onPageChange={setBoletaPage}
                             estadoFilter={boletaEstado}
                             onEstadoFilter={(v) => { setBoletaEstado(v); setBoletaPage(1) }}
+                            clienteId={cliente.id}
+                            clienteNombre={`${cliente.nombre} ${cliente.apellidos}`.trim()}
+                            onUploaded={() => { setBoletaPage(1); fetchBoletas() }}
                         />
                     </>
                 ) : (

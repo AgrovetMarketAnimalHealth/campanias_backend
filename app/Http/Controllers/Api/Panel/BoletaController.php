@@ -9,9 +9,14 @@ use App\Http\Resources\Boleta\BoletaResourceBackend;
 use App\Models\Boleta;
 use App\Services\BoletaService;
 use App\Http\Requests\Admin\Boleta\UpdateBoletaRequest;
+use App\Http\Resources\Boleta\BoletaResource;
+use App\Jobs\EnviarEmailBoleta;
+use App\Models\Cliente;
+use App\Models\ClienteCampania;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Pipeline;
+use Illuminate\Support\Facades\Storage;
 
 class BoletaController extends Controller
 {
@@ -75,5 +80,79 @@ class BoletaController extends Controller
         }
 
         return new BoletaResourceBackend($boleta->fresh());
+    }
+    public function store(Request $request)
+    {
+        $request->validate([
+            'cliente_id' => ['required', 'uuid', 'exists:clientes,id'],
+            'archivo'    => ['required', 'file', 'mimes:jpg,jpeg,png,pdf'],
+        ]);
+
+        $cliente = Cliente::find($request->cliente_id);
+
+        if (!$cliente) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El cliente no existe.',
+            ], 404);
+        }
+
+        $clienteCampania = ClienteCampania::where('cliente_id', $cliente->id)
+            ->whereHas('campania', function ($q) {
+                $q->where('activa', true);
+            })
+            ->latest()
+            ->first();
+
+        if (!$clienteCampania) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El cliente no tiene una campaña activa.',
+            ], 404);
+        }
+
+        $campania = $clienteCampania->campania;
+        $archivo  = $request->file('archivo');
+
+        $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
+
+        // Subimos el archivo primero
+        $ruta = $archivo->storeAs(
+            "clientes/{$cliente->id}/comprobantes",
+            $nombreArchivo,
+            'public'
+        );
+
+        try {
+            $boleta = Boleta::create([
+                'cliente_id'  => $cliente->id,
+                'compania_id' => $campania->id,
+                'archivo'     => $ruta,
+                'estado'      => 'pendiente',
+                'created_by'  => $cliente->id,
+            ]);
+        } catch (\Throwable $e) {
+            // Si falla el registro en BD, eliminamos el archivo huérfano
+            Storage::disk('public')->delete($ruta);
+
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ocurrió un error al guardar el comprobante. Intenta nuevamente.',
+            ], 500);
+        }
+
+        EnviarEmailBoleta::dispatch(
+            $cliente,
+            $boleta,
+            $campania
+        )->onQueue('emails');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Comprobante subido correctamente. Será revisado pronto.',
+            'data'    => new BoletaResource($boleta),
+        ], 201);
     }
 }

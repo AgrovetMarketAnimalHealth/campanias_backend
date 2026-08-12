@@ -100,7 +100,6 @@ class BrevoService
         ]);
 
         try {
-            // Codificar el archivo en base64 para Brevo
             $contenidoBase64 = base64_encode(file_get_contents($adjuntoPath));
 
             $response = Http::withHeaders([

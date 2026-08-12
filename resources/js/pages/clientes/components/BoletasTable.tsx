@@ -36,6 +36,8 @@ import {
 import { BoletaDrawer } from './BoletaDrawer'
 import { estadoBadgeColor, formatMonto } from '../utils'
 import type { Boleta, PaginatedResponse } from '../types'
+import { IconPlus } from '@tabler/icons-react'
+import { BoletaUploadDrawer } from './BoletaUploadDrawer'
 
 interface BoletasTableProps {
     data: PaginatedResponse<Boleta> | null
@@ -44,16 +46,16 @@ interface BoletasTableProps {
     onPageChange: (p: number) => void
     estadoFilter: string
     onEstadoFilter: (v: string) => void
+    clienteId: string
+    clienteNombre?: string
+    onUploaded: (boleta: Boleta) => void
 }
 
 export function BoletasTable({
-    data,
-    loading,
-    page,
-    onPageChange,
-    estadoFilter,
-    onEstadoFilter,
+    data, loading, page, onPageChange, estadoFilter, onEstadoFilter,
+    clienteId, clienteNombre, onUploaded,
 }: BoletasTableProps) {
+
     const [selectedBoleta, setSelectedBoleta] = React.useState<Boleta | null>(null)
     const [drawerOpen, setDrawerOpen] = React.useState(false)
 
@@ -133,22 +135,29 @@ export function BoletasTable({
 
     return (
         <div className="flex flex-col gap-4 px-4 lg:px-6">
-            {/* Filtro estado */}
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Boletas</h3>
-                <Select value={estadoFilter} onValueChange={onEstadoFilter}>
-                    <SelectTrigger size="sm" className="w-36">
-                        <SelectValue placeholder="Filtrar estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="todas">Todas</SelectItem>
-                        <SelectItem value="aceptada">Aceptadas</SelectItem>
-                        <SelectItem value="pendiente">Pendientes</SelectItem>
-                        <SelectItem value="rechazada">Rechazadas</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+                <div className="flex items-center gap-2">
+                    <Select value={estadoFilter} onValueChange={onEstadoFilter}>
+                        <SelectTrigger size="sm" className="w-36">
+                            <SelectValue placeholder="Filtrar estado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="todas">Todas</SelectItem>
+                            <SelectItem value="aceptada">Aceptadas</SelectItem>
+                            <SelectItem value="pendiente">Pendientes</SelectItem>
+                            <SelectItem value="rechazada">Rechazadas</SelectItem>
+                        </SelectContent>
+                    </Select>
 
+                    <BoletaUploadDrawer clienteId={clienteId} clienteNombre={clienteNombre} onUploaded={onUploaded}>
+                        <Button size="sm" className="gap-1">
+                            <IconPlus className="size-4" />
+                            Subir comprobante
+                        </Button>
+                    </BoletaUploadDrawer>
+                </div>
+            </div>
             <div className="overflow-hidden rounded-lg border">
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
