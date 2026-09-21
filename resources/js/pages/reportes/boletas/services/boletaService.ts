@@ -24,7 +24,7 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export const boletaService = {
-    async getMetricas(params: { fecha_inicio: string; fecha_fin: string }): Promise<MetricasPeriodo> {
+    async getMetricas(params: { fecha_inicio: string; fecha_fin: string; compania_id?: string }): Promise<MetricasPeriodo> {
         const q = new URLSearchParams(params)
         return apiFetch<MetricasPeriodo>(`${BASE}/metricas?${q}`)
     },
@@ -35,6 +35,7 @@ export const boletaService = {
         estado?: string
         page?: number
         per_page?: number
+        compania_id?: string
     }): Promise<PaginatedResponse<Boleta>> {
         const limpio = Object.fromEntries(
             Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
@@ -42,7 +43,7 @@ export const boletaService = {
         return apiFetch<PaginatedResponse<Boleta>>(`${BASE}/listado?${new URLSearchParams(limpio)}`)
     },
 
-    exportarUrl(params: { fecha_inicio: string; fecha_fin: string; estado?: string }): string {
+    exportarUrl(params: { fecha_inicio: string; fecha_fin: string; estado?: string; compania_id?: string }): string {
         const limpio = Object.fromEntries(
             Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
         ) as Record<string, string>

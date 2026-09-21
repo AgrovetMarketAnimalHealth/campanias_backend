@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
 import { IconLoader2 } from '@tabler/icons-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface Props {
     clienteId: string
@@ -26,6 +27,7 @@ export default function DetalleCliente({ clienteId, verificationUrl }: Props) {
     const [loadingB, setLoadingB]   = React.useState(true)
     const [boletaPage, setBoletaPage]     = React.useState(1)
     const [boletaEstado, setBoletaEstado] = React.useState('')
+    const [campaniaId, setCampaniaId] = React.useState('')
     const [copied, setCopied]       = React.useState(false)
 
     const handleCopy = () => {
@@ -36,28 +38,33 @@ export default function DetalleCliente({ clienteId, verificationUrl }: Props) {
         })
     }
 
-    // Cargar datos del cliente desde la lista
+    // Consulta el cliente directamente por ID para no depender de la página visible del listado.
     React.useEffect(() => {
         clienteService
-            .getClientes({ page: 1, per_page: 100 })
-            .then((res) => {
-                const found = res.data.find((c) => c.id === clienteId) ?? null
-                setCliente(found)
+            .getCliente(clienteId)
+            .then((cliente) => {
+                setCliente(cliente)
+                setCampaniaId(cliente.campanias.find((campania) => campania.activa)?.id ?? 'todas')
+                setBoletaPage(1)
+                setBoletaEstado('')
             })
             .finally(() => setLoadingC(false))
     }, [clienteId])
 
     // Cargar boletas (función reutilizable para poder refrescar tras subir un comprobante)
     const fetchBoletas = React.useCallback(() => {
+        if (!campaniaId) return
+
         setLoadingB(true)
         clienteService
             .getBoletas(clienteId, {
                 estado: boletaEstado || undefined,
+                campania_id: campaniaId === 'todas' ? undefined : campaniaId || undefined,
                 page: boletaPage,
             })
             .then(setBoletas)
             .finally(() => setLoadingB(false))
-    }, [clienteId, boletaPage, boletaEstado])
+    }, [clienteId, boletaPage, boletaEstado, campaniaId])
 
     React.useEffect(() => {
         fetchBoletas()
@@ -104,8 +111,8 @@ export default function DetalleCliente({ clienteId, verificationUrl }: Props) {
                                 </p>
                             </div>
                             <div className="rounded-lg border bg-card p-4">
-                                <Label className="text-xs text-muted-foreground">DNI / RUC</Label>
-                                <p className="mt-1 font-mono font-medium text-sm">{cliente.dni ?? cliente.ruc ?? '—'}</p>
+                                <Label className="text-xs text-muted-foreground">DNI / RUC / CE</Label>
+                                <p className="mt-1 font-mono font-medium text-sm">{cliente.dni ?? cliente.ruc ?? cliente.ce ?? '—'}</p>
                             </div>
                             <div className="rounded-lg border bg-card p-4">
                                 <Label className="text-xs text-muted-foreground">Departamento</Label>
@@ -165,6 +172,25 @@ export default function DetalleCliente({ clienteId, verificationUrl }: Props) {
 
                         {/* Cards resumen */}
                         <ClienteSectionCards cliente={cliente} />
+
+                        <Separator />
+
+                        <div className="flex flex-col gap-2 px-4 lg:px-6 sm:flex-row sm:items-center sm:justify-between">
+                            <Label htmlFor="campania-detalle">Campaña</Label>
+                            <Select value={campaniaId} onValueChange={(value) => { setCampaniaId(value); setBoletaPage(1) }}>
+                                <SelectTrigger id="campania-detalle" className="w-full sm:w-72">
+                                    <SelectValue placeholder="Selecciona campaña" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todas">Todas las campañas</SelectItem>
+                                    {cliente.campanias.map((campania) => (
+                                        <SelectItem key={campania.id} value={campania.id}>
+                                            {campania.nombre}{!campania.activa && ' (inactiva)'}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
                         <Separator />
 

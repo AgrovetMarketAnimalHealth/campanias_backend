@@ -2,6 +2,11 @@ import axios from 'axios'
 import type { Cliente, Boleta, PaginatedResponse } from '../types'
 
 export const clienteService = {
+    async getCliente(clienteId: string): Promise<Cliente> {
+        const { data } = await axios.get(`/promo-concierto/backoffice/cliente/${clienteId}`)
+        return data.data
+    },
+
     async getClientes(params: {
         search?: string
         tipo_persona?: string
@@ -20,7 +25,7 @@ export const clienteService = {
 
     async getBoletas(
         clienteId: string,
-        params: { estado?: string; page?: number; per_page?: number }
+        params: { estado?: string; campania_id?: string; page?: number; per_page?: number }
     ): Promise<PaginatedResponse<Boleta>> {
         const filtered = Object.fromEntries(
             Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
@@ -50,6 +55,7 @@ export const clienteService = {
         apellidos?: string
         dni?: string
         ruc?: string
+        ce?: string
         departamento: string
         email: string
         telefono: string

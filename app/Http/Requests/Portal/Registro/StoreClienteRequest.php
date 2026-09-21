@@ -21,7 +21,10 @@ class StoreClienteRequest extends FormRequest
                                 ? ['required', 'string', 'max:100']
                                 : ['nullable', 'string', 'max:100'],
             'dni'           => $esNatural
-                                ? ['required', 'digits:8', 'unique:clientes,dni']
+                                ? ['nullable', 'required_without:ce', 'digits:8', 'unique:clientes,dni']
+                                : ['nullable'],
+            'ce'            => $esNatural
+                                ? ['nullable', 'required_without:dni', 'string', 'max:20', 'unique:clientes,ce']
                                 : ['nullable'],
             'ruc'           => !$esNatural
                                 ? ['required', 'digits:11', 'unique:clientes,ruc']
@@ -41,8 +44,12 @@ class StoreClienteRequest extends FormRequest
             'nombre.required'        => 'El nombre es obligatorio.',
             'apellidos.required'     => 'Los apellidos son obligatorios.',
             'dni.required'           => 'El DNI es obligatorio.',
+            'dni.required_without'   => 'El DNI o CE es obligatorio.',
             'dni.digits'             => 'El DNI debe tener exactamente 8 dígitos.',
             'dni.unique'             => 'Este DNI ya está registrado.',
+            'ce.required_without'    => 'El DNI o CE es obligatorio.',
+            'ce.max'                 => 'El CE no debe superar los 20 caracteres.',
+            'ce.unique'              => 'Este CE ya está registrado.',
             'ruc.required'           => 'El RUC es obligatorio.',
             'ruc.digits'             => 'El RUC debe tener exactamente 11 dígitos.',
             'ruc.unique'             => 'Este RUC ya está registrado.',

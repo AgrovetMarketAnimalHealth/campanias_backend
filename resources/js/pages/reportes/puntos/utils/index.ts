@@ -9,11 +9,11 @@ export function nombreCompleto(tipo: string, nom: string, apl: string | null): s
 }
 
 export function docLabel(tipo: string): string {
-    return tipo === 'juridica' ? 'RUC' : 'DNI'
+    return tipo === 'juridica' ? 'RUC' : 'DNI / CE'
 }
 
-export function docValor(tipo: string, dni: string | null, ruc: string | null): string {
-    return (tipo === 'juridica' ? ruc : dni) ?? '—'
+export function docValor(tipo: string, dni: string | null, ruc: string | null, ce: string | null = null): string {
+    return (tipo === 'juridica' ? ruc : dni ?? ce) ?? '—'
 }
 
 export function tipoBadgeColor(tipo: string): string {

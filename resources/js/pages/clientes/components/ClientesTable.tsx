@@ -147,10 +147,10 @@ export function ClientesTable() {
         },
         {
             accessorKey: 'dni',
-            header: 'DNI / RUC',
+            header: 'DNI / RUC / CE',
             cell: ({ row }) => (
                 <span className="font-mono text-xs">
-                    {row.original.dni ?? row.original.ruc ?? '—'}
+                    {row.original.dni ?? row.original.ruc ?? row.original.ce ?? '—'}
                 </span>
             ),
         },
@@ -193,6 +193,7 @@ export function ClientesTable() {
                     estado === 'activo'    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' :
                     estado === 'pendiente' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' :
                     estado === 'rechazado' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' :
+                    estado === 'test'      ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400' :
                     'bg-muted text-muted-foreground'
                 return (
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${color}`}>

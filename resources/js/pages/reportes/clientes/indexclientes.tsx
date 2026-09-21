@@ -16,12 +16,15 @@ import type {
     MetricasPeriodo,
     PaginatedResponse,
     Cliente,
+    Campania,
     Preset,
 } from './types'
 import { hoy } from './utils'
 
 interface Props {
     metricas: MetricasGenerales
+    campanias: Campania[]
+    campania_id: string | null
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -42,17 +45,20 @@ function KpiCard({ label, value, accent }: { label: string; value: number; accen
     )
 }
 
-export default function Clientes({ metricas }: Props) {
+export default function Clientes({ metricas: metricasIniciales, campanias: campaniasIniciales, campania_id: campaniaInicial }: Props) {
 
     // ── Filtros ──────────────────────────────────────────────────────────
     const [fechaInicio, setFechaInicio] = React.useState(hoy())
     const [fechaFin,    setFechaFin]    = React.useState(hoy())
     const [preset,      setPreset]      = React.useState<Preset>('hoy')
     const [estado,      setEstado]      = React.useState('')
+    const [campaniaId,  setCampaniaId]  = React.useState(campaniaInicial ?? '')
+    const [campanias]                   = React.useState<Campania[]>(campaniasIniciales)
     const [page,        setPage]        = React.useState(1)
 
     // ── Datos ────────────────────────────────────────────────────────────
     const [metrPeriodo,  setMetrPeriodo]  = React.useState<MetricasPeriodo | null>(null)
+    const [metricas,     setMetricas]     = React.useState<MetricasGenerales>(metricasIniciales)
     const [listado,      setListado]      = React.useState<PaginatedResponse<Cliente> | null>(null)
     const [loadingChart, setLoadingChart] = React.useState(true)
     const [loadingTable, setLoadingTable] = React.useState(true)
@@ -63,19 +69,22 @@ export default function Clientes({ metricas }: Props) {
     const [openEnviar,    setOpenEnviar]    = React.useState(false)
 
     // ── Loaders ──────────────────────────────────────────────────────────
-    function cargarGrafico(inicio = fechaInicio, fin = fechaFin) {
+    function cargarGrafico(inicio = fechaInicio, fin = fechaFin, campaniaSeleccionada = campaniaId) {
         setLoadingChart(true)
         clienteService
-            .getMetricas({ fecha_inicio: inicio, fecha_fin: fin })
-            .then(setMetrPeriodo)
+            .getMetricas({ fecha_inicio: inicio, fecha_fin: fin, campania_id: campaniaSeleccionada || undefined })
+            .then((data) => {
+                setMetrPeriodo(data)
+                setMetricas(data.metricas_generales)
+            })
             .catch(console.error)
             .finally(() => setLoadingChart(false))
     }
 
-    function cargarListado(inicio = fechaInicio, fin = fechaFin, p = page, est = estado) {
+    function cargarListado(inicio = fechaInicio, fin = fechaFin, p = page, est = estado, campaniaSeleccionada = campaniaId) {
         setLoadingTable(true)
         clienteService
-            .getListado({ fecha_inicio: inicio, fecha_fin: fin, estado: est || undefined, page: p, per_page: 25 })
+            .getListado({ fecha_inicio: inicio, fecha_fin: fin, estado: est || undefined, campania_id: campaniaSeleccionada || undefined, page: p, per_page: 25 })
             .then(setListado)
             .catch(console.error)
             .finally(() => setLoadingTable(false))
@@ -114,6 +123,13 @@ export default function Clientes({ metricas }: Props) {
         cargarListado(fechaInicio, fechaFin, 1, v)
     }
 
+    function handleCampaniaChange(v: string) {
+        setCampaniaId(v)
+        setPage(1)
+        cargarGrafico(fechaInicio, fechaFin, v)
+        cargarListado(fechaInicio, fechaFin, 1, estado, v)
+    }
+
     function handleRowClick(c: Cliente) {
         setDrawerCliente(c)
         setOpenDrawer(true)
@@ -124,6 +140,7 @@ export default function Clientes({ metricas }: Props) {
             fecha_inicio: fechaInicio,
             fecha_fin:    fechaFin,
             estado:       estado || undefined,
+            campania_id:  campaniaId || undefined,
         })
     }
 
@@ -155,7 +172,7 @@ export default function Clientes({ metricas }: Props) {
                 </div>
 
                 {/* KPIs globales — datos del server, no cambian con el filtro */}
-                <div className="px-4 lg:px-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div className="px-4 lg:px-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                     <KpiCard label="Total inscritos" value={metricas.total_inscritos} accent="border-t-blue-500"   />
                     <KpiCard label="Inscritos hoy"   value={metricas.inscritos_hoy}   accent="border-t-teal-500"   />
                     <KpiCard label="Activos"         value={metricas.activos}         accent="border-t-green-500"  />
@@ -169,10 +186,13 @@ export default function Clientes({ metricas }: Props) {
                         fechaInicio={fechaInicio}
                         fechaFin={fechaFin}
                         estado={estado}
+                        campaniaId={campaniaId}
+                        campanias={campanias}
                         preset={preset}
                         onFechaInicioChange={setFechaInicio}
                         onFechaFinChange={setFechaFin}
                         onEstadoChange={handleEstadoChange}
+                        onCampaniaChange={handleCampaniaChange}
                         onPresetChange={handlePresetChange}
                         onConsultar={handleConsultar}
                     />

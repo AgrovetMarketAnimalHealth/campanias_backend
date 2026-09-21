@@ -6,11 +6,11 @@ export function nombreCompleto(cliente: Cliente): string {
 }
 
 export function docLabel(tipo: Cliente['tipo_persona']): string {
-    return tipo === 'juridica' ? 'RUC' : 'DNI'
+    return tipo === 'juridica' ? 'RUC' : 'DNI / CE'
 }
 
 export function docValor(cliente: Cliente): string {
-    return (cliente.tipo_persona === 'juridica' ? cliente.ruc : cliente.dni) ?? '—'
+    return (cliente.tipo_persona === 'juridica' ? cliente.ruc : cliente.dni ?? cliente.ce) ?? '—'
 }
 
 export function estadoBadgeClass(estado: Cliente['estado']): string {
@@ -18,6 +18,7 @@ export function estadoBadgeClass(estado: Cliente['estado']): string {
         case 'activo':    return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
         case 'pendiente': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
         case 'rechazado': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+        case 'test':      return 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
         default:          return 'bg-muted text-muted-foreground'
     }
 }

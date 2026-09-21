@@ -29,6 +29,7 @@ class ReporteBoletasController extends Controller
         $request->validate([
             'fecha_inicio' => 'nullable|date',
             'fecha_fin'    => 'nullable|date|after_or_equal:fecha_inicio',
+            'compania_id'  => 'nullable|string|exists:campanias,id',
         ]);
 
         $fechaInicio = $request->filled('fecha_inicio')
@@ -39,8 +40,18 @@ class ReporteBoletasController extends Controller
             ? $request->date('fecha_fin')->endOfDay()
             : now()->endOfDay();
 
+        $base = fn() => Boleta::query()
+            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
+            ->when($request->filled('compania_id'), fn($query) =>
+                $query->where('compania_id', $request->compania_id)
+            );
+
+        $metricasGenerales = Boleta::query()->when($request->filled('compania_id'), fn($query) =>
+            $query->where('compania_id', $request->compania_id)
+        );
+
         // Boletas por día separadas por estado
-        $porDia = Boleta::query()
+        $porDia = $base()
             ->selectRaw('DATE(created_at) as fecha, estado, COUNT(*) as total')
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->whereIn('estado', ['pendiente', 'aceptada', 'rechazada'])
@@ -57,7 +68,7 @@ class ReporteBoletasController extends Controller
             ->values();
 
         // Boletas por mes separadas por estado
-        $porMes = Boleta::query()
+        $porMes = $base()
             ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as mes, estado, COUNT(*) as total")
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->whereIn('estado', ['pendiente', 'aceptada', 'rechazada'])
@@ -74,7 +85,7 @@ class ReporteBoletasController extends Controller
             ->values();
 
         // Totales por estado en el período
-        $porEstado = Boleta::query()
+        $porEstado = $base()
             ->selectRaw('estado, COUNT(*) as total')
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->groupBy('estado')
@@ -82,13 +93,13 @@ class ReporteBoletasController extends Controller
             ->mapWithKeys(fn($r) => [$r->estado => (int) $r->total]);
 
         // Monto total aceptado en el período
-        $montoAceptado = Boleta::query()
+        $montoAceptado = $base()
             ->where('estado', 'aceptada')
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->sum('monto');
 
         // Recientes
-        $recientes = Boleta::query()
+        $recientes = $base()
             ->with('cliente:id,nombre,apellidos')
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->orderByDesc('created_at')
@@ -114,6 +125,15 @@ class ReporteBoletasController extends Controller
                 'inicio' => $fechaInicio->toDateString(),
                 'fin'    => $fechaFin->toDateString(),
             ],
+            'compania_id' => $request->compania_id,
+            'metricas_generales' => [
+                'total_boletas' => (clone $metricasGenerales)->count(),
+                'boletas_hoy' => (clone $metricasGenerales)->whereDate('created_at', today())->count(),
+                'boletas_mes' => (clone $metricasGenerales)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+                'pendientes' => (clone $metricasGenerales)->where('estado', 'pendiente')->count(),
+                'aceptadas' => (clone $metricasGenerales)->where('estado', 'aceptada')->count(),
+                'rechazadas' => (clone $metricasGenerales)->where('estado', 'rechazada')->count(),
+            ],
             'total_periodo'  => $porEstado->sum(),
             'por_estado'     => $porEstado,
             'monto_aceptado' => (float) $montoAceptado,
@@ -134,6 +154,7 @@ class ReporteBoletasController extends Controller
             'fecha_inicio' => 'nullable|date',
             'fecha_fin'    => 'nullable|date|after_or_equal:fecha_inicio',
             'estado'       => 'nullable|in:pendiente,aceptada,rechazada',
+            'compania_id'  => 'nullable|string|exists:campanias,id',
             'per_page'     => 'nullable|integer|min:10|max:100',
         ]);
 
@@ -158,6 +179,10 @@ class ReporteBoletasController extends Controller
             $query->where('estado', $request->estado);
         }
 
+        if ($request->filled('compania_id')) {
+            $query->where('compania_id', $request->compania_id);
+        }
+
         return response()->json(
             $query->orderByDesc('created_at')
                   ->paginate($request->integer('per_page', 25))
@@ -175,6 +200,7 @@ class ReporteBoletasController extends Controller
             'fecha_inicio' => 'nullable|date',
             'fecha_fin'    => 'nullable|date|after_or_equal:fecha_inicio',
             'estado'       => 'nullable|in:pendiente,aceptada,rechazada',
+            'compania_id'  => 'nullable|string|exists:campanias,id',
         ]);
 
         $boletas = $this->obtenerBoletasParaExportar($request);
@@ -269,6 +295,10 @@ class ReporteBoletasController extends Controller
 
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
+        }
+
+        if ($request->filled('compania_id')) {
+            $query->where('compania_id', $request->compania_id);
         }
 
         return $query->orderByDesc('created_at')->get();

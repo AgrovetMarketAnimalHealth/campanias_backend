@@ -40,12 +40,20 @@ export interface PorMes {
 
 export interface MetricasPeriodo {
     rango: { inicio: string; fin: string }
+    compania_id?: string
+    metricas_generales: MetricasGenerales
     total_periodo: number
     por_estado: Record<string, number>
     monto_aceptado: number
     por_dia: PorDia[]
     por_mes: PorMes[]
     recientes: RecienteBoleta[]
+}
+
+export interface Campania {
+    id: string
+    nombre: string
+    activa: boolean
 }
 
 export interface RecienteBoleta {

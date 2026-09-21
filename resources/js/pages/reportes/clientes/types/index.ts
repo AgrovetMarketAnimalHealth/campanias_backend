@@ -5,10 +5,11 @@ export interface Cliente {
     apellidos: string | null
     dni: string | null
     ruc: string | null
+    ce: string | null
     departamento: string
     email: string
     telefono: string
-    estado: 'pendiente' | 'activo' | 'rechazado'
+    estado: 'pendiente' | 'activo' | 'rechazado' | 'test'
     created_at: string
 }
 
@@ -18,10 +19,18 @@ export interface MetricasGenerales {
     activos: number
     pendientes: number
     rechazados: number
+    test: number
+}
+
+export interface Campania {
+    id: string
+    nombre: string
+    activa: boolean
 }
 
 export interface MetricasPeriodo {
     rango: { inicio: string; fin: string }
+    metricas_generales: MetricasGenerales
     total_periodo: number
     inscritos_por_dia: { fecha: string; total: number }[]
     inscritos_por_mes: { mes: string; total: number }[]

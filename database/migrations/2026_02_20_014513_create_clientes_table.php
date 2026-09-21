@@ -14,13 +14,14 @@ return new class extends Migration
             $table->string('apellidos')->nullable();
             $table->string('dni', 20)->nullable()->unique();
             $table->string('ruc', 20)->nullable()->unique();
+            $table->string('ce', 20)->nullable()->unique();
             $table->string('departamento');
             $table->string('email')->unique();
             $table->string('telefono', 20);
             $table->boolean('acepta_politicas')->default(false);
             $table->boolean('acepta_terminos')->default(false);
             $table->string('archivo_comprobante')->nullable();
-            $table->enum('estado', ['pendiente', 'activo', 'rechazado'])->default('pendiente');
+            $table->enum('estado', ['pendiente', 'activo', 'rechazado','test'])->default('pendiente');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('email_verification_token')->nullable();
             $table->timestamp('email_verification_expires_at')->nullable();
