@@ -9,6 +9,7 @@ export const clienteSchema = z.object({
     departamento: z.string(),
     dni: z.string().nullable(),
     ruc: z.string().nullable(),
+    ce: z.string().nullable(),
     tipo_persona: z.enum(['natural', 'juridica']),
     email: z.string().email(),
     telefono: z.string().nullable(),
@@ -32,6 +33,7 @@ export const clienteRegistroResponseSchema = z.object({
     departamento: z.string(),
     dni: z.string().nullable(),
     ruc: z.string().nullable(),
+    ce: z.string().nullable(),
     tipo_persona: z.enum(['natural', 'juridica']),
     email: z.string().email(),
     telefono: z.string().nullable(),
@@ -63,6 +65,7 @@ export const clienteRegistroSchema = z
         apellidos: z.string().max(150).optional().or(z.literal('')),
         dni: z.string().optional().or(z.literal('')),
         ruc: z.string().optional().or(z.literal('')),
+        ce: z.string().optional().or(z.literal('')),
         departamento: z.string().min(1, 'El departamento es requerido').max(100),
         email: z.string().min(1, 'El email es requerido').email('Email inválido').max(150),
         telefono: z.string().min(1, 'El teléfono es requerido').max(20),
@@ -86,17 +89,24 @@ export const clienteRegistroSchema = z
                     message: 'Los apellidos son requeridos',
                 })
             }
-            if (!data.dni) {
+            if (!data.dni && !data.ce) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     path: ['dni'],
-                    message: 'El DNI es requerido',
+                    message: 'El DNI o CE es requerido',
                 })
-            } else if (!/^\d{8}$/.test(data.dni)) {
+            } else if (data.dni && !/^\d{8}$/.test(data.dni)) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     path: ['dni'],
                     message: 'El DNI debe tener 8 dígitos',
+                })
+            }
+            if (data.ce && data.ce.length > 20) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ['ce'],
+                    message: 'El CE no debe superar los 20 caracteres',
                 })
             }
         }

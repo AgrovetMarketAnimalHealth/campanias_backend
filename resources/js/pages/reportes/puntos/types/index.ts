@@ -8,10 +8,17 @@ export interface Punto {
     cliente_apl: string | null
     cliente_dni: string | null
     cliente_ruc: string | null
+    cliente_ce: string | null
     cliente_email: string
     cliente_departamento: string
     telefono: string | null
     cliente_ganador?: boolean
+}
+
+export interface Campania {
+    id: string
+    nombre: string
+    activa: boolean
 }
 
 export interface PaginatedMeta {

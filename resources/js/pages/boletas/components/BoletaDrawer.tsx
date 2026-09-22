@@ -182,6 +182,11 @@ export function BoletaDrawer({ boleta, onUpdated, children }: Props) {
                                     <IconId className="size-3" /> RUC: {boleta.cliente_ruc}
                                 </Badge>
                             )}
+                            {boleta.cliente_ce && (
+                                <Badge variant="secondary" className="gap-1 text-xs">
+                                    <IconId className="size-3" /> CE: {boleta.cliente_ce}
+                                </Badge>
+                            )}
                             <Badge variant="outline" className="text-xs capitalize">
                                 {boleta.cliente_tipo}
                             </Badge>

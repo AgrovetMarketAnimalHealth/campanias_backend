@@ -7,6 +7,7 @@ export interface Cliente {
     departamento: string
     dni: string | null
     ruc: string | null
+    ce: string | null
     tipo_persona: 'natural' | 'juridica'
     email: string
     telefono: string | null
@@ -18,6 +19,14 @@ export interface Cliente {
     boletas_rechazadas: number
     registrado_en: string
     ganador: boolean
+    campanias: Campania[]
+}
+
+export interface Campania {
+    id: string
+    nombre: string
+    url: string
+    activa: boolean
 }
 
 export interface Boleta {
@@ -61,6 +70,7 @@ export interface ClienteRegistroPayload {
     apellidos?: string
     dni?: string
     ruc?: string
+    ce?: string
     departamento: string
     email: string
     telefono: string

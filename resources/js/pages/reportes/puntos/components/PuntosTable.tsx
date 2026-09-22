@@ -158,7 +158,7 @@ export function PuntosTable({ data, loading, page, onPageChange }: PuntosTablePr
                 return (
                     <div className="flex flex-col gap-0.5">
                         <span className="text-muted-foreground text-xs">{docLabel(p.cliente_tipo)}</span>
-                        <span className="font-mono text-sm">{docValor(p.cliente_tipo, p.cliente_dni, p.cliente_ruc)}</span>
+                        <span className="font-mono text-sm">{docValor(p.cliente_tipo, p.cliente_dni, p.cliente_ruc, p.cliente_ce)}</span>
                     </div>
                 )
             },

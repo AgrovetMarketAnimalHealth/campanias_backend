@@ -20,7 +20,7 @@ class SeedMasivoDatos extends Command
 
     private array $departamentos    = ['Lima','Arequipa','Cusco','La Libertad','Piura','Junín','Puno','Cajamarca','Lambayeque','Áncash'];
     private array $estadosBoleta    = ['pendiente','aceptada','rechazada'];
-    private array $estadosCliente   = ['pendiente','activo','rechazado'];
+    private array $estadosCliente   = ['pendiente','activo','rechazado','test'];
     private array $estadosEnvio     = ['enviado','fallido','pendiente'];
     private array $tiposNotificacion = ['registro_cliente','boleta_recibida','boleta_aceptada','boleta_rechazada','puntos_acreditados','bienvenida'];
 

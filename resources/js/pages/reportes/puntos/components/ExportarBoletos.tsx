@@ -3,7 +3,7 @@ import { IconFileZip, IconLoader2, IconDownload, IconAlertCircle } from '@tabler
 import { Button } from '@/components/ui/button'
 import { puntoService } from '../services/puntoService'
 
-export function ExportarBoletos() {
+export function ExportarBoletos({ campaniaId }: { campaniaId: string }) {
     type Estado = 'idle' | 'generando' | 'listo' | 'error'
 
     const [estado, setEstado]           = React.useState<Estado>('idle')
@@ -29,7 +29,7 @@ export function ExportarBoletos() {
         setErrorMsg('')
 
         try {
-            const res = await puntoService.exportarBoletos()
+            const res = await puntoService.exportarBoletos(campaniaId)
             setFilename(res.filename)
 
             cronometroRef.current = setInterval(() => setSegundos(s => s + 1), 1000)

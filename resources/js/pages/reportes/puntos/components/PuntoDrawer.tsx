@@ -55,7 +55,7 @@ export function PuntoDrawer({ punto, open, onClose }: PuntoDrawerProps) {
                         <div className="flex flex-col gap-1">
                             <span className="text-muted-foreground text-xs">{docLabel(punto.cliente_tipo)}</span>
                             <span className="font-mono font-medium">
-                                {docValor(punto.cliente_tipo, punto.cliente_dni, punto.cliente_ruc)}
+                                {docValor(punto.cliente_tipo, punto.cliente_dni, punto.cliente_ruc, punto.cliente_ce)}
                             </span>
                         </div>
                         <div className="flex flex-col gap-1">

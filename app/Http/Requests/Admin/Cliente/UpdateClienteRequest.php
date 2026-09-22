@@ -22,9 +22,10 @@ class UpdateClienteRequest extends FormRequest
             'email'        => ['sometimes', 'email', 'max:255', Rule::unique('clientes', 'email')->ignore($cliente->id)],
             'dni'          => ['sometimes', 'nullable', 'string', 'max:20', Rule::unique('clientes', 'dni')->ignore($cliente->id)],
             'ruc'          => ['sometimes', 'nullable', 'string', 'max:20', Rule::unique('clientes', 'ruc')->ignore($cliente->id)],
+            'ce'           => ['sometimes', 'nullable', 'string', 'max:20', Rule::unique('clientes', 'ce')->ignore($cliente->id)],
             'telefono'     => ['sometimes', 'string', 'max:20'],
             'departamento' => ['sometimes', 'string', 'max:255'],
-            'estado'       => ['sometimes', Rule::in(['pendiente', 'activo', 'rechazado'])],
+            'estado'       => ['sometimes', Rule::in(['pendiente', 'activo', 'rechazado', 'test'])],
             'ganador'      => ['sometimes', 'boolean'],
         ];
     }

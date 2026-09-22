@@ -143,6 +143,7 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
                 Route::get('/clientes', 'index')->name('reportes.clientes.index');
                 Route::get('/boletas',      'indexBoletas')->name('reportes.boletas.index');
                 Route::get('/puntos',   'indexpuntos')->name('reportes.puntos.index');
+                Route::get('/puntos/{campania}', 'indexpuntosDetalle')->name('reportes.puntos.detalle');
             });
         });
 

@@ -60,6 +60,7 @@ class ClienteAuthController extends Controller{
                 'apellidos'                     => $request->apellidos,
                 'dni'                           => $request->dni,
                 'ruc'                           => $request->ruc,
+                'ce'                            => $request->ce,
                 'departamento'                  => $request->departamento,
                 'email'                         => $request->email,
                 'telefono'                      => $request->telefono,
@@ -114,6 +115,7 @@ class ClienteAuthController extends Controller{
         }
         $cliente = Cliente::where('email', $identificador)
             ->orWhere('dni', $identificador)
+            ->orWhere('ce', $identificador)
             ->orWhere('telefono', $identificador)
             ->first();
 
@@ -132,7 +134,7 @@ class ClienteAuthController extends Controller{
                 'message' => 'Debes verificar tu correo electrónico antes de ingresar.',
             ], 403);
         }
-        if ($cliente->estado !== 'activo') {
+        if (!in_array($cliente->estado, ['activo', 'test'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Tu cuenta no está activa. Contacta al soporte.',

@@ -5,6 +5,7 @@ export interface FiltrosListado {
     fecha_fin?: string
     estado?: string
     tipo_persona?: string
+    campania_id?: string
     page?: number
     per_page?: number
 }
@@ -42,7 +43,7 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
 
 export const clienteService = {
 
-    async getMetricas(params: { fecha_inicio: string; fecha_fin: string }): Promise<MetricasPeriodo> {
+    async getMetricas(params: { fecha_inicio: string; fecha_fin: string; campania_id?: string }): Promise<MetricasPeriodo> {
         const q = new URLSearchParams(params)
         return apiFetch<MetricasPeriodo>(`${BASE}/metricas?${q.toString()}`)
     },
@@ -60,6 +61,7 @@ export const clienteService = {
         fecha_fin: string
         estado?: string
         tipo_persona?: string
+        campania_id?: string
     }): string {
         const limpio = Object.fromEntries(
             Object.entries(params).filter(([, v]) => v !== undefined && v !== '')

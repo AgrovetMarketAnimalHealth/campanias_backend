@@ -20,7 +20,8 @@ class GenerarBoletosSorteoJob implements ShouldQueue
     public int $tries   = 2;
 
     public function __construct(
-        public readonly string $zipFilename
+        public readonly string $zipFilename,
+        public readonly string $campaniaId
     ) {}
 
     public function handle(): void
@@ -36,8 +37,9 @@ class GenerarBoletosSorteoJob implements ShouldQueue
         }
         
         $puntos = Punto::with(['cliente', 'boleta'])
+            ->where('campania_id', $this->campaniaId)
             ->whereHas('cliente', function($q) {
-                $q->whereIn('estado', ['pendiente', 'activo'])
+                                $q->where('estado', 'activo')
                   ->where('ganador', false);
             })
             ->orderByDesc('puntos')

@@ -130,7 +130,7 @@ export function BoletasTable({
         columns,
         getCoreRowModel: getCoreRowModel(),
         manualPagination: true,
-        pageCount: data?.last_page ?? 1,
+        pageCount: data?.meta.last_page ?? 1,
     })
 
     return (
@@ -200,16 +200,16 @@ export function BoletasTable({
             </div>
 
             {/* Paginación */}
-            {data && data.last_page > 1 && (
+            {data && data.meta.last_page > 1 && (
                 <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
-                        Página {data.current_page} de {data.last_page} — {data.total} boletas
+                        Página {data.meta.current_page} de {data.meta.last_page} — {data.meta.total} boletas
                     </span>
                     <div className="flex gap-2">
                         <Button variant="outline" size="icon" className="size-8" disabled={page === 1} onClick={() => onPageChange(page - 1)}>
                             <IconChevronLeft className="size-4" />
                         </Button>
-                        <Button variant="outline" size="icon" className="size-8" disabled={page === data.last_page} onClick={() => onPageChange(page + 1)}>
+                        <Button variant="outline" size="icon" className="size-8" disabled={page === data.meta.last_page} onClick={() => onPageChange(page + 1)}>
                             <IconChevronRight className="size-4" />
                         </Button>
                     </div>

@@ -7,6 +7,7 @@ export const puntoService = {
     async getPuntos(params: {
         page?: number
         per_page?: number
+        campania_id?: string
     }): Promise<PaginatedResponse<Punto>> {
         const filtered = Object.fromEntries(
             Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
@@ -15,8 +16,10 @@ export const puntoService = {
         return data
     },
 
-    async exportarBoletos(): Promise<{ filename: string; url: string }> {
-        const { data } = await axios.post(`${BASE}/exportar-boletos`)
+    async exportarBoletos(campaniaId: string): Promise<{ filename: string; url: string }> {
+        const { data } = await axios.post(`${BASE}/exportar-boletos`, {
+            campania_id: campaniaId,
+        })
         return data
     },
 

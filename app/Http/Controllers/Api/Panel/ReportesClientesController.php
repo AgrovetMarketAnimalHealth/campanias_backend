@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\Cliente;
 use App\Services\BrevoService;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -38,9 +39,18 @@ class ReportesClientesController extends Controller{
         // Helper: query base de clientes en el rango, opcionalmente scoped a una campaña.
         // Se llama fresco cada vez para no reutilizar un builder ya consumido.
         $base = fn() => Cliente::query()
+            ->where('estado', '!=', 'test')
             ->whereBetween('created_at', [$fechaInicio, $fechaFin])
             ->when($campaniaId, fn($q) =>
                 $q->whereHas('clienteCampanias', fn($q2) => $q2->where('campania_id', $campaniaId))
+            );
+
+        $metricasGenerales = Cliente::query()
+            ->where('estado', '!=', 'test')
+            ->when($campaniaId, fn($q) =>
+                $q->whereHas('clienteCampanias', fn($q2) =>
+                    $q2->where('campania_id', $campaniaId)
+                )
             );
 
         $inscritosPorDia = $base()
@@ -51,7 +61,33 @@ class ReportesClientesController extends Controller{
             ->map(fn($row) => [
                 'fecha' => $row->fecha,
                 'total' => (int) $row->total,
-            ]);
+            ])
+            ->keyBy('fecha');
+
+        $inscritosPorDia = collect(CarbonPeriod::create(
+            $fechaInicio->copy()->startOfDay(),
+            '1 day',
+            $fechaFin->copy()->startOfDay(),
+        ))->map(fn($fecha) => [
+            'fecha' => $fecha->toDateString(),
+            'total' => $inscritosPorDia->get($fecha->toDateString(), ['total' => 0])['total'],
+        ])->values();
+
+        $inscritosPorMes = $base()
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as mes, COUNT(*) as total")
+            ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m')")
+            ->orderBy('mes')
+            ->get()
+            ->mapWithKeys(fn($row) => [$row->mes => (int) $row->total]);
+
+        $inscritosPorMes = collect(CarbonPeriod::create(
+            $fechaInicio->copy()->startOfMonth(),
+            '1 month',
+            $fechaFin->copy()->startOfMonth(),
+        ))->map(fn($fecha) => [
+            'mes' => $fecha->format('Y-m'),
+            'total' => $inscritosPorMes->get($fecha->format('Y-m'), 0),
+        ])->values();
 
         $porEstado = $base()
             ->selectRaw('estado, COUNT(*) as total')
@@ -86,6 +122,7 @@ class ReportesClientesController extends Controller{
             ->join('cliente_campania', 'cliente_campania.cliente_id', '=', 'clientes.id')
             ->join('campanias', 'campanias.id', '=', 'cliente_campania.campania_id')
             ->whereBetween('clientes.created_at', [$fechaInicio, $fechaFin])
+            ->where('clientes.estado', '!=', 'test')
             ->selectRaw('campanias.id as campania_id, campanias.nombre as campania_nombre, COUNT(DISTINCT clientes.id) as total')
             ->groupBy('campanias.id', 'campanias.nombre')
             ->orderByDesc('total')
@@ -97,8 +134,17 @@ class ReportesClientesController extends Controller{
                 'fin'    => $fechaFin->toDateString(),
             ],
             'campania_id'       => $campaniaId,
+            'metricas_generales' => [
+                'total_inscritos' => (clone $metricasGenerales)->count(),
+                'inscritos_hoy'   => (clone $metricasGenerales)->whereDate('created_at', today())->count(),
+                'activos'         => (clone $metricasGenerales)->where('estado', 'activo')->count(),
+                'pendientes'      => (clone $metricasGenerales)->where('estado', 'pendiente')->count(),
+                'rechazados'      => (clone $metricasGenerales)->where('estado', 'rechazado')->count(),
+                'test'            => (clone $metricasGenerales)->where('estado', 'test')->count(),
+            ],
             'total_periodo'     => $inscritosPorDia->sum('total'),
             'inscritos_por_dia' => $inscritosPorDia,
+            'inscritos_por_mes' => $inscritosPorMes,
             'por_estado'        => $porEstado,
             'por_tipo_persona'  => $porTipoPersona,
             'por_campania'      => $porCampania,
@@ -128,10 +174,12 @@ class ReportesClientesController extends Controller{
         $query = Cliente::query()
             ->select([
                 'id', 'tipo_persona', 'nombre', 'apellidos',
-                'dni', 'ruc', 'departamento', 'email',
+                'dni', 'ruc', 'ce', 'departamento', 'email',
                 'telefono', 'estado', 'created_at',
             ])
             ->whereBetween('created_at', [$fechaInicio, $fechaFin]);
+
+        $query->where('estado', '!=', 'test');
 
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
@@ -160,6 +208,7 @@ class ReportesClientesController extends Controller{
             'fecha_fin'    => 'nullable|date|after_or_equal:fecha_inicio',
             'estado'       => 'nullable|in:pendiente,activo,rechazado',
             'tipo_persona' => 'nullable|in:natural,juridica',
+            'campania_id'  => 'nullable|string|exists:campanias,id',
         ]);
 
         $clientes = $this->obtenerClientesParaExportar($request);
@@ -237,9 +286,11 @@ class ReportesClientesController extends Controller{
 
         $query = Cliente::query()->select([
             'id', 'tipo_persona', 'nombre', 'apellidos',
-            'dni', 'ruc', 'departamento', 'email',
+            'dni', 'ruc', 'ce', 'departamento', 'email',
             'telefono', 'estado', 'created_at',
         ])->whereBetween('created_at', [$fechaInicio, $fechaFin]);
+
+        $query->where('estado', '!=', 'test');
 
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
@@ -247,6 +298,12 @@ class ReportesClientesController extends Controller{
 
         if ($request->filled('tipo_persona')) {
             $query->where('tipo_persona', $request->tipo_persona);
+        }
+
+        if ($request->filled('campania_id')) {
+            $query->whereHas('clienteCampanias', fn($q) =>
+                $q->where('campania_id', $request->campania_id)
+            );
         }
 
         return $query->orderByDesc('created_at')->get();
@@ -285,7 +342,7 @@ class ReportesClientesController extends Controller{
         return $spreadsheet;
     }
     private function construirHojaListado($sheet, $clientes, Request $request, string $titulo): void{
-        $sheet->mergeCells('A1:K1');
+        $sheet->mergeCells('A1:L1');
         $sheet->setCellValue('A1', $titulo . ' — ' . now()->format('d/m/Y h:i:s A'));
         $sheet->getStyle('A1')->applyFromArray([
             'font'      => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
@@ -297,7 +354,7 @@ class ReportesClientesController extends Controller{
         $inicio = $request->filled('fecha_inicio') ? $request->fecha_inicio : now()->toDateString();
         $fin    = $request->filled('fecha_fin')    ? $request->fecha_fin    : now()->toDateString();
 
-        $sheet->mergeCells('A2:K2');
+        $sheet->mergeCells('A2:L2');
         $sheet->setCellValue('A2', "Período: {$inicio} al {$fin}  |  Total: " . $clientes->count());
         $sheet->getStyle('A2')->applyFromArray([
             'font'      => ['italic' => true, 'color' => ['rgb' => '444444']],
@@ -307,16 +364,16 @@ class ReportesClientesController extends Controller{
 
         $encabezados = [
             'A' => '#', 'B' => 'Tipo Persona', 'C' => 'Nombre',
-            'D' => 'Apellidos', 'E' => 'DNI', 'F' => 'RUC',
-            'G' => 'Departamento', 'H' => 'Email',
-            'I' => 'Teléfono', 'J' => 'Estado', 'K' => 'Fecha Inscripción',
+            'D' => 'Apellidos', 'E' => 'DNI', 'F' => 'RUC', 'G' => 'CE',
+            'H' => 'Departamento', 'I' => 'Email',
+            'J' => 'Teléfono', 'K' => 'Estado', 'L' => 'Fecha Inscripción',
         ];
 
         foreach ($encabezados as $col => $encabezado) {
             $sheet->setCellValue("{$col}3", $encabezado);
         }
 
-        $sheet->getStyle('A3:K3')->applyFromArray([
+        $sheet->getStyle('A3:L3')->applyFromArray([
             'font'      => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '2563EB']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
@@ -333,26 +390,27 @@ class ReportesClientesController extends Controller{
             $sheet->setCellValue("D{$fila}", $cliente->apellidos ?? '—');
             $sheet->setCellValue("E{$fila}", $cliente->dni ?? '—');
             $sheet->setCellValue("F{$fila}", $cliente->ruc ?? '—');
-            $sheet->setCellValue("G{$fila}", $cliente->departamento);
-            $sheet->setCellValue("H{$fila}", $cliente->email);
-            $sheet->setCellValue("I{$fila}", $cliente->telefono);
-            $sheet->setCellValue("J{$fila}", ucfirst($cliente->estado));
-            $sheet->setCellValue("K{$fila}", $cliente->created_at->format('d/m/Y h:i:s A'));
+            $sheet->setCellValue("G{$fila}", $cliente->ce ?? '—');
+            $sheet->setCellValue("H{$fila}", $cliente->departamento);
+            $sheet->setCellValue("I{$fila}", $cliente->email);
+            $sheet->setCellValue("J{$fila}", $cliente->telefono);
+            $sheet->setCellValue("K{$fila}", ucfirst($cliente->estado));
+            $sheet->setCellValue("L{$fila}", $cliente->created_at->format('d/m/Y h:i:s A'));
 
-            $sheet->getStyle("A{$fila}:K{$fila}")->applyFromArray([
+            $sheet->getStyle("A{$fila}:L{$fila}")->applyFromArray([
                 'fill'    => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => $bgColor]],
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D1D5DB']]],
             ]);
 
-            $coloresEstado = ['activo' => '16A34A', 'pendiente' => 'D97706', 'rechazado' => 'DC2626'];
-            $sheet->getStyle("J{$fila}")->getFont()->getColor()->setRGB($coloresEstado[$cliente->estado] ?? '6B7280');
-            $sheet->getStyle("J{$fila}")->getFont()->setBold(true);
+            $coloresEstado = ['activo' => '16A34A', 'pendiente' => 'D97706', 'rechazado' => 'DC2626', 'test' => '7C3AED'];
+            $sheet->getStyle("K{$fila}")->getFont()->getColor()->setRGB($coloresEstado[$cliente->estado] ?? '6B7280');
+            $sheet->getStyle("K{$fila}")->getFont()->setBold(true);
 
             $fila++;
         }
 
         $anchos = ['A' => 6, 'B' => 14, 'C' => 20, 'D' => 20, 'E' => 13,
-                   'F' => 13, 'G' => 16, 'H' => 28, 'I' => 14, 'J' => 12, 'K' => 26];
+               'F' => 13, 'G' => 13, 'H' => 16, 'I' => 28, 'J' => 14, 'K' => 12, 'L' => 26];
         foreach ($anchos as $col => $ancho) {
             $sheet->getColumnDimension($col)->setWidth($ancho);
         }

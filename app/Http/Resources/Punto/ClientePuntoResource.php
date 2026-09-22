@@ -19,6 +19,7 @@ class ClientePuntoResource extends JsonResource
             'cliente_apl'          => $this->cliente->apellidos,
             'cliente_dni'          => $this->cliente->dni,
             'cliente_ruc'          => $this->cliente->ruc,
+            'cliente_ce'           => $this->cliente->ce,
             'cliente_email'        => $this->cliente->email,
             'cliente_departamento' => $this->cliente->departamento,
             'telefono'             => $this->cliente->telefono,

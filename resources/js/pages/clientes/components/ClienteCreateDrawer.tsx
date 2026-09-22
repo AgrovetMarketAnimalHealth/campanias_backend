@@ -79,6 +79,7 @@ export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
             apellidos: '',
             dni: '',
             ruc: '',
+            ce: '',
             departamento: '',
             email: '',
             telefono: '',
@@ -114,6 +115,7 @@ export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
                 apellidos: values.tipo_persona === 'natural' ? values.apellidos : undefined,
                 dni: values.tipo_persona === 'natural' ? values.dni : undefined,
                 ruc: values.tipo_persona === 'juridica' ? values.ruc : undefined,
+                ce: values.tipo_persona === 'natural' ? values.ce : undefined,
                 departamento: values.departamento,
                 email: values.email,
                 telefono: values.telefono,
@@ -133,6 +135,7 @@ export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
                 departamento: raw.departamento,
                 dni: raw.dni,
                 ruc: raw.ruc,
+                ce: raw.ce,
                 tipo_persona: raw.tipo_persona,
                 email: raw.email,
                 telefono: raw.telefono,
@@ -262,7 +265,7 @@ export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
                                     )}
                                 </div>
                                 <div className="flex flex-col gap-1.5 col-span-2">
-                                    <Label htmlFor="dni">DNI <Req /></Label>
+                                    <Label htmlFor="dni">DNI o CE <Req /></Label>
                                     <Controller
                                         control={control}
                                         name="dni"
@@ -278,6 +281,23 @@ export function ClienteCreateDrawer({ campania, onCreated, children }: Props) {
                                         )}
                                     />
                                     {errors.dni && <p className="text-xs text-destructive">{errors.dni.message}</p>}
+                                </div>
+                                <div className="flex flex-col gap-1.5 col-span-2">
+                                    <Label htmlFor="ce">CE</Label>
+                                    <Controller
+                                        control={control}
+                                        name="ce"
+                                        render={({ field }) => (
+                                            <Input
+                                                id="ce"
+                                                maxLength={20}
+                                                placeholder="Carné de extranjería"
+                                                value={field.value ?? ''}
+                                                onChange={(e) => field.onChange(e.target.value)}
+                                            />
+                                        )}
+                                    />
+                                    {errors.ce && <p className="text-xs text-destructive">{errors.ce.message}</p>}
                                 </div>
                             </>
                         )}

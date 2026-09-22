@@ -33,6 +33,7 @@ class Cliente extends Authenticatable implements AuditableContract, MustVerifyEm
         'apellidos',
         'dni',
         'ruc',
+        'ce',
         'departamento',
         'email',
         'telefono',

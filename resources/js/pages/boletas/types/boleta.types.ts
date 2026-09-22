@@ -6,6 +6,7 @@ export interface Boleta {
     cliente_tipo: string;
     cliente_dni: string | null;
     cliente_ruc: string | null;
+    cliente_ce: string | null;
     cliente_nom: string;
     codigo: string;
     archivo: string | null;

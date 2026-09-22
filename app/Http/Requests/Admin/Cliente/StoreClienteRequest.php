@@ -21,9 +21,16 @@ class StoreClienteRequest extends FormRequest
             'apellidos'   => ['nullable', 'required_if:tipo_persona,natural', 'string', 'max:150'],
             'dni' => [
                 'nullable',
-                'required_if:tipo_persona,natural',
+                Rule::requiredIf(fn () => $this->input('tipo_persona') === 'natural' && blank($this->input('ce'))),
                 'digits:8',
                 Rule::unique('clientes', 'dni'),
+            ],
+            'ce' => [
+                'nullable',
+                Rule::requiredIf(fn () => $this->input('tipo_persona') === 'natural' && blank($this->input('dni'))),
+                'string',
+                'max:20',
+                Rule::unique('clientes', 'ce'),
             ],
             'ruc' => [
                 'nullable',
@@ -57,8 +64,13 @@ class StoreClienteRequest extends FormRequest
             'apellidos.max'         => 'Los apellidos no deben superar los 150 caracteres.',
 
             'dni.required_if' => 'El DNI es obligatorio para personas naturales.',
+            'dni.required'    => 'El DNI o CE es obligatorio para personas naturales.',
             'dni.digits'       => 'El DNI debe tener exactamente 8 dígitos.',
             'dni.unique'       => 'Ya existe un cliente registrado con este DNI.',
+
+            'ce.required_without' => 'El DNI o CE es obligatorio para personas naturales.',
+            'ce.max'              => 'El CE no debe superar los 20 caracteres.',
+            'ce.unique'           => 'Ya existe un cliente registrado con este CE.',
 
             'ruc.required_if' => 'El RUC es obligatorio para personas jurídicas.',
             'ruc.digits'       => 'El RUC debe tener exactamente 11 dígitos.',
@@ -91,6 +103,7 @@ class StoreClienteRequest extends FormRequest
             'nombre'               => 'nombre',
             'apellidos'            => 'apellidos',
             'dni'                  => 'DNI',
+            'ce'                   => 'CE',
             'ruc'                  => 'RUC',
             'departamento'         => 'departamento',
             'email'                => 'correo electrónico',

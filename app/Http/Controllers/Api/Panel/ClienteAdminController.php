@@ -49,6 +49,8 @@ class ClienteAdminController extends Controller{
                     $q->where('nombre',    'like', "%$search%")
                     ->orWhere('apellidos', 'like', "%$search%")
                     ->orWhere('dni',       'like', "%$search%")
+                    ->orWhere('ruc',       'like', "%$search%")
+                    ->orWhere('ce',        'like', "%$search%")
                     ->orWhere('email',     'like', "%$search%")
                 )
             )
@@ -62,8 +64,21 @@ class ClienteAdminController extends Controller{
     }
     public function boletas(Request $request, Cliente $cliente){
         Gate::authorize('view', $cliente);
+        $request->validate([
+            'campania_id' => [
+                'nullable',
+                'string',
+                'exists:campanias,id',
+                fn ($attribute, $value, $fail) =>
+                    $value && ! $cliente->clienteCampanias()->where('campania_id', $value)->exists()
+                        ? $fail('La campaña no pertenece a este cliente.')
+                        : null,
+            ],
+        ]);
+
         $boletas = $cliente->boletas()
             ->when($request->estado, fn($q, $estado) => $q->where('estado', $estado))
+            ->when($request->campania_id, fn($q, $campaniaId) => $q->where('compania_id', $campaniaId))
             ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 15);
         return BoletaResourceC::collection($boletas);
@@ -79,6 +94,14 @@ class ClienteAdminController extends Controller{
     }
     public function show(Cliente $cliente): ClienteResource{
         Gate::authorize('view', $cliente);
+        $cliente->load('clienteCampanias.campania')
+            ->loadCount([
+                'boletas as boletas_aceptadas' => fn($q) => $q->where('estado', 'aceptada'),
+                'boletas as boletas_pendientes' => fn($q) => $q->where('estado', 'pendiente'),
+                'boletas as boletas_rechazadas' => fn($q) => $q->where('estado', 'rechazada'),
+            ])
+            ->loadSum(['puntos as total_puntos'], 'puntos');
+
         return new ClienteResource($cliente);
     }
     public function register(StoreClienteRequest $request){
@@ -100,6 +123,7 @@ class ClienteAdminController extends Controller{
                 'apellidos'         => $request->apellidos,
                 'dni'               => $request->dni,
                 'ruc'               => $request->ruc,
+                'ce'                => $request->ce,
                 'departamento'      => $request->departamento,
                 'email'             => $request->email,
                 'telefono'          => $request->telefono,

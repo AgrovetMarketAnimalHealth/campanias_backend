@@ -39,6 +39,7 @@ interface FormState {
     telefono: string
     dni: string
     ruc: string
+    ce: string
     departamento: string
     estado: string
     ganador: boolean
@@ -60,6 +61,7 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
         telefono: '',
         dni: '',
         ruc: '',
+        ce: '',
         departamento: '',
         estado: '',
         ganador: false,
@@ -76,6 +78,7 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
                 telefono:     cliente.telefono      ?? '',
                 dni:          cliente.dni           ?? '',
                 ruc:          cliente.ruc           ?? '',
+                ce:           cliente.ce            ?? '',
                 departamento: cliente.departamento  ?? '',
                 estado:       cliente.estado        ?? '',
                 ganador:      cliente.ganador       ?? false,
@@ -88,7 +91,7 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
 
     const esNatural = cliente.tipo_persona === 'natural'
 
-    const set = (key: keyof Pick<FormState, 'nombre' | 'apellidos' | 'email' | 'telefono' | 'dni' | 'ruc'>) => (
+    const set = (key: keyof Pick<FormState, 'nombre' | 'apellidos' | 'email' | 'telefono' | 'dni' | 'ruc' | 'ce'>) => (
         e: React.ChangeEvent<HTMLInputElement>
     ) => {
         setForm(f => ({ ...f, [key]: e.target.value }))
@@ -110,6 +113,7 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
             }
             if (esNatural) {
                 payload.dni = form.dni
+                payload.ce = form.ce
             } else {
                 payload.ruc = form.ruc
             }
@@ -181,13 +185,16 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
 
                     <Separator />
 
-                    {/* DNI o RUC según tipo */}
+                    {/* Documento según tipo */}
                     <div className="flex flex-col gap-1.5">
                         {esNatural ? (
                             <>
                                 <Label htmlFor="dni">DNI</Label>
                                 <Input id="dni" value={form.dni} onChange={set('dni')} maxLength={8} />
                                 {errors.dni && <p className="text-xs text-destructive">{errors.dni}</p>}
+                                <Label htmlFor="ce">CE</Label>
+                                <Input id="ce" value={form.ce} onChange={set('ce')} maxLength={20} />
+                                {errors.ce && <p className="text-xs text-destructive">{errors.ce}</p>}
                             </>
                         ) : (
                             <>
@@ -235,6 +242,7 @@ export function ClienteEditDrawer({ cliente, open, onClose, onUpdated }: Cliente
                                 <SelectItem value="pendiente">Pendiente</SelectItem>
                                 <SelectItem value="activo">Activo</SelectItem>
                                 <SelectItem value="rechazado">Rechazado</SelectItem>
+                                <SelectItem value="test">Test</SelectItem>
                             </SelectContent>
                         </Select>
                         {errors.estado && <p className="text-xs text-destructive">{errors.estado}</p>}

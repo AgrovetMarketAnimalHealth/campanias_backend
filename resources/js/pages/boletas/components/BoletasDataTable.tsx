@@ -267,6 +267,7 @@ export function BoletasDataTable() {
                             {b.cliente_dni ? `DNI: ${b.cliente_dni}` : ''}
                             {b.cliente_dni && b.cliente_ruc ? ' · ' : ''}
                             {b.cliente_ruc ? `RUC: ${b.cliente_ruc}` : ''}
+                            {b.cliente_ce ? `${b.cliente_dni || b.cliente_ruc ? ' · ' : ''}CE: ${b.cliente_ce}` : ''}
                         </span>
                     </div>
                 );
@@ -399,7 +400,7 @@ export function BoletasDataTable() {
                     <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
                         className="pl-8 h-8"
-                        placeholder="Buscar por cliente, código, DNI, RUC..."
+                        placeholder="Buscar por cliente, código, DNI, RUC, CE..."
                         value={searchInput}
                         onChange={e => handleSearch(e.target.value)}
                     />

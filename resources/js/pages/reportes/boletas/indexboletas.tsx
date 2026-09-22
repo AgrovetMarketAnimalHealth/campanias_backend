@@ -13,11 +13,15 @@ import { EnviarBoletasDialog }  from './components/EnviarBoletasDialog'
 import { boletaService }        from './services/boletaService'
 import type {
     MetricasGenerales, MetricasPeriodo,
-    PaginatedResponse, Boleta, Preset,
+    PaginatedResponse, Boleta, Campania, Preset,
 } from './types'
 import { hoy } from './utils'
 
-interface Props { metricas: MetricasGenerales }
+interface Props {
+    metricas: MetricasGenerales
+    campanias: Campania[]
+    compania_id: string | null
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Reportes', href: '#' },
@@ -33,15 +37,17 @@ function KpiCard({ label, value, accent }: { label: string; value: number; accen
     )
 }
 
-export default function Boletas({ metricas }: Props) {
+export default function Boletas({ metricas: metricasIniciales, campanias, compania_id: companiaInicial }: Props) {
 
     const [fechaInicio, setFechaInicio] = React.useState(hoy())
     const [fechaFin,    setFechaFin]    = React.useState(hoy())
     const [preset,      setPreset]      = React.useState<Preset>('hoy')
     const [estado,      setEstado]      = React.useState('')
+    const [campaniaId,  setCampaniaId]  = React.useState(companiaInicial ?? '')
     const [page,        setPage]        = React.useState(1)
 
     const [metrPeriodo,  setMetrPeriodo]  = React.useState<MetricasPeriodo | null>(null)
+    const [metricas,     setMetricas]     = React.useState<MetricasGenerales>(metricasIniciales)
     const [listado,      setListado]      = React.useState<PaginatedResponse<Boleta> | null>(null)
     const [loadingChart, setLoadingChart] = React.useState(true)
     const [loadingTable, setLoadingTable] = React.useState(true)
@@ -50,16 +56,16 @@ export default function Boletas({ metricas }: Props) {
     const [openDrawer,   setOpenDrawer]   = React.useState(false)
     const [openEnviar,   setOpenEnviar]   = React.useState(false)
 
-    function cargarGrafico(inicio = fechaInicio, fin = fechaFin) {
+    function cargarGrafico(inicio = fechaInicio, fin = fechaFin, campaniaSeleccionada = campaniaId) {
         setLoadingChart(true)
-        boletaService.getMetricas({ fecha_inicio: inicio, fecha_fin: fin })
-            .then(setMetrPeriodo).catch(console.error)
+        boletaService.getMetricas({ fecha_inicio: inicio, fecha_fin: fin, compania_id: campaniaSeleccionada || undefined })
+            .then((data) => { setMetrPeriodo(data); setMetricas(data.metricas_generales) }).catch(console.error)
             .finally(() => setLoadingChart(false))
     }
 
-    function cargarListado(inicio = fechaInicio, fin = fechaFin, p = page, est = estado) {
+    function cargarListado(inicio = fechaInicio, fin = fechaFin, p = page, est = estado, campaniaSeleccionada = campaniaId) {
         setLoadingTable(true)
-        boletaService.getListado({ fecha_inicio: inicio, fecha_fin: fin, estado: est || undefined, page: p, per_page: 25 })
+        boletaService.getListado({ fecha_inicio: inicio, fecha_fin: fin, estado: est || undefined, compania_id: campaniaSeleccionada || undefined, page: p, per_page: 25 })
             .then(setListado).catch(console.error)
             .finally(() => setLoadingTable(false))
     }
@@ -80,6 +86,12 @@ export default function Boletas({ metricas }: Props) {
         setEstado(v); setPage(1); cargarListado(fechaInicio, fechaFin, 1, v)
     }
 
+    function handleCampaniaChange(v: string) {
+        setCampaniaId(v); setPage(1)
+        cargarGrafico(fechaInicio, fechaFin, v)
+        cargarListado(fechaInicio, fechaFin, 1, estado, v)
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Boletas" />
@@ -94,7 +106,7 @@ export default function Boletas({ metricas }: Props) {
                         </p>
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                        <Button variant="outline" onClick={() => window.location.href = boletaService.exportarUrl({ fecha_inicio: fechaInicio, fecha_fin: fechaFin, estado: estado || undefined })} className="gap-1.5">
+                        <Button variant="outline" onClick={() => window.location.href = boletaService.exportarUrl({ fecha_inicio: fechaInicio, fecha_fin: fechaFin, estado: estado || undefined, compania_id: campaniaId || undefined })} className="gap-1.5">
                             <IconDownload className="size-4" /> Exportar Excel
                         </Button>
                         <Button onClick={() => setOpenEnviar(true)} className="gap-1.5">
@@ -118,9 +130,11 @@ export default function Boletas({ metricas }: Props) {
                     <FiltrosBoletas
                         fechaInicio={fechaInicio} fechaFin={fechaFin}
                         estado={estado} preset={preset}
+                        campaniaId={campaniaId} campanias={campanias}
                         onFechaInicioChange={setFechaInicio}
                         onFechaFinChange={setFechaFin}
                         onEstadoChange={handleEstadoChange}
+                        onCampaniaChange={handleCampaniaChange}
                         onPresetChange={handlePresetChange}
                         onConsultar={handleConsultar}
                     />

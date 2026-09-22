@@ -4,7 +4,7 @@ import {
     Select, SelectContent, SelectItem,
     SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import type { Preset } from '../types'
+import type { Campania, Preset } from '../types'
 import { hoy, fechaHaceNMeses } from '../utils'
 
 const PRESETS: { key: Preset; label: string; meses: number | null }[] = [
@@ -19,17 +19,20 @@ interface FiltrosReporteProps {
     fechaInicio: string
     fechaFin: string
     estado: string
+    campaniaId: string
+    campanias: Campania[]
     preset: Preset
     onFechaInicioChange: (v: string) => void
     onFechaFinChange: (v: string) => void
     onEstadoChange: (v: string) => void
+    onCampaniaChange: (v: string) => void
     onPresetChange: (inicio: string, fin: string, key: Preset) => void
     onConsultar: () => void
 }
 
 export function FiltrosReporte({
-    fechaInicio, fechaFin, estado, preset,
-    onFechaInicioChange, onFechaFinChange, onEstadoChange,
+    fechaInicio, fechaFin, estado, campaniaId, campanias, preset,
+    onFechaInicioChange, onFechaFinChange, onEstadoChange, onCampaniaChange,
     onPresetChange, onConsultar,
 }: FiltrosReporteProps) {
     return (
@@ -78,6 +81,19 @@ export function FiltrosReporte({
                     <SelectItem value="activo">Activo</SelectItem>
                     <SelectItem value="pendiente">Pendiente</SelectItem>
                     <SelectItem value="rechazado">Rechazado</SelectItem>
+                </SelectContent>
+            </Select>
+
+            <Select value={campaniaId} onValueChange={onCampaniaChange}>
+                <SelectTrigger className="w-48 h-9 text-sm">
+                    <SelectValue placeholder="Selecciona una campaña" />
+                </SelectTrigger>
+                <SelectContent>
+                    {campanias.map((campania) => (
+                        <SelectItem key={campania.id} value={campania.id}>
+                            {campania.nombre}
+                        </SelectItem>
+                    ))}
                 </SelectContent>
             </Select>
 
