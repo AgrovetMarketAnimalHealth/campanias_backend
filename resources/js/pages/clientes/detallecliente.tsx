@@ -17,10 +17,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 interface Props {
     clienteId: string
+    campaniaId?: string
     verificationUrl: string | null
 }
 
-export default function DetalleCliente({ clienteId, verificationUrl }: Props) {
+export default function DetalleCliente({ clienteId, campaniaId: campaniaInicial, verificationUrl }: Props) {
     const [cliente, setCliente]     = React.useState<Cliente | null>(null)
     const [boletas, setBoletas]     = React.useState<PaginatedResponse<Boleta> | null>(null)
     const [loadingC, setLoadingC]   = React.useState(true)
@@ -41,15 +42,35 @@ export default function DetalleCliente({ clienteId, verificationUrl }: Props) {
     // Consulta el cliente directamente por ID para no depender de la página visible del listado.
     React.useEffect(() => {
         clienteService
-            .getCliente(clienteId)
+            .getCliente(clienteId, campaniaInicial)
             .then((cliente) => {
                 setCliente(cliente)
-                setCampaniaId(cliente.campanias.find((campania) => campania.activa)?.id ?? 'todas')
+                setCampaniaId(campaniaInicial ?? cliente.campanias.find((campania) => campania.activa)?.id ?? 'todas')
                 setBoletaPage(1)
                 setBoletaEstado('')
             })
             .finally(() => setLoadingC(false))
     }, [clienteId])
+
+    React.useEffect(() => {
+        if (!campaniaId || campaniaId === 'todas') return
+
+        clienteService
+            .getCliente(clienteId, campaniaId)
+            .then(setCliente)
+            .catch(console.error)
+    }, [clienteId, campaniaId])
+
+    function cambiarCampania(value: string) {
+        setCampaniaId(value)
+        setBoletaPage(1)
+        if (value === 'todas') {
+            clienteService
+                .getCliente(clienteId)
+                .then(setCliente)
+                .catch(console.error)
+        }
+    }
 
     // Cargar boletas (función reutilizable para poder refrescar tras subir un comprobante)
     const fetchBoletas = React.useCallback(() => {
@@ -177,7 +198,7 @@ export default function DetalleCliente({ clienteId, verificationUrl }: Props) {
 
                         <div className="flex flex-col gap-2 px-4 lg:px-6 sm:flex-row sm:items-center sm:justify-between">
                             <Label htmlFor="campania-detalle">Campaña</Label>
-                            <Select value={campaniaId} onValueChange={(value) => { setCampaniaId(value); setBoletaPage(1) }}>
+                            <Select value={campaniaId} onValueChange={cambiarCampania}>
                                 <SelectTrigger id="campania-detalle" className="w-full sm:w-72">
                                     <SelectValue placeholder="Selecciona campaña" />
                                 </SelectTrigger>

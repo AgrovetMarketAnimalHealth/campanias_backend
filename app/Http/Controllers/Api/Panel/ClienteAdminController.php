@@ -40,9 +40,15 @@ class ClienteAdminController extends Controller{
                 ),
             ], 'puntos')
             ->when($campaniaIds, fn($q) =>
-                $q->whereHas('clienteCampanias', fn($q2) =>
-                    $q2->whereIn('campania_id', $campaniaIds)
-                )
+                $q->where(function ($campaignQuery) use ($campaniaIds) {
+                    $campaignQuery
+                        ->whereHas('clienteCampanias', fn($q2) =>
+                            $q2->whereIn('campania_id', $campaniaIds)
+                        )
+                        ->orWhereHas('boletas', fn($q2) =>
+                            $q2->whereIn('compania_id', $campaniaIds)
+                        );
+                })
             )
             ->when($request->search, fn($q, $search) =>
                 $q->where(fn($q) =>
@@ -70,7 +76,9 @@ class ClienteAdminController extends Controller{
                 'string',
                 'exists:campanias,id',
                 fn ($attribute, $value, $fail) =>
-                    $value && ! $cliente->clienteCampanias()->where('campania_id', $value)->exists()
+                    $value
+                    && ! $cliente->clienteCampanias()->where('campania_id', $value)->exists()
+                    && ! $cliente->boletas()->where('compania_id', $value)->exists()
                         ? $fail('La campaña no pertenece a este cliente.')
                         : null,
             ],
@@ -92,15 +100,37 @@ class ClienteAdminController extends Controller{
         $cliente->update($data);
         return new ClienteResource($cliente);
     }
-    public function show(Cliente $cliente): ClienteResource{
+    public function show(Request $request, Cliente $cliente): ClienteResource{
         Gate::authorize('view', $cliente);
-        $cliente->load('clienteCampanias.campania')
+        $request->validate([
+            'campania_id' => [
+                'nullable',
+                'string',
+                'exists:campanias,id',
+                fn ($attribute, $value, $fail) =>
+                    $value
+                    && ! $cliente->clienteCampanias()->where('campania_id', $value)->exists()
+                    && ! $cliente->boletas()->where('compania_id', $value)->exists()
+                        ? $fail('La campaña no pertenece a este cliente.')
+                        : null,
+            ],
+        ]);
+        $campaniaId = $request->campania_id;
+        $cliente->load('clienteCampanias.campania', 'boletas.campania')
             ->loadCount([
-                'boletas as boletas_aceptadas' => fn($q) => $q->where('estado', 'aceptada'),
-                'boletas as boletas_pendientes' => fn($q) => $q->where('estado', 'pendiente'),
-                'boletas as boletas_rechazadas' => fn($q) => $q->where('estado', 'rechazada'),
+                'boletas as boletas_aceptadas' => fn($q) => $q->where('estado', 'aceptada')
+                    ->when($campaniaId, fn($q2) => $q2->where('compania_id', $campaniaId)),
+                'boletas as boletas_pendientes' => fn($q) => $q->where('estado', 'pendiente')
+                    ->when($campaniaId, fn($q2) => $q2->where('compania_id', $campaniaId)),
+                'boletas as boletas_rechazadas' => fn($q) => $q->where('estado', 'rechazada')
+                    ->when($campaniaId, fn($q2) => $q2->where('compania_id', $campaniaId)),
             ])
-            ->loadSum(['puntos as total_puntos'], 'puntos');
+            ->loadSum([
+                'puntos as total_puntos' => fn($q) => $q->when(
+                    $campaniaId,
+                    fn($q2) => $q2->where('campania_id', $campaniaId)
+                ),
+            ], 'puntos');
 
         return new ClienteResource($cliente);
     }

@@ -40,17 +40,40 @@ class ReportesClientesController extends Controller{
         // Se llama fresco cada vez para no reutilizar un builder ya consumido.
         $base = fn() => Cliente::query()
             ->where('estado', '!=', 'test')
-            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
-            ->when($campaniaId, fn($q) =>
-                $q->whereHas('clienteCampanias', fn($q2) => $q2->where('campania_id', $campaniaId))
+            ->when($campaniaId, function ($q) use ($campaniaId, $fechaInicio, $fechaFin) {
+                $q->where(function ($campaignQuery) use ($campaniaId) {
+                    $campaignQuery
+                        ->whereHas('clienteCampanias', fn($q2) =>
+                            $q2->where('campania_id', $campaniaId)
+                        )
+                        ->orWhereHas('boletas', fn($q2) =>
+                            $q2->where('compania_id', $campaniaId)
+                        );
+                })->where(function ($dateQuery) use ($campaniaId, $fechaInicio, $fechaFin) {
+                    $dateQuery
+                        ->whereBetween('clientes.created_at', [$fechaInicio, $fechaFin])
+                        ->orWhereHas('boletas', fn($q2) =>
+                            $q2->where('compania_id', $campaniaId)
+                                ->whereBetween('created_at', [$fechaInicio, $fechaFin])
+                        );
+                });
+            })
+            ->when(! $campaniaId, fn($q) =>
+                $q->whereBetween('created_at', [$fechaInicio, $fechaFin])
             );
 
         $metricasGenerales = Cliente::query()
             ->where('estado', '!=', 'test')
             ->when($campaniaId, fn($q) =>
-                $q->whereHas('clienteCampanias', fn($q2) =>
-                    $q2->where('campania_id', $campaniaId)
-                )
+                $q->where(function ($campaignQuery) use ($campaniaId) {
+                    $campaignQuery
+                        ->whereHas('clienteCampanias', fn($q2) =>
+                            $q2->where('campania_id', $campaniaId)
+                        )
+                        ->orWhereHas('boletas', fn($q2) =>
+                            $q2->where('compania_id', $campaniaId)
+                        );
+                })
             );
 
         $inscritosPorDia = $base()
@@ -176,8 +199,29 @@ class ReportesClientesController extends Controller{
                 'id', 'tipo_persona', 'nombre', 'apellidos',
                 'dni', 'ruc', 'ce', 'departamento', 'email',
                 'telefono', 'estado', 'created_at',
-            ])
-            ->whereBetween('created_at', [$fechaInicio, $fechaFin]);
+            ]);
+
+        if ($request->filled('campania_id')) {
+            $campaniaId = $request->campania_id;
+            $query->where(function ($campaignQuery) use ($campaniaId) {
+                $campaignQuery
+                    ->whereHas('clienteCampanias', fn($q) =>
+                        $q->where('campania_id', $campaniaId)
+                    )
+                    ->orWhereHas('boletas', fn($q) =>
+                        $q->where('compania_id', $campaniaId)
+                    );
+            })->where(function ($dateQuery) use ($campaniaId, $fechaInicio, $fechaFin) {
+                $dateQuery
+                    ->whereBetween('clientes.created_at', [$fechaInicio, $fechaFin])
+                    ->orWhereHas('boletas', fn($q) =>
+                        $q->where('compania_id', $campaniaId)
+                            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
+                    );
+            });
+        } else {
+            $query->whereBetween('created_at', [$fechaInicio, $fechaFin]);
+        }
 
         $query->where('estado', '!=', 'test');
 
@@ -187,12 +231,6 @@ class ReportesClientesController extends Controller{
 
         if ($request->filled('tipo_persona')) {
             $query->where('tipo_persona', $request->tipo_persona);
-        }
-
-        if ($request->filled('campania_id')) {
-            $query->whereHas('clienteCampanias', fn($q) =>
-                $q->where('campania_id', $request->campania_id)
-            );
         }
 
         return response()->json(
@@ -288,7 +326,29 @@ class ReportesClientesController extends Controller{
             'id', 'tipo_persona', 'nombre', 'apellidos',
             'dni', 'ruc', 'ce', 'departamento', 'email',
             'telefono', 'estado', 'created_at',
-        ])->whereBetween('created_at', [$fechaInicio, $fechaFin]);
+        ]);
+
+        if ($request->filled('campania_id')) {
+            $campaniaId = $request->campania_id;
+            $query->where(function ($campaignQuery) use ($campaniaId) {
+                $campaignQuery
+                    ->whereHas('clienteCampanias', fn($q) =>
+                        $q->where('campania_id', $campaniaId)
+                    )
+                    ->orWhereHas('boletas', fn($q) =>
+                        $q->where('compania_id', $campaniaId)
+                    );
+            })->where(function ($dateQuery) use ($campaniaId, $fechaInicio, $fechaFin) {
+                $dateQuery
+                    ->whereBetween('clientes.created_at', [$fechaInicio, $fechaFin])
+                    ->orWhereHas('boletas', fn($q) =>
+                        $q->where('compania_id', $campaniaId)
+                            ->whereBetween('created_at', [$fechaInicio, $fechaFin])
+                    );
+            });
+        } else {
+            $query->whereBetween('created_at', [$fechaInicio, $fechaFin]);
+        }
 
         $query->where('estado', '!=', 'test');
 
@@ -298,12 +358,6 @@ class ReportesClientesController extends Controller{
 
         if ($request->filled('tipo_persona')) {
             $query->where('tipo_persona', $request->tipo_persona);
-        }
-
-        if ($request->filled('campania_id')) {
-            $query->whereHas('clienteCampanias', fn($q) =>
-                $q->where('campania_id', $request->campania_id)
-            );
         }
 
         return $query->orderByDesc('created_at')->get();

@@ -29,16 +29,26 @@ class ClienteResource extends JsonResource
             'boletas_rechazadas' => $this->boletas_rechazadas,
             'registrado_en'      => $this->created_at?->format('d/m/Y'),
             'ganador'            => $this->ganador,
-            'campanias'          => $this->whenLoaded('clienteCampanias', fn() =>
-                $this->clienteCampanias
-                    ->filter(fn($clienteCampania) => $clienteCampania->campania)
-                    ->map(fn($clienteCampania) => [
-                        'id'     => $clienteCampania->campania->id,
-                        'nombre' => $clienteCampania->campania->nombre,
-                        'url'    => $clienteCampania->campania->url,
-                        'activa' => (bool) $clienteCampania->campania->activa,
-                    ])
-                    ->values()
+            'campanias'          => $this->when(
+                $this->relationLoaded('clienteCampanias'),
+                function () {
+                    $campanias = $this->clienteCampanias
+                        ->filter(fn($clienteCampania) => $clienteCampania->campania)
+                        ->map(fn($clienteCampania) => $clienteCampania->campania);
+
+                    if ($this->relationLoaded('boletas')) {
+                        $campanias = $campanias
+                            ->merge($this->boletas->map(fn($boleta) => $boleta->campania))
+                            ->filter();
+                    }
+
+                    return $campanias->unique('id')->map(fn($campania) => [
+                        'id'     => $campania->id,
+                        'nombre' => $campania->nombre,
+                        'url'    => $campania->url,
+                        'activa' => (bool) $campania->activa,
+                    ])->values();
+                }
             ),
         ];
     }

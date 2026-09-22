@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Panel;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cliente;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,9 +14,17 @@ class ClienteWebController extends Controller{
         Gate::authorize('viewAny', Cliente::class);
         return Inertia::render('clientes/indexclientes');
     }
-    public function show(string $id): Response{
+    public function show(Request $request, string $id): Response{
         $cliente = Cliente::findOrFail($id);
         Gate::authorize('view', $cliente);
+
+        $campaniaId = $request->query('campania_id');
+        if ($campaniaId
+            && ! $cliente->clienteCampanias()->where('campania_id', $campaniaId)->exists()
+            && ! $cliente->boletas()->where('compania_id', $campaniaId)->exists()
+        ) {
+            abort(404);
+        }
 
         $verificationUrl = null;
 
@@ -47,6 +56,7 @@ class ClienteWebController extends Controller{
 
         return Inertia::render('clientes/detallecliente', [
             'clienteId'       => $cliente->id,
+            'campaniaId'      => $campaniaId,
             'verificationUrl' => $verificationUrl,
         ]);
     }
