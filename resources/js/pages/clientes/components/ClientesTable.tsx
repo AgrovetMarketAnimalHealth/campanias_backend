@@ -78,7 +78,11 @@ export function ClientesTable() {
     }, [search, tipoPersona, campaniaId, page, campaniasReady])
 
     function goToDetalle(id: string) {
-        router.visit(clientes.show(id).url)
+        router.visit(clientes.show(id, {
+            query: campaniaId && campaniaId !== TODAS_CAMPANIAS
+                ? { campania_id: campaniaId }
+                : {},
+        }).url)
     }
 
     function openEdit(cliente: Cliente) {
