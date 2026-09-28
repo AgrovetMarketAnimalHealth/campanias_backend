@@ -11,6 +11,7 @@ class BoletaResource extends JsonResource
     {
         return [
             'id'               => $this->id,
+            'compania_id'      => $this->compania_id,
             'codigo'           => $this->codigo,
             'archivo'          => $this->resolverUrlArchivo(),
             'puntos_otorgados' => $this->puntos_otorgados,

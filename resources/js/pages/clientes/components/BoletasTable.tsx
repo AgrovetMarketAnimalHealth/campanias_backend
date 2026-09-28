@@ -48,12 +48,13 @@ interface BoletasTableProps {
     onEstadoFilter: (v: string) => void
     clienteId: string
     clienteNombre?: string
+    campaniaId?: string
     onUploaded: (boleta: Boleta) => void
 }
 
 export function BoletasTable({
     data, loading, page, onPageChange, estadoFilter, onEstadoFilter,
-    clienteId, clienteNombre, onUploaded,
+    clienteId, clienteNombre, campaniaId, onUploaded,
 }: BoletasTableProps) {
 
     const [selectedBoleta, setSelectedBoleta] = React.useState<Boleta | null>(null)
@@ -150,7 +151,7 @@ export function BoletasTable({
                         </SelectContent>
                     </Select>
 
-                    <BoletaUploadDrawer clienteId={clienteId} clienteNombre={clienteNombre} onUploaded={onUploaded}>
+                    <BoletaUploadDrawer clienteId={clienteId} clienteNombre={clienteNombre} campaniaId={campaniaId} onUploaded={onUploaded}>
                         <Button size="sm" className="gap-1">
                             <IconPlus className="size-4" />
                             Subir comprobante

@@ -225,7 +225,15 @@ export default function DetalleCliente({ clienteId, campaniaId: campaniaInicial,
                             onEstadoFilter={(v) => { setBoletaEstado(v); setBoletaPage(1) }}
                             clienteId={cliente.id}
                             clienteNombre={`${cliente.nombre} ${cliente.apellidos}`.trim()}
-                            onUploaded={() => { setBoletaPage(1); fetchBoletas() }}
+                            campaniaId={campaniaId}
+                            onUploaded={(boleta) => {
+                                setBoletaPage(1)
+                                if (boleta.compania_id && boleta.compania_id !== campaniaId) {
+                                    setCampaniaId(boleta.compania_id)
+                                } else {
+                                    fetchBoletas()
+                                }
+                            }}
                         />
                     </>
                 ) : (
