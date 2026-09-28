@@ -27,11 +27,12 @@ interface ServerValidationError {
 interface Props {
     clienteId: string
     clienteNombre?: string
+    campaniaId?: string
     onUploaded: (boleta: Boleta) => void
     children: React.ReactNode
 }
 
-export function BoletaUploadDrawer({ clienteId, clienteNombre, onUploaded, children }: Props) {
+export function BoletaUploadDrawer({ clienteId, clienteNombre, campaniaId, onUploaded, children }: Props) {
     const isMobile = useIsMobile()
     const [open, setOpen] = React.useState(false)
     const [errorMsg, setErrorMsg] = React.useState<string | null>(null)
@@ -56,7 +57,7 @@ export function BoletaUploadDrawer({ clienteId, clienteNombre, onUploaded, child
     const onSubmit = handleSubmit(async (values) => {
         setErrorMsg(null)
         try {
-            const res = await clienteService.subirBoleta(clienteId, values.archivo)
+            const res = await clienteService.subirBoleta(clienteId, values.archivo, campaniaId)
             onUploaded(res.data)
             toast.success(res.message ?? 'Comprobante subido correctamente. Será revisado pronto.')
             setOpen(false)

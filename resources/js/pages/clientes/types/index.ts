@@ -31,6 +31,7 @@ export interface Campania {
 
 export interface Boleta {
     id: string
+    compania_id?: string
     codigo: string
     numero_boleta: string | null
     monto: string | number | null

@@ -11,6 +11,7 @@ use App\Services\BoletaService;
 use App\Http\Requests\Admin\Boleta\UpdateBoletaRequest;
 use App\Http\Resources\Boleta\BoletaResource;
 use App\Jobs\EnviarEmailBoleta;
+use App\Models\Campania;
 use App\Models\Cliente;
 use App\Models\ClienteCampania;
 use Illuminate\Http\Request;
@@ -86,6 +87,7 @@ class BoletaController extends Controller
         $request->validate([
             'cliente_id' => ['required', 'uuid', 'exists:clientes,id'],
             'archivo'    => ['required', 'file', 'mimes:jpg,jpeg,png,pdf'],
+            'campania_id' => ['nullable', 'uuid', 'exists:campanias,id'],
         ]);
 
         $cliente = Cliente::find($request->cliente_id);
@@ -97,21 +99,26 @@ class BoletaController extends Controller
             ], 404);
         }
 
-        $clienteCampania = ClienteCampania::where('cliente_id', $cliente->id)
-            ->whereHas('campania', function ($q) {
-                $q->where('activa', true);
-            })
-            ->latest()
-            ->first();
+        $campaniaOrigen = $request->filled('campania_id')
+            ? Campania::find($request->campania_id)
+            : $cliente->clienteCampanias()->with('campania')->latest()->first()?->campania;
 
-        if (!$clienteCampania) {
+        $campania = $campaniaOrigen?->activa
+            ? $campaniaOrigen
+            : $this->resolverCampaniaActivaDelMismoTipo($campaniaOrigen);
+
+        if (!$campania) {
             return response()->json([
                 'success' => false,
-                'message' => 'El cliente no tiene una campaña activa.',
+                'message' => 'No hay una campaña activa del mismo tipo que la seleccionada.',
             ], 404);
         }
 
-        $campania = $clienteCampania->campania;
+        ClienteCampania::firstOrCreate([
+            'cliente_id'  => $cliente->id,
+            'campania_id' => $campania->id,
+        ]);
+
         $archivo  = $request->file('archivo');
 
         $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
@@ -154,5 +161,30 @@ class BoletaController extends Controller
             'message' => 'Comprobante subido correctamente. Será revisado pronto.',
             'data'    => new BoletaResource($boleta),
         ], 201);
+    }
+
+    private function resolverCampaniaActivaDelMismoTipo(?Campania $campaniaOrigen): ?Campania
+    {
+        if (!$campaniaOrigen) {
+            return null;
+        }
+
+        $url = trim($campaniaOrigen->url, '/');
+        $tipo = null;
+
+        if (str_ends_with($url, '/veterinarios')) {
+            $tipo = 'veterinarios';
+        } elseif (str_ends_with($url, '/clientes')) {
+            $tipo = 'clientes';
+        }
+
+        if (!$tipo) {
+            return null;
+        }
+
+        return Campania::where('activa', true)
+            ->where('url', 'like', "%/{$tipo}")
+            ->latest()
+            ->first();
     }
 }

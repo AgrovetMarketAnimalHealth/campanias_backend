@@ -76,11 +76,15 @@ export const clienteService = {
 
     async subirBoleta(
         clienteId: string,
-        archivo: File
+        archivo: File,
+        campaniaId?: string
     ): Promise<{ success: boolean; message: string; data: Boleta }> {
         const formData = new FormData()
         formData.append('cliente_id', clienteId)
         formData.append('archivo', archivo)
+        if (campaniaId && campaniaId !== 'todas') {
+            formData.append('campania_id', campaniaId)
+        }
 
         const { data } = await axios.post('/promo-concierto/backoffice/boleta', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
