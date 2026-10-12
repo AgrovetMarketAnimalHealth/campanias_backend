@@ -160,41 +160,14 @@
 <body>
 
   @php
-  $todos = [];
-  foreach ($puntos as $registro) {
-  $cantidad = (int) ($registro->puntos ?? 0);
-  if ($cantidad <= 0) continue;
-    $cliente=$registro->cliente;
-    $tipo = strtolower($cliente->tipo_persona ?? 'natural');
-    $esJ = $tipo === 'juridica';
-    $nombre = trim(($cliente->nombre ?? '') . ' ' . ($cliente->apellidos ?? ''));
-    $razonSoc = $cliente->razon_social ?? $nombre;
-    $docVal = $esJ ? ($cliente->ruc ?? '-') : ($cliente->dni ?? '-');
-    $tipoLabel = $esJ ? 'Persona Jurídica' : 'Persona Natural';
-    $codigoBoleta = $registro->boleta->codigo ?? '-';
-    $puntosTxt = number_format((float)($registro->puntos ?? 0), 0) . ' pts';
-    $imagen = $registro->imagen ?? '';
-    for ($i = 1; $i <= $cantidad; $i++) {
-      $todos[]=[ 'tipoLabel'=> $tipoLabel,
-      'esJuridica' => $esJ,
-      'nombre' => $nombre,
-      'razonSoc' => $razonSoc,
-      'docVal' => $docVal,
-      'email' => $cliente->email ?? '-',
-      'telefono' => $cliente->telefono ?? '-',
-      'departamento' => $cliente->departamento ?? '-',
-      'codigo' => $codigoBoleta,
-      'puntos' => $puntosTxt,
-      'imagen' => $imagen,
-      'tickNum' => $i,
-      'tickTotal' => $cantidad,
-      ];
+    $filas = array_chunk($tickets, 3);
+    if ($filas !== []) {
+      $ultimaFila = array_key_last($filas);
+      while (count($filas[$ultimaFila]) < 3) {
+        $filas[$ultimaFila][] = null;
       }
-      }
-      // Una sola tabla continua — sin saltos forzados
-      while (count($todos) % 3 !== 0) { $todos[] = null; }
-      $filas = array_chunk($todos, 3);
-      @endphp
+    }
+  @endphp
 
       <table class="pagina">
         <tbody>

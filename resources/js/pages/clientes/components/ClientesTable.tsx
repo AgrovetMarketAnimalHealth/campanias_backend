@@ -9,7 +9,7 @@ import {
 import {
     IconChevronLeft, IconChevronRight,
     IconChevronsLeft, IconChevronsRight,
-    IconDotsVertical, IconLoader2, IconSearch,
+    IconDotsVertical, IconDownload, IconLoader2, IconSearch,
     IconUser, IconBuilding, IconMailCheck, IconCoins,
     IconTrophy,IconPlus,
 } from '@tabler/icons-react'
@@ -305,15 +305,31 @@ export function ClientesTable() {
             </div>
         </div>
 
-        <ClienteCreateDrawer campania={campaniaSeleccionada} onCreated={handleCreated}>
+        <div className="flex gap-2">
             <Button
-                disabled={!puedeCrear}
-                title={!puedeCrear ? 'Selecciona una campaña activa para registrar' : undefined}
+                variant="outline"
+                onClick={() => {
+                    window.location.href = clienteService.exportarUrl({
+                        search,
+                        tipo_persona: tipoPersona,
+                        campania_id: campaniaId,
+                    })
+                }}
+                disabled={!campaniasReady}
             >
-                <IconPlus className="size-4" />
-                Nuevo cliente
+                <IconDownload className="size-4" />
+                Exportar Excel
             </Button>
-        </ClienteCreateDrawer>
+            <ClienteCreateDrawer campania={campaniaSeleccionada} onCreated={handleCreated}>
+                <Button
+                    disabled={!puedeCrear}
+                    title={!puedeCrear ? 'Selecciona una campaña activa para registrar' : undefined}
+                >
+                    <IconPlus className="size-4" />
+                    Nuevo cliente
+                </Button>
+            </ClienteCreateDrawer>
+        </div>
     </div>
 
     <div className="relative w-full">

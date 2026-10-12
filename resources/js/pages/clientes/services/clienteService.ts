@@ -2,6 +2,19 @@ import axios from 'axios'
 import type { Cliente, Boleta, PaginatedResponse } from '../types'
 
 export const clienteService = {
+    exportarUrl(params: {
+        search?: string
+        tipo_persona?: string
+        campania_id?: string
+    }): string {
+        const query = new URLSearchParams()
+        Object.entries(params).forEach(([key, value]) => {
+            if (value && value !== 'todas') query.set(key, value)
+        })
+
+        return `/promo-concierto/backoffice/cliente/exportar?${query.toString()}`
+    },
+
     async getCliente(clienteId: string, campaniaId?: string): Promise<Cliente> {
         const params = campaniaId ? { campania_id: campaniaId } : undefined
         const { data } = await axios.get(`/promo-concierto/backoffice/cliente/${clienteId}`, { params })
