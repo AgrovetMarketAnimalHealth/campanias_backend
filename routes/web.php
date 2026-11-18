@@ -179,6 +179,7 @@ Route::prefix('promo-concierto/backoffice')->group(function () {
         Route::prefix('punto')->controller(ClientePuntoController::class)->group(function () {
             Route::get('/',                          'index')->name('panel.punto.index');
             Route::post('/exportar-boletos',         'exportarBoletos')->name('panel.punto.exportar');
+            Route::post('/exportar-boletos-json',    'exportarBoletosDesdeJson')->name('panel.punto.exportar-json');
             Route::get('/estado-boletos/{filename}', 'estadoBoletos')->name('panel.punto.estado');
             Route::get('/descargar/{filename}',      'descargarBoletos')->name('panel.punto.descargar');
         });

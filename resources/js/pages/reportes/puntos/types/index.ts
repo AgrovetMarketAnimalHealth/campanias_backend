@@ -1,50 +1,58 @@
 export interface Punto {
-    id: string
-    imagen: string | null
-    puntos: string | number
-    cliente_id: string
-    cliente_tipo: 'natural' | 'juridica'
-    cliente_nom: string
-    cliente_apl: string | null
-    cliente_dni: string | null
-    cliente_ruc: string | null
-    cliente_ce: string | null
-    cliente_email: string
-    cliente_departamento: string
-    telefono: string | null
-    cliente_ganador?: boolean
+    id: string;
+    imagen: string | null;
+    puntos: string | number;
+    cliente_id: string;
+    cliente_tipo: 'natural' | 'juridica';
+    cliente_nom: string;
+    cliente_apl: string | null;
+    cliente_dni: string | null;
+    cliente_ruc: string | null;
+    cliente_ce: string | null;
+    cliente_email: string;
+    cliente_departamento: string;
+    telefono: string | null;
+    cliente_ganador?: boolean;
 }
 
 export interface Campania {
-    id: string
-    nombre: string
-    activa: boolean
+    id: string;
+    nombre: string;
+    activa: boolean;
 }
 
 export interface PaginatedMeta {
-    current_page: number
-    last_page: number
-    per_page: number
-    total: number
-    from: number
-    to: number
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number;
+    to: number;
 }
 
 export interface PaginatedLinks {
-    first: string | null
-    last: string | null
-    prev: string | null
-    next: string | null
+    first: string | null;
+    last: string | null;
+    prev: string | null;
+    next: string | null;
 }
 
 export interface PaginatedResponse<T> {
-    data: T[]
-    meta: PaginatedMeta
-    links: PaginatedLinks
+    data: T[];
+    meta: PaginatedMeta;
+    links: PaginatedLinks;
 }
 
 export interface ExportStatus {
-    listo: boolean
-    url?: string
-    size?: number
+    listo: boolean;
+    url?: string;
+    size?: number;
+}
+
+export interface OpcionSorteoDistribuidor {
+    distribuidor_razon_social: string;
+    opciones_sorteo: number;
+    ruc: string;
+    representante: string;
+    celular: string;
 }

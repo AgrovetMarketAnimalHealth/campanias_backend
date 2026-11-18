@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Api\Panel;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Punto\ClientePuntoResource;
+use App\Jobs\GenerarBoletosOpcionesSorteoJob;
 use App\Jobs\GenerarBoletosSorteoJob;
 use App\Models\Boleta;
 use App\Models\Campania;
+use App\Models\Punto;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ClientePuntoController extends Controller
 {
@@ -50,6 +54,45 @@ class ClientePuntoController extends Controller
 
         $filename = 'sorteo_boletos_'.$request->campania_id.'_'.now()->format('Ymd_His').'_'.Str::lower(Str::random(8)).'.zip';
         GenerarBoletosSorteoJob::dispatch($filename, $request->campania_id);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Generando boletos en segundo plano...',
+            'filename' => $filename,
+            'url' => url("/promo-concierto/backoffice/punto/descargar/{$filename}"),
+        ], 202);
+    }
+
+    public function exportarBoletosDesdeJson(Request $request)
+    {
+        Gate::authorize('viewAny', Punto::class);
+
+        $validated = $request->validate([
+            'campania_id' => ['required', 'uuid', Rule::exists('campanias', 'id')],
+            'distribuidores' => ['required', 'array', 'min:1', 'max:500'],
+            'distribuidores.*.distribuidor_razon_social' => ['required', 'string', 'max:255'],
+            'distribuidores.*.opciones_sorteo' => ['required', 'integer', 'min:1', 'max:10000'],
+            'distribuidores.*.ruc' => ['required', 'string', 'regex:/^\d{11}$/'],
+            'distribuidores.*.representante' => ['required', 'string', 'max:255'],
+            'distribuidores.*.celular' => ['required', 'string', 'max:30'],
+        ]);
+
+        $totalOpciones = array_sum(array_column($validated['distribuidores'], 'opciones_sorteo'));
+
+        if ($totalOpciones > 10000) {
+            throw ValidationException::withMessages([
+                'distribuidores' => ['El total de opciones no puede superar los 10,000 boletos por generación.'],
+            ]);
+        }
+
+        abort_unless(
+            Campania::whereKey($validated['campania_id'])->where('activa', true)->exists(),
+            403,
+            'Solo se pueden generar boletos para campañas activas.'
+        );
+
+        $filename = 'sorteo_boletos_'.$validated['campania_id'].'_'.now()->format('Ymd_His').'_'.Str::lower(Str::random(8)).'.zip';
+        GenerarBoletosOpcionesSorteoJob::dispatch($filename, $validated['distribuidores']);
 
         return response()->json([
             'ok' => true,

@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\GenerarBoletosOpcionesSorteoJob;
 use App\Jobs\GenerarBoletosSorteoJob;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Filesystem\Filesystem;
@@ -86,6 +87,43 @@ it('publishes a ZIP containing a rendered ticket PDF', function () {
 
     try {
         (new GenerarBoletosSorteoJob($zipFilename, $campaniaId))->handle();
+
+        $zipPath = Storage::disk('public')->path('sorteo/'.$zipFilename);
+        $zip = new ZipArchive;
+
+        expect($zip->open($zipPath))->toBeTrue()
+            ->and($zip->numFiles)->toBe(2);
+
+        $pdfContents = [
+            $zip->getFromIndex(0),
+            $zip->getFromIndex(1),
+        ];
+        $zip->close();
+
+        expect(array_unique(array_map(fn ($content) => substr($content, 0, 5), $pdfContents)))->toBe(['%PDF-'])
+            ->and(glob(dirname($zipPath).'/*.tmp'))->toBe([]);
+    } finally {
+        app(Filesystem::class)->deleteDirectory($fakeStorageRoot);
+    }
+});
+
+it('generates one ticket per draw option and splits the PDFs into the ZIP', function () {
+    $zipFilename = 'sorteo_boletos_5489d14a-bb86-41bb-bd65-b45f8ac95b6b_20261012_125721_ab12cd34.zip';
+    $fakeStorageRoot = sys_get_temp_dir().'/campanias-json-test-'.bin2hex(random_bytes(8));
+
+    config(['filesystems.disks.public.root' => $fakeStorageRoot]);
+    Storage::forgetDisk('public');
+
+    try {
+        (new GenerarBoletosOpcionesSorteoJob($zipFilename, [
+            [
+                'distribuidor_razon_social' => 'DISTRIBUIDOR DE PRUEBA S.A.C.',
+                'opciones_sorteo' => 501,
+                'ruc' => '20600835506',
+                'representante' => 'Representante de prueba',
+                'celular' => '950648934',
+            ],
+        ]))->handle();
 
         $zipPath = Storage::disk('public')->path('sorteo/'.$zipFilename);
         $zip = new ZipArchive;
