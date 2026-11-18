@@ -194,6 +194,12 @@
                     <span class="t-lbl">RUC</span>
                     <span class="t-val">{{ $tick['docVal'] }}</span>
                   </div>
+                  @if(!empty($tick['distribuidor']))
+                  <div class="t-campo">
+                    <span class="t-lbl">Distribuidor</span>
+                    <span class="t-val">{{ $tick['distribuidor'] }}</span>
+                  </div>
+                  @endif
                   <div class="t-campo">
                     <span class="t-lbl">Rep. Legal</span>
                     <span class="t-val">{{ $tick['nombre'] }}</span>
@@ -212,14 +218,16 @@
                     <span class="t-lbl">Teléfono</span>
                     <span class="t-val">{{ $tick['telefono'] }}</span>
                   </div>
-                  <div class="t-campo">
-                    <span class="t-lbl">Departamento</span>
-                    <span class="t-val">{{ $tick['departamento'] }}</span>
-                  </div>
-                  <div class="t-campo">
-                    <span class="t-lbl">Email</span>
-                    <span class="t-val-sm">{{ $tick['email'] }}</span>
-                  </div>
+                  @if(empty($tick['opcionesSorteo']))
+                    <div class="t-campo">
+                      <span class="t-lbl">Departamento</span>
+                      <span class="t-val">{{ $tick['departamento'] }}</span>
+                    </div>
+                    <div class="t-campo">
+                      <span class="t-lbl">Email</span>
+                      <span class="t-val-sm">{{ $tick['email'] }}</span>
+                    </div>
+                  @endif
                   <div class="t-footer">
                     <span class="t-cod-lbl">N° Boleto</span>
                     <span class="t-cod-val">{{ $tick['codigo'] }}</span>
